@@ -1,0 +1,15 @@
+.env
+
+frontend/node_modules/
+frontend/dist/
+
+backend/target/
+
+*.log
+logs/
+
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+codex resume 019fef7b-5ace-73b2-926a-808550c4a637

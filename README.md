@@ -62,8 +62,8 @@ redis:7-alpine
 minio/minio:RELEASE.2023-11-20T22-40-07Z
 rabbitmq:3-management
 node:24-alpine3.21
-dhi.io/maven:3-jdk25-debian13-dev
-eclipse-temurin:26.0.1_8-jre-noble
+maven:3.9-eclipse-temurin-25
+eclipse-temurin:25-jre
 ```
 
 You do **not** need to manually download these images before starting the project.
@@ -193,7 +193,7 @@ FROM node:24-alpine3.21
 or:
 
 ```dockerfile
-FROM dhi.io/maven:3-jdk25-debian13-dev
+FROM maven:3.9-eclipse-temurin-25
 ```
 
 If a required base image is not available locally, Docker can pull it from the configured registry.
@@ -285,15 +285,15 @@ After the containers have started successfully, access the services using:
 
 | Service             | URL / Port                            |
 | ------------------- | ------------------------------------- |
-| Frontend            | http://localhost:5173                 |
-| Backend             | http://localhost:8080                 |
-| Backend Health      | http://localhost:8080/actuator/health |
-| pgAdmin             | http://localhost:5050                 |
-| MinIO API           | http://localhost:9000                 |
-| MinIO Console       | http://localhost:9001                 |
-| RabbitMQ Management | http://localhost:15672                |
-| PostgreSQL          | localhost:5432                        |
-| Redis               | localhost:6379                        |
+| Frontend            | http://localhost:5174                 |
+| Backend             | http://localhost:8081                 |
+| Backend Health      | http://localhost:8081/actuator/health |
+| pgAdmin             | http://localhost:5051                  |
+| MinIO API           | http://localhost:9003                |
+| MinIO Console       | http://localhost:9002                 |
+| RabbitMQ Management | http://localhost:15673                |
+| PostgreSQL          | localhost:5433                    |
+| Redis               | localhost:6380                        |
 
 ---
 
@@ -448,7 +448,7 @@ These volumes preserve development data when containers are stopped or recreated
 After starting the system, verify the backend:
 
 ```text
-http://localhost:8080/actuator/health
+http://localhost:8081/actuator/health
 ```
 
 Additional technical health endpoints include:
@@ -697,11 +697,11 @@ docker compose up -d --build
 After startup:
 
 ```text
-Frontend: http://localhost:5173
-Backend:  http://localhost:8080
-pgAdmin:  http://localhost:5050
-MinIO:    http://localhost:9001
-RabbitMQ: http://localhost:15672
+Frontend: http://localhost:5174
+Backend:  http://localhost:8081
+pgAdmin:  http://localhost:5051
+MinIO:    http://localhost:9002
+RabbitMQ: http://localhost:15673
 ```
 
 To stop:

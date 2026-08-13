@@ -99,10 +99,10 @@ services:
           "CMD-SHELL",
           "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /actuator/health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"UP\" <&3'"
         ]
-      interval: 15s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 20
-      start_period: 180s
+      start_period: 30s
 
 
   # =========================================================
@@ -137,8 +137,8 @@ services:
           "CMD-SHELL",
           "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
         ]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
 
 
@@ -200,8 +200,8 @@ services:
           "redis-cli",
           "ping"
         ]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
 
 
@@ -249,8 +249,8 @@ services:
           "ready",
           "local"
         ]
-      interval: 15s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
 
 
@@ -286,17 +286,11 @@ services:
       - scms-network
 
     healthcheck:
-      test:
-        [
-          "CMD",
-          "rabbitmq-diagnostics",
-          "-q",
-          "ping"
-        ]
-      interval: 15s
-      timeout: 20s
-      retries: 10
-      start_period: 60s
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
 
 # =========================================================

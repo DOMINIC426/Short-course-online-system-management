@@ -5,9 +5,9 @@ spring:
   application:
     name: scms-backend
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:scms}
-    username: ${DB_USERNAME:scms_user}
-    password: ${DB_PASSWORD:change_me}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:short_course}
+    username: ${DB_USERNAME:dominic}
+    password: ${DB_PASSWORD:1234}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

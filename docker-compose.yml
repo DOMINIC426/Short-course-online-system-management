@@ -2,8 +2,7 @@ services:
 
   # =========================================================
   # FRONTEND
-  # Host: localhost:5174
-  # Container: 5173
+  # Host: http://localhost:5174
   # =========================================================
   frontend:
     build:
@@ -18,28 +17,22 @@ services:
 
     environment:
       NODE_ENV: development
-      FRONTEND_HOST_PORT: ${FRONTEND_HOST_PORT:-5174}
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8081}
       CHOKIDAR_USEPOLLING: "true"
 
     volumes:
       - ./frontend:/app
-      - /app/node_modules
-
-    restart: unless-stopped
+      - frontend_node_modules:/app/node_modules
 
     networks:
       - scms-network
 
-    depends_on:
-      backend:
-        condition: service_healthy
+    restart: unless-stopped
 
 
   # =========================================================
   # BACKEND
-  # Host: localhost:8081
-  # Container: 8080
+  # Host: http://localhost:8081
   # =========================================================
   backend:
     build:
@@ -52,47 +45,53 @@ services:
     ports:
       - "${BACKEND_HOST_PORT:-8081}:8080"
 
-    volumes:
-      - ./backend:/app/src
-      - ~/.m2:/root/.m2
-
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
-      # PostgreSQL internal Docker connection
+      # PostgreSQL
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB}
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
 
-      # Redis internal Docker connection
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
 
-      # MinIO internal Docker connection
+      # MinIO
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
 
-      # RabbitMQ internal Docker connection
+      # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
-      RABBITMQ_VHOST: ${RABBITMQ_VHOST}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
 
+      # CORS
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5174}
+
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - rabbitmq
 
     volumes:
       - ./backend:/app
       - maven_cache:/root/.m2
 
-    restart: unless-stopped
-
     networks:
       - scms-network
 
+<<<<<<< HEAD
     depends_on:
       postgres:
         condition: service_healthy
@@ -109,34 +108,35 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
+=======
+    restart: unless-stopped
+>>>>>>> 0ca137d (Improved Auto Reload)
 
 
   # =========================================================
   # POSTGRESQL
   # Host: localhost:5433
-  # Container: 5432
   # =========================================================
   postgres:
     image: postgres:15-alpine
 
     container_name: scms-postgres
 
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
-    ports:
-      - "${POSTGRES_HOST_PORT:-5433}:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-    restart: unless-stopped
 
     networks:
       - scms-network
 
+<<<<<<< HEAD
     healthcheck:
       test:
         [
@@ -146,42 +146,42 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+=======
+    restart: unless-stopped
+>>>>>>> 0ca137d (Improved Auto Reload)
 
 
   # =========================================================
   # PGADMIN
-  # Host: localhost:5051
-  # Container: 80
+  # Host: http://localhost:5051
   # =========================================================
   pgadmin:
     image: dpage/pgadmin4:9.12
 
     container_name: scms-pgadmin
 
+    ports:
+      - "${PGADMIN_HOST_PORT:-5051}:80"
+
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
 
-    ports:
-      - "${PGADMIN_HOST_PORT:-5051}:80"
+    depends_on:
+      - postgres
 
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
-    restart: unless-stopped
-
     networks:
       - scms-network
 
-    depends_on:
-      postgres:
-        condition: service_healthy
+    restart: unless-stopped
 
 
   # =========================================================
   # REDIS
   # Host: localhost:6380
-  # Container: 6379
   # =========================================================
   redis:
     image: redis:7-alpine
@@ -194,11 +194,10 @@ services:
     volumes:
       - redis_data:/data
 
-    restart: unless-stopped
-
     networks:
       - scms-network
 
+<<<<<<< HEAD
     healthcheck:
       test:
         [
@@ -209,16 +208,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+=======
+    restart: unless-stopped
+>>>>>>> 0ca137d (Improved Auto Reload)
 
 
   # =========================================================
   # MINIO
-  # API Host: localhost:9002
-  # Console Host: localhost:9003
-  #
-  # Internal:
-  # API: 9000
-  # Console: 9001
+  # API:     http://localhost:9002
+  # Console: http://localhost:9003
   # =========================================================
   minio:
     image: minio/minio:RELEASE.2023-11-20T22-40-07Z
@@ -231,22 +229,21 @@ services:
       - --console-address
       - ":9001"
 
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-
     ports:
       - "${MINIO_API_HOST_PORT:-9002}:9000"
       - "${MINIO_CONSOLE_HOST_PORT:-9003}:9001"
 
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
     volumes:
       - minio_data:/data
-
-    restart: unless-stopped
 
     networks:
       - scms-network
 
+<<<<<<< HEAD
     healthcheck:
       test:
         [
@@ -258,39 +255,37 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+=======
+    restart: unless-stopped
+>>>>>>> 0ca137d (Improved Auto Reload)
 
 
   # =========================================================
   # RABBITMQ
-  # AMQP Host: localhost:5673
-  # Management Host: localhost:15673
-  #
-  # Internal:
-  # AMQP: 5672
-  # Management: 15672
+  # AMQP:       localhost:5673
+  # Management: http://localhost:15673
   # =========================================================
   rabbitmq:
     image: rabbitmq:3-management
 
     container_name: scms-rabbitmq
 
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
-
     ports:
       - "${RABBITMQ_HOST_PORT:-5673}:5672"
       - "${RABBITMQ_MANAGEMENT_HOST_PORT:-15673}:15672"
 
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-
-    restart: unless-stopped
 
     networks:
       - scms-network
 
+<<<<<<< HEAD
     healthcheck:
       test:
         [
@@ -306,7 +301,7 @@ services:
 
 
 # =========================================================
-# NETWORK
+# NETWORKS
 # =========================================================
 networks:
   scms-network:
@@ -314,12 +309,13 @@ networks:
 
 
 # =========================================================
-# VOLUMES
+# NAMED VOLUMES
 # =========================================================
 volumes:
+  frontend_node_modules:
+  maven_cache:
   postgres_data:
   pgadmin_data:
   redis_data:
   minio_data:
   rabbitmq_data:
-  maven_cache:

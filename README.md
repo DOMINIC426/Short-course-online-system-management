@@ -62,8 +62,8 @@ redis:7-alpine
 minio/minio:RELEASE.2023-11-20T22-40-07Z
 rabbitmq:3-management
 node:24-alpine3.21
-maven:3.9-eclipse-temurin-25
-eclipse-temurin:25-jre
+maven:3.9-eclipse-temurin-21
+eclipse-temurin:21-jre
 ```
 
 You do **not** need to manually download these images before starting the project.
@@ -193,7 +193,7 @@ FROM node:24-alpine3.21
 or:
 
 ```dockerfile
-FROM maven:3.9-eclipse-temurin-25
+FROM maven:3.9-eclipse-temurin-21
 ```
 
 If a required base image is not available locally, Docker can pull it from the configured registry.
@@ -287,7 +287,7 @@ After the containers have started successfully, access the services using:
 | ------------------- | ------------------------------------- |
 | Frontend            | http://localhost:5174                 |
 | Backend             | http://localhost:8081                 |
-| Backend Health      | http://localhost:8081/actuator/health |
+| Backend Health      | http://localhost:8081/api/health |
 | pgAdmin             | http://localhost:5051                  |
 | MinIO API           | http://localhost:9003                |
 | MinIO Console       | http://localhost:9002                 |
@@ -448,7 +448,7 @@ These volumes preserve development data when containers are stopped or recreated
 After starting the system, verify the backend:
 
 ```text
-http://localhost:8081/actuator/health
+http://localhost:8081/api/health
 ```
 
 Additional technical health endpoints include:
@@ -456,7 +456,6 @@ Additional technical health endpoints include:
 ```text
 GET /
 GET /api/health
-GET /actuator/health
 ```
 
 Spring Security is included in the backend.
@@ -473,7 +472,7 @@ Docker Compose uses health checks for infrastructure services:
 * **Redis:** `redis-cli ping`
 * **MinIO:** `mc ready local`
 * **RabbitMQ:** `rabbitmq-diagnostics -q ping`
-* **Backend:** health request to `/actuator/health`
+* **Backend:** health request to `/api/health`
 
 Check the health status:
 

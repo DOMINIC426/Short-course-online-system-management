@@ -51,6 +51,10 @@ services:
     ports:
       - "${BACKEND_HOST_PORT:-8081}:8080"
 
+    volumes:
+      - ./backend:/app/src
+      - ~/.m2:/root/.m2
+
     environment:
       SPRING_PROFILES_ACTIVE: docker
 

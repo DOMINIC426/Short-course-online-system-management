@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import PasswordInput from "../components/PasswordInput.jsx";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -43,19 +44,12 @@ export default function LoginPage() {
           />
         </div>
 
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-udom-accent"
-          />
-        </div>
+       <PasswordInput
+  id="password"
+  label="Password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+/>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -68,10 +62,9 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-600">
-        Don't have an account?{" "}
-        <Link to="/register" className="font-semibold text-udom-primary hover:underline">
-          Create one
+      <p className="mt-3 text-center text-sm">
+        <Link to="/forgot-password" className="font-medium text-udom-primary hover:underline">
+          Forgot password?
         </Link>
       </p>
     </section>

@@ -22,13 +22,23 @@ export function AuthProvider({ children }) {
     return response.data;
   }
 
+  async function forgotPassword(identifier) {
+  const response = await api.post("/api/auth/forgot-password", { identifier });
+  return response.data;
+}
+
+async function resetPassword(token, newPassword) {
+  const response = await api.post("/api/auth/reset-password", { token, newPassword });
+  return response.data;
+}
+
   function logout() {
     setUser(null);
     localStorage.removeItem("scms_user");
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, forgotPassword, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

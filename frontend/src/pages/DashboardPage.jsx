@@ -1,0 +1,54 @@
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+import StatCard from "../components/StatCard.jsx";
+import { FileText, Wallet, Award } from "lucide-react";
+
+const QUICK_LINKS = [
+  { to: "/applications", title: "My applications", description: "Track the status of your submitted applications" },
+  { to: "/attendance", title: "My attendance", description: "See your attendance record per course" },
+  { to: "/results", title: "My results", description: "View assessment scores and pass/fail status" },
+  { to: "/profile", title: "My profile", description: "Update your personal information and documents" },
+];
+
+export default function DashboardPage() {
+  const { user } = useAuth();
+
+  return (
+    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-udom-primary">
+            Student dashboard
+          </p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
+            Welcome{user?.fullName ? `, ${user.fullName}` : ""}
+          </h1>
+        </div>
+      </div>
+
+      {/* Stat cards */}
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard icon={<FileText className="h-6 w-6" strokeWidth={1.8} />} label="Applications submitted" value="0" tone="blue" />
+        <StatCard icon={<Wallet className="h-6 w-6" strokeWidth={1.8} />} label="Outstanding balance" value="TZS 0" tone="teal" />
+        <StatCard icon={<Award className="h-6 w-6" strokeWidth={1.8} />} label="Certificates earned" value="0" tone="orange" />
+      </div>
+
+      {/* Quick links */}
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-slate-900">Quick actions</h2>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {QUICK_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-udom-primary/40 hover:shadow-md"
+            >
+              <p className="font-semibold text-slate-900">{link.title}</p>
+              <p className="mt-1 text-sm text-slate-600">{link.description}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

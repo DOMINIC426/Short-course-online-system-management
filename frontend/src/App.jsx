@@ -3,6 +3,8 @@ import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
+import CoursesPage from "./pages/CoursesPage";
+
 
 export default function App() {
   return (
@@ -10,8 +12,9 @@ export default function App() {
       <Navbar />
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<HomePage />} />
-        </Routes>
+  <Route path="/" element={<HomePage />} />
+  <Route path="/courses" element={<CoursesPage />} />
+</Routes>
       </main>
       <Footer />
     </div>

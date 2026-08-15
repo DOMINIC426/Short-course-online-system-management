@@ -5,6 +5,8 @@ import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
 import CoursesPage from "./pages/CoursesPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 
 export default function App() {
@@ -16,6 +18,8 @@ export default function App() {
   <Route path="/" element={<HomePage />} />
   <Route path="/courses" element={<CoursesPage />} />
   <Route path="/courses/:id" element={<CourseDetailPage />} />
+  <Route path="/login" element={<LoginPage />} />
+  <Route path="/register" element={<RegisterPage />} />
 </Routes>
       </main>
       <Footer />

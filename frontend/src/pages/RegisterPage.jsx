@@ -1,0 +1,94 @@
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+
+export default function RegisterPage() {
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await register(fullName, username, password);
+      navigate("/login");
+    } catch (err) {
+      setError("Could not create account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <section className="mx-auto max-w-md px-6 py-16">
+      <h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        <div>
+          <label htmlFor="fullName" className="block text-sm font-medium text-slate-700">
+            Full name
+          </label>
+          <input
+            id="fullName"
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-udom-accent"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="username" className="block text-sm font-medium text-slate-700">
+            Username
+          </label>
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-udom-accent"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-udom-accent"
+          />
+        </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-md bg-udom-accent px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95 disabled:opacity-60"
+        >
+          {loading ? "Creating account..." : "Create account"}
+        </button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-slate-600">
+        Already have an account?{" "}
+        <Link to="/login" className="font-semibold text-udom-primary hover:underline">
+          Sign in
+        </Link>
+      </p>
+    </section>
+  );
+}

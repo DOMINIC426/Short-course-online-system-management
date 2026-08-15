@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
 import CoursesPage from "./pages/CoursesPage";
+import CourseDetailPage from "./pages/CourseDetailPage";
 
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
         <Routes>
   <Route path="/" element={<HomePage />} />
   <Route path="/courses" element={<CoursesPage />} />
+  <Route path="/courses/:id" element={<CourseDetailPage />} />
 </Routes>
       </main>
       <Footer />

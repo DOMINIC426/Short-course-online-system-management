@@ -1,45 +1,34 @@
 package com.scms.service;
 
-import com.scms.dto.RegisterUserRequest;
+
 import com.scms.dto.RegisterResponse;
+import com.scms.dto.RegisterUserRequest;
 import com.scms.entity.Users;
-import com.scms.entity.enums.Role;
-import com.scms.exception.UserAlreadyExistException;
+
 import com.scms.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
+
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Service
+
+import java.time.LocalDate;
+
 @RequiredArgsConstructor
-@Slf4j
-@Transactional(readOnly = true)  // Default: read-only for queries
+@Service
 public class UserService {
-
     private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
 
-    @Transactional
-    public RegisterResponse registerUser(RegisterUserRequest request) {
+    //************************* REGISTER USER ******************
+    public RegisterResponse register(RegisterUserRequest request){
+        Users users =modelMapper.map(request,Users.class);
+        users.setCreatedAt(LocalDate.now());
+        users.setUpdatedAt(LocalDate.now());
 
-        if (userRepository.existsByEmail(request.email())) {
-            throw new UserAlreadyExistException("User with email " + request.email() + " already exists");
-        }
+        Users savedUser = userRepository.save(users);
 
-        // 2. Create entity using Builder
-        Users user = Users.builder()
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .email(request.email().toLowerCase().trim())
-                .password(request.password())
-                .role(request.role())
-                .build();
-
-
-        Users savedUser = userRepository.save(user);
-
-        return RegisterResponse.fromUser(savedUser);
+        return modelMapper.map(savedUser,RegisterResponse.class);
     }
-
-
 }
+

@@ -1,5 +1,6 @@
 package com.scms.entity;
 
+import com.scms.entity.enums.LevelOfEducation;
 import com.scms.entity.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 @Table(name = "users")
 @Getter
 @Builder
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -50,19 +52,8 @@ public class Users {
     private LocalDate updatedAt;
 
 
-    // BUSINESS METHODS (Professional approach - no public setters)
-    // ============================================================
+    // relationships exist with user
+     @OneToOne(mappedBy = "users",orphanRemoval = true)
+    private Student student;
 
-    public void updateProfile(String firstName, String lastName) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-    }
-
-    public void changePassword(String newPassword) {
-        this.password = newPassword;
-    }
-
-    public void changeRole(Role newRole) {
-        this.role = newRole;
-    }
 }

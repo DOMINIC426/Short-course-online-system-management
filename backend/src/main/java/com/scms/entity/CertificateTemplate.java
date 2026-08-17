@@ -45,6 +45,6 @@ public class CertificateTemplate {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "template", cascade = CascadeType.SET_NULL)
+    @OneToMany(mappedBy = "template")
     private List<Certificate> certificates = new ArrayList<>();
 }

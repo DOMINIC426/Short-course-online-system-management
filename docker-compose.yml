@@ -110,7 +110,6 @@ services:
       start_period: 60s
 =======
     restart: unless-stopped
->>>>>>> 0ca137d (Improved Auto Reload)
 
 
   # =========================================================
@@ -136,19 +135,8 @@ services:
     networks:
       - scms-network
 
-<<<<<<< HEAD
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-=======
+
     restart: unless-stopped
->>>>>>> 0ca137d (Improved Auto Reload)
 
 
   # =========================================================
@@ -197,20 +185,8 @@ services:
     networks:
       - scms-network
 
-<<<<<<< HEAD
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "redis-cli",
-          "ping"
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-=======
+
     restart: unless-stopped
->>>>>>> 0ca137d (Improved Auto Reload)
 
 
   # =========================================================
@@ -243,21 +219,8 @@ services:
     networks:
       - scms-network
 
-<<<<<<< HEAD
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "mc",
-          "ready",
-          "local"
-        ]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-=======
+
     restart: unless-stopped
->>>>>>> 0ca137d (Improved Auto Reload)
 
 
   # =========================================================

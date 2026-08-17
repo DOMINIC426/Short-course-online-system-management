@@ -35,7 +35,5 @@ public class RegisterUserRequest{
         @NotNull(message = "Role is required")
        private Role role;
 
-        @NotBlank(message = "level of education is required")
-    private LevelOfEducation levelOfEducation;
 
 }

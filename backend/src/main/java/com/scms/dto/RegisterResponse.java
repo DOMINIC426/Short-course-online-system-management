@@ -7,6 +7,6 @@ public class RegisterResponse{
    private String lastName;
    private String email;
    private Role role;
-
+   private String token;
 
 }

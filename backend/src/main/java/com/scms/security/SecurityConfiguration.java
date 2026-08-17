@@ -11,11 +11,16 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.scms.jwt.*;
 
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfiguration {
+
     private final CustomUserDetailsService customUserDetailsService;
+    private final JwtAuthenticationFilter jwtAuthFilter;
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -23,19 +28,21 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-          http.csrf(csrf->csrf.disable())
-                  .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                  .authorizeHttpRequests(request->{
-                      request.requestMatchers("/api/v1/auth/**").permitAll()
-                              .requestMatchers("/v3/api-docs/**").permitAll()
-                              .requestMatchers("/swagger-ui/**").permitAll()
-                              .requestMatchers("/swagger-ui.html").permitAll()
-                              .requestMatchers("/", "/actuator/health").permitAll()
-                              .anyRequest().authenticated();
-                  });
-          return http.build();
-    }
+        http.csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(request -> {
+                    request.requestMatchers("/api/v1/auth/**").permitAll()
+                            .requestMatchers("/v3/api-docs/**").permitAll()
+                            .requestMatchers("/swagger-ui/**").permitAll()
+                            .requestMatchers("/swagger-ui.html").permitAll()
+                            .requestMatchers("/", "/actuator/health").permitAll()
+                            .anyRequest().authenticated();
+                })
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
+        return http.build();
+    }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -49,5 +56,4 @@ public class SecurityConfiguration {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
-
 }

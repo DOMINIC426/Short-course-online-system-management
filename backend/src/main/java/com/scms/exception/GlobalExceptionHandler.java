@@ -18,4 +18,13 @@ public class GlobalExceptionHandler {
                 "time", LocalDateTime.now().toString()
         ));
     }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Map<String,String>> userNotFound(){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+           "message","User not found",
+           "time", LocalDateTime.now().toString(),
+               "status-code", HttpStatus.NOT_FOUND.toString()
+        ));
+    }
 }

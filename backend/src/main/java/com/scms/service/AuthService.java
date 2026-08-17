@@ -41,7 +41,7 @@ public class AuthService {
 
         RegisterResponse response = modelMapper.map(savedUser, RegisterResponse.class);
 
-        // response.setToken(token);
+         response.setToken(token);
 
         return response;
     }

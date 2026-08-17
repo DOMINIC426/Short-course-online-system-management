@@ -1,11 +1,15 @@
-import axios from 'axios';
+// src/api/backendClient.js
+import axios from "axios";
 
-export const backendClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
-  timeout: 3000
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
+
+export const api = axios.create({
+  baseURL,
+  timeout: 8000,
+  headers: { "Content-Type": "application/json" },
 });
 
 export async function fetchBackendHealth() {
-  const response = await backendClient.get('/api/health');
+  const response = await api.get("/actuator/health");
   return response.data;
 }

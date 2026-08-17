@@ -13,7 +13,7 @@ public class HealthController {
     public Map<String, String> health() {
         return Map.of(
                 "status", "UP",
-                "application", "SCMS Backend here"
+                "application", "SCMS Backend"
         );
     }
 }

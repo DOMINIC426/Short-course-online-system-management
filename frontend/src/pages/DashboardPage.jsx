@@ -21,7 +21,7 @@ export default function DashboardPage() {
             Student dashboard
           </p>
           <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
-            Welcome{user?.fullName ? `, ${user.fullName}` : ""}
+           Welcome{user?.firstName ? `, ${user.firstName}` : ""}
           </h1>
         </div>
       </div>

@@ -95,7 +95,7 @@ export default function PortalLayout() {
             <SidebarLinks onLinkClick={() => setIsDrawerOpen(false)} />
             <div className="border-t border-slate-200 px-3 py-4">
               <p className="truncate px-3 text-sm font-semibold text-slate-900">
-                {user.fullName || user.username}
+               {user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.username}
               </p>
               <LogoutButton onClick={logout} />
             </div>

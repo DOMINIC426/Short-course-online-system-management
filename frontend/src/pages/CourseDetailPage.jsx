@@ -1,6 +1,10 @@
 import { useParams, Link } from "react-router-dom";
 import { FEATURED_COURSES } from "../data/homeData.js";
 
+function formatFee(fee) {
+  return `TZS ${Number(fee).toLocaleString()}`;
+}
+
 export default function CourseDetailPage() {
   const { id } = useParams();
   const course = FEATURED_COURSES.find((c) => String(c.id) === id);
@@ -31,29 +35,31 @@ export default function CourseDetailPage() {
       </Link>
 
       <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-udom-primary">
-        {course.college} · {course.code}
+        {course.categoryName} &middot; {course.courseCode}
       </p>
       <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">
-        {course.title}
+        {course.name}
       </h1>
-      <p className="mt-4 text-slate-600">{course.summary}</p>
+      <p className="mt-4 text-slate-600">{course.description}</p>
 
       <dl className="mt-8 grid grid-cols-2 gap-6 rounded-2xl border border-slate-200 bg-white p-6 sm:grid-cols-4">
         <div>
           <dt className="text-xs uppercase tracking-wide text-slate-500">Duration</dt>
-          <dd className="mt-1 font-semibold text-slate-900">{course.duration}</dd>
+          <dd className="mt-1 font-semibold text-slate-900">
+            {course.durationValue} {course.durationUnit}
+          </dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wide text-slate-500">Mode</dt>
-          <dd className="mt-1 font-semibold text-slate-900">{course.mode}</dd>
+          <dd className="mt-1 font-semibold text-slate-900">{course.deliveryMode}</dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wide text-slate-500">Fee</dt>
-          <dd className="mt-1 font-semibold text-slate-900">{course.fee}</dd>
+          <dd className="mt-1 font-semibold text-slate-900">{formatFee(course.defaultFee)}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-slate-500">Seats left</dt>
-          <dd className="mt-1 font-semibold text-slate-900">{course.seatsLeft}</dd>
+          <dt className="text-xs uppercase tracking-wide text-slate-500">Status</dt>
+          <dd className="mt-1 font-semibold text-slate-900">{course.status}</dd>
         </div>
       </dl>
 

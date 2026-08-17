@@ -7,7 +7,7 @@ export default function CoursesPage() {
   const search = searchParams.get("search") || "";
 
   const filteredCourses = FEATURED_COURSES.filter((course) =>
-    course.title.toLowerCase().includes(search.toLowerCase())
+    course.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (

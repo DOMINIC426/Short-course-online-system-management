@@ -10,7 +10,7 @@ export default function FeaturedCourses() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-udom-primary">
-              Featured programmes
+              Featured courses
             </p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
               Professional short courses for career growth

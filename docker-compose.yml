@@ -91,25 +91,9 @@ services:
     networks:
       - scms-network
 
-<<<<<<< HEAD
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
 
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
-=======
-    restart: unless-stopped
+
+
 
 
   # =========================================================
@@ -248,7 +232,6 @@ services:
     networks:
       - scms-network
 
-<<<<<<< HEAD
     healthcheck:
       test:
         [

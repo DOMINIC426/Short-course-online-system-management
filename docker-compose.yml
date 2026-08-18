@@ -19,7 +19,6 @@ services:
     environment:
       NODE_ENV: development
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8081}
-      CHOKIDAR_USEPOLLING: "true"
 
     volumes:
       - ./frontend/src:/app/src
@@ -95,11 +94,15 @@ services:
         condition: service_healthy
 
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /actuator/health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"UP\" <&3'"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
 
 
   # =========================================================
@@ -134,8 +137,8 @@ services:
           "CMD-SHELL",
           "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
         ]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
 
 
@@ -197,8 +200,8 @@ services:
           "redis-cli",
           "ping"
         ]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
 
 
@@ -246,8 +249,8 @@ services:
           "ready",
           "local"
         ]
-      interval: 15s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
 
 
@@ -283,17 +286,11 @@ services:
       - scms-network
 
     healthcheck:
-      test:
-        [
-          "CMD",
-          "rabbitmq-diagnostics",
-          "-q",
-          "check_running"
-        ]
-      interval: 10s
-      timeout: 10s
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 15s
 
 
 # =========================================================

@@ -10,6 +10,6 @@ export const api = axios.create({
 });
 
 export async function fetchBackendHealth() {
-  const response = await api.get("/actuator/health");
-  return response.data;
+  const response = await backendClient.get('/api/health');
+  return response.data.status;
 }

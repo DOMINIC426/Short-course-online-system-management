@@ -1,8 +1,8 @@
-// package com.scms.config;
+ package com.scms.config;
 
-// import java.util.List;
-// import org.springframework.boot.context.properties.ConfigurationProperties;
+ import java.util.List;
+ import org.springframework.boot.context.properties.ConfigurationProperties;
 
-// @ConfigurationProperties(prefix = "scms.cors")
-// public record CorsProperties(List<String> allowedOrigins) {
-// }
+ @ConfigurationProperties(prefix = "scms.cors")
+ public record CorsProperties(List<String> allowedOrigins) {
+ }

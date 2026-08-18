@@ -148,7 +148,7 @@ Production secrets and passwords must not be committed to Git.
 
 # 3. Validate Docker Compose
 
-Before starting the system, verify the Docker Compose configuration:
+Before starting the system, verify the Docker Compose configuration or otherwise:
 
 ```bash
 docker compose config

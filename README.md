@@ -259,7 +259,7 @@ For a new developer, the main command is therefore:
 docker compose up -d --build
 ```
 
----
+----
 
 # Check Container Status
 

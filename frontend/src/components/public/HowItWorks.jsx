@@ -1,5 +1,5 @@
 // src/components/HowItWorks.jsx
-import { STEPS } from "../data/homeData";
+import { STEPS } from "../../data/homeData";
 
 export default function HowItWorks() {
   return (

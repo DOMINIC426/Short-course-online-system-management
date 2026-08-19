@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
-import StatCard from "../components/StatCard.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
+import StatCard from "../../components/shared/StatCard.jsx";
 import { FileText, Wallet, Award } from "lucide-react";
 
 const QUICK_LINKS = [

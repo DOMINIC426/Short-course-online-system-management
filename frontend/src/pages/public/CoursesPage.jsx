@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom";
-import CourseCard from "../components/CourseCard";
-import { FEATURED_COURSES } from "../data/homeData.js";
+import CourseCard from "../../components/public/CourseCard";
+import { FEATURED_COURSES } from "../../data/homeData.js";
 
 export default function CoursesPage() {
   const [searchParams] = useSearchParams();

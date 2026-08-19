@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { FEATURED_COURSES } from "../data/homeData.js";
+import { FEATURED_COURSES } from "../../data/homeData.js";
 
 function formatFee(fee) {
   return `TZS ${Number(fee).toLocaleString()}`;

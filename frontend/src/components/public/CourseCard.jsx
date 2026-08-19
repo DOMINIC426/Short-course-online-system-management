@@ -7,14 +7,12 @@ function formatFee(fee) {
 export default function CourseCard({ course }) {
   return (
     <article className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-udom-primary/40 hover:shadow-xl">
-      <div className="flex items-center justify-between gap-3">
-        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-udom-primary">
-          {course.categoryName} &middot; {course.courseCode}
-        </span>
-      </div>
+      <span className="w-fit rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-udom-primary">
+        {course.categoryName} &middot; {course.courseCode}
+      </span>
 
       <h3 className="mt-4 text-xl font-bold leading-snug text-slate-900">
-        {course.name}
+        {course.courseName}
       </h3>
       <p className="mt-3 text-sm leading-6 text-slate-600">
         {course.description}
@@ -29,7 +27,7 @@ export default function CourseCard({ course }) {
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-slate-500">Mode</dt>
-          <dd className="text-right font-medium text-slate-800">{course.deliveryMode}</dd>
+          <dd className="text-right font-medium text-slate-800">{course.deliverableMode}</dd>
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-slate-500">Fee</dt>

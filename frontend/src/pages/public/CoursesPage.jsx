@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom";
-import CourseCard from "../../components/public/CourseCard";
+import CourseCard from "../../components/public/CourseCard.jsx";
 import { FEATURED_COURSES } from "../../data/homeData.js";
 
 export default function CoursesPage() {
@@ -7,7 +7,7 @@ export default function CoursesPage() {
   const search = searchParams.get("search") || "";
 
   const filteredCourses = FEATURED_COURSES.filter((course) =>
-    course.name.toLowerCase().includes(search.toLowerCase())
+    course.courseName.toLowerCase().includes(search.toLowerCase())
   );
 
   return (

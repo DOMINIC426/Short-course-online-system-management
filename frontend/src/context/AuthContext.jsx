@@ -3,6 +3,14 @@ import { api } from "../api/backendClient.js";
 
 const AuthContext = createContext(null);
 
+function normalizeProfileFields(data) {
+  return {
+    levelOfEducation: data.levelOfEducation ?? data.level_of_education ?? "",
+    nationality: data.nationality ?? "",
+    identificationNumber: data.identificationNumber ?? data.identification_number ?? "",
+  };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("scms_user");
@@ -47,29 +55,25 @@ export function AuthProvider({ children }) {
   }
 
   async function updateProfile({ levelOfEducation, nationality, identificationNumber }) {
-  try {
-    const response = await api.post("/api/students/me", {
-      level_of_education: levelOfEducation,
-      nationality,
-      identification_number: identificationNumber,
-    });
-    const updatedUser = { ...user, ...response.data };
-    setUser(updatedUser);
-    localStorage.setItem("scms_user", JSON.stringify(updatedUser));
-    return updatedUser;
-  } catch (err) {
-    // TEMPORARY fallback until backend endpoint is ready — to be removed once connected
-    const updatedUser = {
-      ...user,
-      levelOfEducation,
-      nationality,
-      identificationNumber,
-    };
-    setUser(updatedUser);
-    localStorage.setItem("scms_user", JSON.stringify(updatedUser));
-    return updatedUser;
+    try {
+      const response = await api.post("/api/students/me", {
+        level_of_education: levelOfEducation,
+        nationality,
+        identification_number: identificationNumber,
+      });
+      const updatedUser = { ...user, ...normalizeProfileFields(response.data) };
+      setUser(updatedUser);
+      localStorage.setItem("scms_user", JSON.stringify(updatedUser));
+      return updatedUser;
+    } catch (err) {
+      // TEMPORARY fallback until backend endpoint is ready — to be removed once connected
+      const updatedUser = { ...user, levelOfEducation, nationality, identificationNumber };
+      setUser(updatedUser);
+      localStorage.setItem("scms_user", JSON.stringify(updatedUser));
+      return updatedUser;
+    }
   }
-}
+
   async function forgotPassword(email) {
     const response = await api.post("/api/auth/forgot-password", { email });
     return response.data;
@@ -87,7 +91,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, forgotPassword, resetPassword, updateProfile}}
+      value={{ user, login, register, logout, forgotPassword, resetPassword, updateProfile }}
     >
       {children}
     </AuthContext.Provider>

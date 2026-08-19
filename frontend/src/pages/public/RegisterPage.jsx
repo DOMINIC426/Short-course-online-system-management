@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
-import PasswordInput from "../components/PasswordInput.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
+import PasswordInput from "../../components/shared/PasswordInput.jsx";
 
 export default function RegisterPage() {
   const [firstName, setFirstName] = useState("");

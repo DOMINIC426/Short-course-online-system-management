@@ -1,6 +1,6 @@
 // src/components/BackendStatus.jsx
 import { useEffect, useState } from "react";
-import { fetchBackendHealth } from "../api/backendClient";
+import { fetchBackendHealth } from "../../api/backendClient";
 
 export default function BackendStatus() {
   const [state, setState] = useState({ loading: true, status: null, error: null });
@@ -10,9 +10,9 @@ export default function BackendStatus() {
 
     async function load() {
       try {
-        const data = await fetchBackendHealth();
+        const status = await fetchBackendHealth();
         if (!cancelled) {
-          setState({ loading: false, status: data.status, error: null });
+          setState({ loading: false, status, error: null });
         }
       } catch (error) {
         if (!cancelled) {

@@ -1,7 +1,7 @@
 // src/components/FeaturedCourses.jsx
 import { Link } from "react-router-dom";
 import CourseCard from "./CourseCard";
-import { FEATURED_COURSES } from "../data/homeData";
+import { FEATURED_COURSES } from "../../data/homeData";
 
 export default function FeaturedCourses() {
   return (

@@ -52,7 +52,7 @@ function LogoutButton({ onClick }) {
   );
 }
 
-export default function PortalLayout() {
+export default function StudentLayout() {
   const { user, logout } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 

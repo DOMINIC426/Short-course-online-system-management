@@ -10,6 +10,9 @@ import RegisterPage from "./pages/public/RegisterPage";
 import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/public/ResetPasswordPage";
 import DashboardPage from "./pages/student/DashboardPage";
+import ProfilePage from "./pages/student/ProfilePage";
+import ApplyPage from "./pages/student/ApplyPage";
+import MyApplicationsPage from "./pages/student/MyApplicationsPage";
 
 export default function App() {
   return (
@@ -26,6 +29,9 @@ export default function App() {
 
       <Route element={<StudentLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/intakes/:intakeId/apply" element={<ApplyPage />} />
+        <Route path="/applications" element={<MyApplicationsPage />} />
       </Route>
     </Routes>
   );

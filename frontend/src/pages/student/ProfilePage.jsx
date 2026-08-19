@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { CheckCircle2 } from "lucide-react";
+import CountrySelect from "../../components/shared/CountrySelect.jsx";
 
 const EDUCATION_LEVELS = [
   "Certificate",
@@ -22,19 +23,20 @@ export default function ProfilePage() {
   const [error, setError] = useState("");
 
   async function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
-    setSaved(false);
-    setSaving(true);
-    try {
-      await updateProfile({ levelOfEducation, nationality, identificationNumber });
-      setSaved(true);
-    } catch (err) {
-      setError("Could not save your profile. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+  event.preventDefault();
+  setError("");
+  setSaved(false);
+  setSaving(true);
+  try {
+    await updateProfile({ levelOfEducation, nationality, identificationNumber });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  } catch (err) {
+    setError("Could not save your profile. Please try again.");
+  } finally {
+    setSaving(false);
   }
+}
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8 sm:px-8 sm:py-10">
@@ -88,19 +90,17 @@ export default function ProfilePage() {
         </div>
 
         <div>
-          <label htmlFor="nationality" className="block text-sm font-medium text-slate-700">
-            Nationality
-          </label>
-          <input
-            id="nationality"
-            type="text"
-            value={nationality}
-            onChange={(e) => setNationality(e.target.value)}
-            required
-            placeholder="e.g. Tanzanian"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-udom-accent"
-          />
-        </div>
+  <label htmlFor="nationality" className="block text-sm font-medium text-slate-700">
+    Nationality
+  </label>
+  <div className="mt-1">
+    <CountrySelect
+      id="nationality"
+      value={nationality}
+      onChange={setNationality}
+    />
+  </div>
+</div>
 
         <div>
           <label htmlFor="identificationNumber" className="block text-sm font-medium text-slate-700">

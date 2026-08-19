@@ -6,9 +6,7 @@ import PasswordInput from "../../components/shared/PasswordInput.jsx";
 export default function RegisterPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +25,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register({ firstName, lastName, username, email, phone, password });
+      await register({ firstName, lastName, email, password });
       navigate("/login");
     } catch (err) {
       setError("Could not create account. Please try again.");
@@ -38,8 +36,7 @@ export default function RegisterPage() {
 
   return (
     <section className="mx-auto max-w-md px-6 py-16">
-      <h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
-
+      <h1 className="text-2xl font-bold text-slate-900">Create your student account</h1>
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -71,20 +68,6 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-slate-700">
-            Username
-          </label>
-          <input
-            id="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-udom-accent"
-          />
-        </div>
-
-        <div>
           <label htmlFor="email" className="block text-sm font-medium text-slate-700">
             Email
           </label>
@@ -93,20 +76,6 @@ export default function RegisterPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-udom-accent"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-slate-700">
-            Phone number
-          </label>
-          <input
-            id="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
             required
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-udom-accent"
           />

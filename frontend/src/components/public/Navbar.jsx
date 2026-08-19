@@ -1,16 +1,33 @@
 // src/components/Navbar.jsx
 import { Link, NavLink } from "react-router-dom";
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const NAV_LINKS = [
+  { to: "/", label: "Home", end: true },
   { to: "/courses", label: "Courses" },
-  { to: "/how-to-apply", label: "How to apply" },
+  { href: "/#how-to-apply", label: "How to apply", isHashLink: true },
   { to: "/fees", label: "Fees" },
   { to: "/contact", label: "Contact" },
 ];
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  function handleHowToApplyClick(event) {
+    event.preventDefault();
+    setIsMenuOpen(false);
+
+    if (location.pathname === "/") {
+      window.history.pushState(null, "", "/#how-to-apply");
+      document.getElementById("how-to-apply")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    navigate("/#how-to-apply");
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-udom-primary shadow-sm">
@@ -43,16 +60,27 @@ export default function Navbar() {
         <ul className="hidden items-center gap-7 lg:flex">
           {NAV_LINKS.map((link) => (
             <li key={link.to}>
-              <NavLink
-                to={link.to}
-                className={({ isActive }) =>
-                  `text-sm text-white/80 transition hover:text-white ${
-                    isActive ? "text-white underline underline-offset-8" : ""
-                  }`
-                }
-              >
-                {link.label}
-              </NavLink>
+              {link.isHashLink ? (
+                <a
+                  href={link.href}
+                  onClick={handleHowToApplyClick}
+                  className="text-sm text-white/80 transition hover:text-white"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <NavLink
+                  to={link.to}
+                  end={link.end}
+                  className={({ isActive }) =>
+                    `text-sm text-white/80 transition hover:text-white ${
+                      isActive ? "text-white underline underline-offset-8" : ""
+                    }`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              )}
             </li>
           ))}
         </ul>
@@ -92,17 +120,28 @@ export default function Navbar() {
             <ul className="space-y-2">
               {NAV_LINKS.map((link) => (
                 <li key={link.to}>
-                  <NavLink
-                    to={link.to}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `block text-sm text-white/80 transition hover:text-white py-2 ${
-                        isActive ? "text-white font-semibold" : ""
-                      }`
-                    }
-                  >
-                    {link.label}
-                  </NavLink>
+                  {link.isHashLink ? (
+                    <a
+                      href={link.href}
+                      onClick={handleHowToApplyClick}
+                      className="block py-2 text-sm text-white/80 transition hover:text-white"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <NavLink
+                      to={link.to}
+                      end={link.end}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `block py-2 text-sm text-white/80 transition hover:text-white ${
+                          isActive ? "font-semibold text-white" : ""
+                        }`
+                      }
+                    >
+                      {link.label}
+                    </NavLink>
+                  )}
                 </li>
               ))}
             </ul>

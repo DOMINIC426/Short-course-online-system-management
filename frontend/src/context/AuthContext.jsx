@@ -9,9 +9,9 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  async function login(username, password) {
+  async function login(email, password) {
     try {
-      const response = await api.post("/api/auth/login", { username, password });
+      const response = await api.post("/api/auth/login", { email, password });
       const loggedInUser = response.data;
       setUser(loggedInUser);
       localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
@@ -19,11 +19,9 @@ export function AuthProvider({ children }) {
     } catch (err) {
       // TEMPORARY fallback until backend auth is ready — remove once CORS/endpoint is fixed
       const fakeUser = {
-        username,
-        firstName: username,
-        lastName: "",
-        email: "",
-        phone: "",
+        firstName: "Test",
+        lastName: "Student",
+        email,
         role: "STUDENT",
       };
       setUser(fakeUser);
@@ -32,25 +30,48 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function register({ firstName, lastName, username, email, phone, password }) {
+  async function register({ firstName, lastName, email, password }) {
     try {
       const response = await api.post("/api/auth/register", {
         first_name: firstName,
         last_name: lastName,
-        username,
         email,
-        phone,
         password,
+        role: "STUDENT",
       });
       return response.data;
     } catch (err) {
-      // TEMPORARY fallback until backend auth is ready — to be removed once CORS/endpoint is fixed
-      return { firstName, lastName, username, email, phone };
+      // TEMPORARY fallback until backend auth is ready — remove once CORS/endpoint is fixed
+      return { firstName, lastName, email };
     }
   }
 
-  async function forgotPassword(identifier) {
-    const response = await api.post("/api/auth/forgot-password", { identifier });
+  async function updateProfile({ levelOfEducation, nationality, identificationNumber }) {
+  try {
+    const response = await api.post("/api/students/me", {
+      level_of_education: levelOfEducation,
+      nationality,
+      identification_number: identificationNumber,
+    });
+    const updatedUser = { ...user, ...response.data };
+    setUser(updatedUser);
+    localStorage.setItem("scms_user", JSON.stringify(updatedUser));
+    return updatedUser;
+  } catch (err) {
+    // TEMPORARY fallback until backend endpoint is ready — to be removed once connected
+    const updatedUser = {
+      ...user,
+      levelOfEducation,
+      nationality,
+      identificationNumber,
+    };
+    setUser(updatedUser);
+    localStorage.setItem("scms_user", JSON.stringify(updatedUser));
+    return updatedUser;
+  }
+}
+  async function forgotPassword(email) {
+    const response = await api.post("/api/auth/forgot-password", { email });
     return response.data;
   }
 
@@ -66,7 +87,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, forgotPassword, resetPassword }}
+      value={{ user, login, register, logout, forgotPassword, resetPassword, updateProfile}}
     >
       {children}
     </AuthContext.Provider>

@@ -14,6 +14,7 @@ import ProfilePage from "./pages/student/ProfilePage";
 import ApplyPage from "./pages/student/ApplyPage";
 import MyApplicationsPage from "./pages/student/MyApplicationsPage";
 import MyPaymentsPage from "./pages/student/MyPaymentsPage";
+import MyAttendancePage from "./pages/student/MyAttendencePage";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/intakes/:intakeId/apply" element={<ApplyPage />} />
         <Route path="/applications" element={<MyApplicationsPage />} />
         <Route path="/payments" element={<MyPaymentsPage />} />
+        <Route path="/attendance" element={<MyAttendancePage />} />
       </Route>
     </Routes>
   );

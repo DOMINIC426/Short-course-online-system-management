@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import StatCard from "../../components/shared/StatCard.jsx";
 import { FileText, Wallet, Award, AlertCircle } from "lucide-react";
+import { MY_INVOICES } from "../../data/paymentsData.js";
 
 const QUICK_LINKS = [
   { to: "/applications", title: "My applications", description: "Track the status of your submitted applications" },
@@ -53,7 +54,12 @@ export default function DashboardPage() {
       {/* Stat cards */}
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard icon={<FileText className="h-6 w-6" strokeWidth={1.8} />} label="Applications submitted" value="0" tone="blue" />
-        <StatCard icon={<Wallet className="h-6 w-6" strokeWidth={1.8} />} label="Outstanding balance" value="TZS 0" tone="teal" />
+        <StatCard
+  icon={<Wallet className="h-6 w-6" strokeWidth={1.8} />}
+  label="Outstanding balance"
+  value={`TZS ${MY_INVOICES.reduce((sum, inv) => sum + inv.balanceAmount, 0).toLocaleString()}`}
+  tone="teal"
+/>
         <StatCard icon={<Award className="h-6 w-6" strokeWidth={1.8} />} label="Certificates earned" value="0" tone="orange" />
       </div>
 

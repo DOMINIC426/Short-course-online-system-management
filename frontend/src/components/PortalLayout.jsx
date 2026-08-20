@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Outlet, Navigate, Link, NavLink } from "react-router-dom";
+import { Outlet, Navigate, Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { LayoutDashboard, FileText, CreditCard, CalendarCheck, Award, UserCircle, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, CreditCard, CalendarCheck, Award, UserCircle, ClipboardCheck, MessageSquare, Menu, X, LogOut } from "lucide-react";
 
-const PORTAL_LINKS = [
+const STUDENT_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/applications", label: "My applications", icon: FileText },
   { to: "/payments", label: "My payments", icon: CreditCard },
@@ -13,10 +13,18 @@ const PORTAL_LINKS = [
   { to: "/profile", label: "My profile", icon: UserCircle },
 ];
 
-function SidebarLinks({ onLinkClick }) {
+const INSTRUCTOR_LINKS = [
+  { to: "/instructor", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/instructor/courses", label: "My courses", icon: FileText },
+  { to: "/instructor/submissions", label: "Submissions", icon: ClipboardCheck },
+  { to: "/instructor/messages", label: "Messages", icon: MessageSquare },
+  { to: "/profile", label: "My profile", icon: UserCircle },
+];
+
+function SidebarLinks({ links, onLinkClick }) {
   return (
     <nav className="flex-1 space-y-1 px-3 py-4">
-      {PORTAL_LINKS.map((link) => {
+      {links.map((link) => {
         const Icon = link.icon;
         return (
           <NavLink
@@ -54,10 +62,18 @@ function LogoutButton({ onClick }) {
 
 export default function PortalLayout() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const isInstructor = String(user?.role || "").toUpperCase() === "INSTRUCTOR";
+  const isInstructorRoute = location.pathname.startsWith("/instructor");
+  const portalLinks = isInstructor ? INSTRUCTOR_LINKS : STUDENT_LINKS;
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (isInstructorRoute && !isInstructor) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -66,9 +82,9 @@ export default function PortalLayout() {
       <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-slate-200 bg-white sm:flex">
         <Link to="/" className="flex items-center gap-2 border-b border-slate-200 px-6 py-5">
           <img src="/udom-logo.png" alt="University of Dodoma logo" className="h-8 w-8" />
-          <span className="text-sm font-semibold text-slate-900">Student Portal</span>
+          <span className="text-sm font-semibold text-slate-900">{isInstructor ? "Instructor Portal" : "Student Portal"}</span>
         </Link>
-        <SidebarLinks />
+        <SidebarLinks links={portalLinks} />
         <div className="border-t border-slate-200 px-3 py-4">
           <p className="px-3 text-xs text-slate-500">Signed in as</p>
           <p className="truncate px-3 text-sm font-semibold text-slate-900">
@@ -92,7 +108,7 @@ export default function PortalLayout() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <SidebarLinks onLinkClick={() => setIsDrawerOpen(false)} />
+            <SidebarLinks links={portalLinks} onLinkClick={() => setIsDrawerOpen(false)} />
             <div className="border-t border-slate-200 px-3 py-4">
               <p className="truncate px-3 text-sm font-semibold text-slate-900">
                {user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.username}
@@ -113,7 +129,7 @@ export default function PortalLayout() {
           >
             <Menu className="h-5 w-5 text-slate-700" />
           </button>
-          <span className="text-sm font-semibold text-slate-900">Student Portal</span>
+          <span className="text-sm font-semibold text-slate-900">{isInstructor ? "Instructor Portal" : "Student Portal"}</span>
           <div className="w-9" />
         </header>
 

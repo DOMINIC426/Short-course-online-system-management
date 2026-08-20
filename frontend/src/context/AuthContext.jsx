@@ -3,6 +3,16 @@ import { api } from "../api/backendClient.js";
 
 const AuthContext = createContext(null);
 
+function decodeToken(token) {
+  try {
+    const payload = token.split(".")[1];
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(normalized));
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("scms_user");
@@ -11,22 +21,34 @@ export function AuthProvider({ children }) {
 
   async function login(username, password) {
     try {
-      const response = await api.post("/api/auth/login", { username, password });
-      const loggedInUser = response.data;
+      const response = await api.post("/api/v1/auth/login", { email: username, password });
+      const token = response.data;
+      const claims = decodeToken(token);
+      const loggedInUser = {
+        username: claims?.sub || username,
+        firstName: claims?.sub || username,
+        lastName: "",
+        email: claims?.sub || username,
+        role: String(claims?.role || "STUDENT").toUpperCase(),
+        token,
+      };
       setUser(loggedInUser);
+      localStorage.setItem("scms_token", token);
       localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
       return loggedInUser;
     } catch (err) {
       // TEMPORARY fallback until backend auth is ready — remove once CORS/endpoint is fixed
+      const fakeRole = username.toLowerCase().includes("instructor") ? "INSTRUCTOR" : "STUDENT";
       const fakeUser = {
         username,
         firstName: username,
         lastName: "",
         email: "",
         phone: "",
-        role: "STUDENT",
+        role: fakeRole,
       };
       setUser(fakeUser);
+      localStorage.removeItem("scms_token");
       localStorage.setItem("scms_user", JSON.stringify(fakeUser));
       return fakeUser;
     }
@@ -61,6 +83,7 @@ export function AuthProvider({ children }) {
 
   function logout() {
     setUser(null);
+    localStorage.removeItem("scms_token");
     localStorage.removeItem("scms_user");
   }
 

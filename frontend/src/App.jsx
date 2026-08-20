@@ -10,6 +10,12 @@ import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
+import Instructor from "./pages/instructor/Instructor.jsx";
+import MyCoursesPage from "./pages/instructor/MyCoursesPage.jsx";
+import CourseWorkspacePage from "./pages/instructor/CourseWorkspacePage.jsx";
+import CourseStudentsPage from "./pages/instructor/CourseStudentsPage.jsx";
+import SubmissionsPage from "./pages/instructor/SubmissionsPage.jsx";
+import MessagesPage from "./pages/instructor/MessagesPage.jsx";
 
 export default function App() {
   return (
@@ -26,6 +32,12 @@ export default function App() {
 
       <Route element={<PortalLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/instructor" element={<Instructor />} />
+        <Route path="/instructor/courses" element={<MyCoursesPage />} />
+        <Route path="/instructor/courses/:courseId" element={<CourseWorkspacePage />} />
+        <Route path="/instructor/courses/:courseId/students" element={<CourseStudentsPage />} />
+        <Route path="/instructor/submissions" element={<SubmissionsPage />} />
+        <Route path="/instructor/messages" element={<MessagesPage />} />
       </Route>
     </Routes>
   );

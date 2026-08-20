@@ -16,8 +16,9 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await login(username, password);
-      navigate("/dashboard");
+      const loggedInUser = await login(username, password);
+      const role = String(loggedInUser?.role || "STUDENT").toUpperCase();
+      navigate(role === "INSTRUCTOR" ? "/instructor" : "/dashboard");
     } catch (err) {
       setError("Invalid username or password. Please try again.");
     } finally {

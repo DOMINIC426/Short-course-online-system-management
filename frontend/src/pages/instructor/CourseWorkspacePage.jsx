@@ -9,14 +9,7 @@ const COURSE = {
   passMark: 50,
 };
 
-const INITIAL_STUDENTS = [
-  { id: 1, name: "Amina Hassan", attendance: "PRESENT", score: "78" },
-  { id: 2, name: "Baraka Mollel", attendance: "LATE", score: "64" },
-  { id: 3, name: "Neema Joseph", attendance: "ABSENT", score: "" },
-  { id: 4, name: "Juma Ally", attendance: "EXCUSED", score: "82" },
-];
-
-const ATTENDANCE_OPTIONS = ["PRESENT", "ABSENT", "LATE", "EXCUSED"];
+ 
 
 function formatLabel(value) {
   return value.charAt(0) + value.slice(1).toLowerCase();

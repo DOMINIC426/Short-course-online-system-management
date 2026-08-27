@@ -1,6 +1,5 @@
 package com.scms.dto;
 
-import com.scms.entity.enums.LevelOfEducation;
 import com.scms.entity.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

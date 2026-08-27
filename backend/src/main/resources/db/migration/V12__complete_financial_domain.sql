@@ -1,2 +1,0 @@
-
-ALTER TABLE course ADD COLUMN IF NOT EXISTS prerequisite TEXT;

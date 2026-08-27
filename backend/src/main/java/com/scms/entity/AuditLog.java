@@ -8,7 +8,6 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.util.UUID;
 
 @Entity
 @Table(name = "audit_logs",
@@ -35,7 +34,7 @@ public class AuditLog extends BaseEntity {
     private String entity;
 
     @Column(name = "entity_id")
-    private UUID entityId;
+    private Long entityId;
 
     @Column(name = "old_value", columnDefinition = "TEXT")
     private String oldValue;

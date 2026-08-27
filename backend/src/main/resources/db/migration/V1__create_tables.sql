@@ -1,10 +1,11 @@
 -- =====================================================
 -- SCRMS V1 - Initial Database Schema
+-- Uses BIGSERIAL (BIGINT auto-increment) for all primary keys
 -- =====================================================
 
 -- 1. users
 CREATE TABLE users (
-    id              UUID PRIMARY KEY,
+    id              BIGSERIAL PRIMARY KEY,
     first_name      VARCHAR(100) NOT NULL,
     last_name       VARCHAR(100) NOT NULL,
     email           VARCHAR(150) NOT NULL UNIQUE,
@@ -18,22 +19,22 @@ CREATE TABLE users (
 
 -- 2. roles
 CREATE TABLE roles (
-    id              UUID PRIMARY KEY,
+    id              BIGSERIAL PRIMARY KEY,
     role_name       VARCHAR(50)  NOT NULL UNIQUE,
     description     TEXT
 );
 
 -- 3. permissions
 CREATE TABLE permissions (
-    id                UUID PRIMARY KEY,
+    id                BIGSERIAL PRIMARY KEY,
     permission_name   VARCHAR(100) NOT NULL UNIQUE,
     description       TEXT
 );
 
 -- 4. user_roles (junction)
 CREATE TABLE user_roles (
-    user_id         UUID NOT NULL,
-    role_id         UUID NOT NULL,
+    user_id         BIGINT NOT NULL,
+    role_id         BIGINT NOT NULL,
     PRIMARY KEY (user_id, role_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
@@ -41,8 +42,8 @@ CREATE TABLE user_roles (
 
 -- 5. role_permissions (junction)
 CREATE TABLE role_permissions (
-    role_id         UUID NOT NULL,
-    permission_id   UUID NOT NULL,
+    role_id         BIGINT NOT NULL,
+    permission_id   BIGINT NOT NULL,
     PRIMARY KEY (role_id, permission_id),
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
@@ -50,8 +51,8 @@ CREATE TABLE role_permissions (
 
 -- 6. students
 CREATE TABLE students (
-    id          UUID PRIMARY KEY,
-    user_id     UUID NOT NULL UNIQUE,
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT NOT NULL UNIQUE,
     created_at  TIMESTAMP NOT NULL,
     updated_at  TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -59,8 +60,8 @@ CREATE TABLE students (
 
 -- 7. instructors
 CREATE TABLE instructors (
-    id          UUID PRIMARY KEY,
-    user_id     UUID NOT NULL UNIQUE,
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT NOT NULL UNIQUE,
     created_at  TIMESTAMP NOT NULL,
     updated_at  TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -68,8 +69,8 @@ CREATE TABLE instructors (
 
 -- 8. coordinators
 CREATE TABLE coordinators (
-    id          UUID PRIMARY KEY,
-    user_id     UUID NOT NULL UNIQUE,
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT NOT NULL UNIQUE,
     created_at  TIMESTAMP NOT NULL,
     updated_at  TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -77,8 +78,8 @@ CREATE TABLE coordinators (
 
 -- 9. market_officers
 CREATE TABLE market_officers (
-    id          UUID PRIMARY KEY,
-    user_id     UUID NOT NULL UNIQUE,
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT NOT NULL UNIQUE,
     created_at  TIMESTAMP NOT NULL,
     updated_at  TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -86,7 +87,7 @@ CREATE TABLE market_officers (
 
 -- 10. course_categories
 CREATE TABLE course_categories (
-    id              UUID PRIMARY KEY,
+    id              BIGSERIAL PRIMARY KEY,
     category_name   VARCHAR(100) NOT NULL UNIQUE,
     description     TEXT,
     created_at      TIMESTAMP NOT NULL,
@@ -95,7 +96,7 @@ CREATE TABLE course_categories (
 
 -- 11. venues
 CREATE TABLE venues (
-    id          UUID PRIMARY KEY,
+    id          BIGSERIAL PRIMARY KEY,
     venue_name  VARCHAR(150) NOT NULL UNIQUE,
     capacity    INT,
     location    VARCHAR(255),
@@ -105,11 +106,11 @@ CREATE TABLE venues (
 
 -- 12. short_courses
 CREATE TABLE short_courses (
-    id                  UUID PRIMARY KEY,
+    id                  BIGSERIAL PRIMARY KEY,
     course_code         VARCHAR(50)  NOT NULL UNIQUE,
     title               VARCHAR(200) NOT NULL,
     description         TEXT,
-    category_id         UUID,
+    category_id         BIGINT,
     duration            VARCHAR(50),
     start_date          DATE,
     end_date            DATE,
@@ -118,9 +119,9 @@ CREATE TABLE short_courses (
     course_fee          DECIMAL(10,2) NOT NULL,
     max_students        INT,
     min_students        INT,
-    venue_id            UUID,
+    venue_id            BIGINT,
     status              VARCHAR(30)  NOT NULL DEFAULT 'DRAFT',
-    created_by          UUID NOT NULL,
+    created_by          BIGINT NOT NULL,
     created_at          TIMESTAMP NOT NULL,
     updated_at          TIMESTAMP,
     CONSTRAINT fk_courses_category FOREIGN KEY (category_id) REFERENCES course_categories(id) ON DELETE SET NULL,
@@ -131,9 +132,9 @@ CREATE TABLE short_courses (
 
 -- 13. course_instructors (junction)
 CREATE TABLE course_instructors (
-    id              UUID PRIMARY KEY,
-    course_id       UUID NOT NULL,
-    instructor_id   UUID NOT NULL,
+    id              BIGSERIAL PRIMARY KEY,
+    course_id       BIGINT NOT NULL,
+    instructor_id   BIGINT NOT NULL,
     assigned_date   DATE,
     created_at      TIMESTAMP NOT NULL,
     updated_at      TIMESTAMP,
@@ -144,9 +145,9 @@ CREATE TABLE course_instructors (
 
 -- 14. course_enrollments
 CREATE TABLE course_enrollments (
-    id                  UUID PRIMARY KEY,
-    student_id          UUID NOT NULL,
-    course_id           UUID NOT NULL,
+    id                  BIGSERIAL PRIMARY KEY,
+    student_id          BIGINT NOT NULL,
+    course_id           BIGINT NOT NULL,
     registration_date   TIMESTAMP NOT NULL,
     enrollment_status   VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     payment_status      VARCHAR(20) NOT NULL DEFAULT 'UNPAID',
@@ -165,8 +166,8 @@ CREATE TABLE course_enrollments (
 
 -- 15. payment_transactions
 CREATE TABLE payment_transactions (
-    id                      UUID PRIMARY KEY,
-    enrollment_id           UUID NOT NULL,
+    id                      BIGSERIAL PRIMARY KEY,
+    enrollment_id           BIGINT NOT NULL,
     control_number          VARCHAR(50) NOT NULL,
     transaction_reference   VARCHAR(100),
     amount                  DECIMAL(10,2) NOT NULL,
@@ -183,12 +184,12 @@ CREATE TABLE payment_transactions (
 
 -- 16. announcements
 CREATE TABLE announcements (
-    id              UUID PRIMARY KEY,
-    course_id       UUID NOT NULL,
+    id              BIGSERIAL PRIMARY KEY,
+    course_id       BIGINT NOT NULL,
     title           VARCHAR(200) NOT NULL,
     message         TEXT NOT NULL,
     audience_type   VARCHAR(20) NOT NULL DEFAULT 'ALL',
-    created_by      UUID NOT NULL,
+    created_by      BIGINT NOT NULL,
     created_date    TIMESTAMP NOT NULL,
     expiry_date     TIMESTAMP,
     status          VARCHAR(20) NOT NULL DEFAULT 'SENT',
@@ -202,8 +203,8 @@ CREATE TABLE announcements (
 
 -- 17. notifications
 CREATE TABLE notifications (
-    id              UUID PRIMARY KEY,
-    user_id         UUID NOT NULL,
+    id              BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT NOT NULL,
     message         TEXT NOT NULL,
     is_read         BOOLEAN NOT NULL DEFAULT FALSE,
     created_at      TIMESTAMP NOT NULL,
@@ -213,11 +214,11 @@ CREATE TABLE notifications (
 
 -- 18. venue_change_history
 CREATE TABLE venue_change_history (
-    id              UUID PRIMARY KEY,
-    course_id       UUID NOT NULL,
-    old_venue_id    UUID,
-    new_venue_id    UUID NOT NULL,
-    changed_by      UUID NOT NULL,
+    id              BIGSERIAL PRIMARY KEY,
+    course_id       BIGINT NOT NULL,
+    old_venue_id    BIGINT,
+    new_venue_id    BIGINT NOT NULL,
+    changed_by      BIGINT NOT NULL,
     change_date     TIMESTAMP NOT NULL,
     reason          TEXT NOT NULL,
     created_at      TIMESTAMP NOT NULL,
@@ -230,15 +231,15 @@ CREATE TABLE venue_change_history (
 
 -- 19. course_progress
 CREATE TABLE course_progress (
-    id                          UUID PRIMARY KEY,
-    course_id                   UUID NOT NULL,
+    id                          BIGSERIAL PRIMARY KEY,
+    course_id                   BIGINT NOT NULL,
     progress_percentage         INT NOT NULL,
     topics_completed            TEXT,
     topics_remaining            TEXT,
     challenges                  TEXT,
     remarks                     TEXT,
     expected_completion_date    DATE,
-    updated_by                  UUID NOT NULL,
+    updated_by                  BIGINT NOT NULL,
     updated_at                  TIMESTAMP NOT NULL,
     created_at                  TIMESTAMP NOT NULL,
     FOREIGN KEY (course_id) REFERENCES short_courses(id) ON DELETE CASCADE,
@@ -248,11 +249,11 @@ CREATE TABLE course_progress (
 
 -- 20. certificate_eligibility
 CREATE TABLE certificate_eligibility (
-    id              UUID PRIMARY KEY,
-    enrollment_id   UUID NOT NULL UNIQUE,
+    id              BIGSERIAL PRIMARY KEY,
+    enrollment_id   BIGINT NOT NULL UNIQUE,
     status          VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     reason          TEXT,
-    updated_by      UUID,
+    updated_by      BIGINT,
     updated_at      TIMESTAMP NOT NULL,
     created_at      TIMESTAMP NOT NULL,
     FOREIGN KEY (enrollment_id) REFERENCES course_enrollments(id) ON DELETE CASCADE,
@@ -262,11 +263,11 @@ CREATE TABLE certificate_eligibility (
 
 -- 21. audit_logs
 CREATE TABLE audit_logs (
-    id          UUID PRIMARY KEY,
-    user_id     UUID,
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT,
     action      VARCHAR(30) NOT NULL,
     entity      VARCHAR(50) NOT NULL,
-    entity_id   UUID,
+    entity_id   BIGINT,
     old_value   TEXT,
     new_value   TEXT,
     timestamp   TIMESTAMP NOT NULL,
@@ -277,7 +278,7 @@ CREATE TABLE audit_logs (
 
 -- 22. system_settings
 CREATE TABLE system_settings (
-    id              UUID PRIMARY KEY,
+    id              BIGSERIAL PRIMARY KEY,
     setting_key     VARCHAR(100) NOT NULL UNIQUE,
     setting_value   TEXT,
     description     TEXT,
@@ -286,7 +287,7 @@ CREATE TABLE system_settings (
 );
 
 -- =====================================================
--- Indexes (optional but recommended for performance)
+-- Indexes
 -- =====================================================
 
 CREATE INDEX idx_users_email ON users(email);
@@ -311,4 +312,4 @@ CREATE INDEX idx_cert_enrollment ON certificate_eligibility(enrollment_id);
 CREATE INDEX idx_cert_status ON certificate_eligibility(status);
 CREATE INDEX idx_audit_user ON audit_logs(user_id);
 CREATE INDEX idx_audit_entity ON audit_logs(entity, entity_id);
-CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp);
+CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp);  

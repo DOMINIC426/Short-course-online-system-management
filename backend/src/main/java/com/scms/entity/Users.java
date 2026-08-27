@@ -56,12 +56,6 @@ public class Users implements UserDetails {
     private LocalDate updatedAt;
 
 
-    // relationships exist with user
-     @OneToOne(mappedBy = "users",orphanRemoval = true)
-    private Student student;
-
-     @OneToOne(mappedBy = "users",orphanRemoval = true)
-     private Instructor instructor;
 
 
     @Override

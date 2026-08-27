@@ -1,6 +1,5 @@
 package com.scms.entity;
 
-import com.scms.entity.enums.LevelOfEducation;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,9 +15,6 @@ public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long studentId;
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private LevelOfEducation levelOfEducation;
     @Column(nullable = false)
     private String nationality;
     @Column(nullable = false)

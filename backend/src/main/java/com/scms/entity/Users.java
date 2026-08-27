@@ -1,6 +1,5 @@
 package com.scms.entity;
 
-import com.scms.entity.enums.LevelOfEducation;
 import com.scms.entity.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;

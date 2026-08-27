@@ -17,7 +17,7 @@ export default function MyPaymentsPage() {
       </p>
       <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">My payments</h1>
       <p className="mt-2 text-sm text-slate-600">
-        View your invoices and payment history for every course you've applied to.
+        View your payment history for every course you have applied to.
       </p>
 
       {/* Outstanding balance summary */}
@@ -35,7 +35,7 @@ export default function MyPaymentsPage() {
       <div className="mt-4 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4">
         <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" strokeWidth={1.8} />
         <p className="text-sm text-blue-800">
-          Use the invoice number as your control number when paying by bank or mobile money.
+          Use the control number issued when paying by bank or mobile money.
           Your balance updates once the finance office confirms your payment.
         </p>
       </div>

@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { Outlet, Navigate, Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { LayoutDashboard, FileText, CreditCard, CalendarCheck, Award, UserCircle, Menu, X, LogOut, BookOpen } from "lucide-react";
+import { LayoutDashboard, FileText, CreditCard, Megaphone, Award, UserCircle, BookOpen, Menu, X, LogOut } from "lucide-react";
 
 const PORTAL_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/courses", label: "Browse courses", icon: BookOpen },
-  { to: "/applications", label: "My applications", icon: FileText },
+  { to: "/applications", label: "My courses", icon: FileText },
   { to: "/payments", label: "My payments", icon: CreditCard },
-  { to: "/attendance", label: "My attendance", icon: CalendarCheck },
-  { to: "/results", label: "My results", icon: Award },
-  { to: "/certificates", label: "My certificates", icon: Award },
+  { to: "/announcements", label: "Announcements", icon: Megaphone },
+  { to: "/certificates", label: "Certificate status", icon: Award },
   { to: "/profile", label: "My profile", icon: UserCircle },
 ];
 

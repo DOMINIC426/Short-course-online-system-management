@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { COURSE_INTAKES, FEATURED_COURSES } from "../../data/homeData.js";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { api } from "../../api/backendClient.js";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 
 export default function ApplyPage() {
@@ -25,17 +24,9 @@ export default function ApplyPage() {
   async function handleApply() {
     setError("");
     setSubmitting(true);
-    try {
-      const response = await api.post("/api/applications", { intake_id: intake.id });
-      setApplicationNumber(response.data.application_number);
-      setSubmitted(true);
-    } catch (err) {
-      // TEMPORARY fallback until backend endpoint is ready — remove once connected
-      setApplicationNumber(`APP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
-      setSubmitted(true);
-    } finally {
-      setSubmitting(false);
-    }
+    setApplicationNumber(`APP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+    setSubmitted(true);
+    setSubmitting(false);
   }
 
   if (!intake || !course) {

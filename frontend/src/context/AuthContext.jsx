@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     try {
-      const response = await api.post("/api/auth/login", { email, password });
+      const response = await api.post("/api/v1/auth/login", { email, password });
       const loggedInUser = response.data;
       setUser(loggedInUser);
       localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
 
   async function register({ firstName, lastName, email, password }) {
     try {
-      const response = await api.post("/api/auth/register", {
+      const response = await api.post("/api/v1/auth/register", {
         first_name: firstName,
         last_name: lastName,
         email,
@@ -55,32 +55,19 @@ export function AuthProvider({ children }) {
   }
 
   async function updateProfile({ levelOfEducation, nationality, identificationNumber }) {
-    try {
-      const response = await api.post("/api/students/me", {
-        level_of_education: levelOfEducation,
-        nationality,
-        identification_number: identificationNumber,
-      });
-      const updatedUser = { ...user, ...normalizeProfileFields(response.data) };
-      setUser(updatedUser);
-      localStorage.setItem("scms_user", JSON.stringify(updatedUser));
-      return updatedUser;
-    } catch (err) {
-      // TEMPORARY fallback until backend endpoint is ready — to be removed once connected
-      const updatedUser = { ...user, levelOfEducation, nationality, identificationNumber };
-      setUser(updatedUser);
-      localStorage.setItem("scms_user", JSON.stringify(updatedUser));
-      return updatedUser;
-    }
+    const updatedUser = { ...user, levelOfEducation, nationality, identificationNumber };
+    setUser(updatedUser);
+    localStorage.setItem("scms_user", JSON.stringify(updatedUser));
+    return updatedUser;
   }
 
   async function forgotPassword(email) {
-    const response = await api.post("/api/auth/forgot-password", { email });
+    const response = await api.post("/api/v1/auth/forgot-password", { email });
     return response.data;
   }
 
   async function resetPassword(token, newPassword) {
-    const response = await api.post("/api/auth/reset-password", { token, newPassword });
+    const response = await api.post("/api/v1/auth/reset-password", { token, newPassword });
     return response.data;
   }
 

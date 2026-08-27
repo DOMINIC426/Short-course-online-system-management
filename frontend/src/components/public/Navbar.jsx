@@ -85,7 +85,7 @@ export default function Navbar() {
         {/* Desktop Navigation - Hidden on mobile */}
         <ul className="hidden items-center gap-7 lg:flex">
           {NAV_LINKS.map((link) => (
-            <li key={link.to}>
+            <li key={link.to || link.href}>
               {link.isHashLink ? (
                 <a
                   href={link.href}
@@ -179,7 +179,7 @@ export default function Navbar() {
             {/* Mobile Navigation Links */}
             <ul className="space-y-2">
               {NAV_LINKS.map((link) => (
-                <li key={link.to}>
+                <li key={link.to || link.href}>
                   {link.isHashLink ? (
                     <a
                       href={link.href}

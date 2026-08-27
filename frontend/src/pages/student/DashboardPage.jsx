@@ -1,24 +1,24 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import StatCard from "../../components/shared/StatCard.jsx";
-import { FileText, Wallet, Award, AlertCircle } from "lucide-react";
 import { MY_INVOICES } from "../../data/paymentsData.js";
+import { FileText, Wallet, Award, AlertCircle } from "lucide-react";
 
 const QUICK_LINKS = [
-  { to: "/applications", title: "My applications", description: "Track the status of your submitted applications" },
-  { to: "/attendance", title: "My attendance", description: "See your attendance record per course" },
-  { to: "/results", title: "My results", description: "View assessment scores and pass/fail status" },
-  { to: "/profile", title: "My profile", description: "Update your personal information and documents" },
+  { to: "/applications", title: "My courses", description: "See the courses you've registered for and their status" },
+  { to: "/announcements", title: "Announcements", description: "Read updates from your instructors" },
+  { to: "/certificates", title: "Certificate status", description: "Check your eligibility for course certificates" },
+  { to: "/profile", title: "My profile", description: "Update your personal information" },
 ];
 
 export default function DashboardPage() {
   const { user } = useAuth();
 
-  // TEMPORARY: until backend returns a real "student profile complete" flag,
-  // treat the profile as incomplete unless these fields are present.
   const isProfileComplete = Boolean(
     user?.levelOfEducation && user?.nationality && user?.identificationNumber
   );
+
+  const outstandingBalance = MY_INVOICES.reduce((sum, inv) => sum + inv.balanceAmount, 0);
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
@@ -39,7 +39,7 @@ export default function DashboardPage() {
           <div className="flex-1">
             <p className="text-sm font-semibold text-amber-800">Complete your student profile</p>
             <p className="mt-0.5 text-sm text-amber-700">
-              You need to add your education level, nationality, and ID number before you can apply to any course.
+              You need to add your education level, nationality, and ID number before you can register for a course.
             </p>
           </div>
           <Link
@@ -53,14 +53,14 @@ export default function DashboardPage() {
 
       {/* Stat cards */}
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard icon={<FileText className="h-6 w-6" strokeWidth={1.8} />} label="Applications submitted" value="0" tone="blue" />
+        <StatCard icon={<FileText className="h-6 w-6" strokeWidth={1.8} />} label="Courses registered" value="0" tone="blue" />
         <StatCard
-  icon={<Wallet className="h-6 w-6" strokeWidth={1.8} />}
-  label="Outstanding balance"
-  value={`TZS ${MY_INVOICES.reduce((sum, inv) => sum + inv.balanceAmount, 0).toLocaleString()}`}
-  tone="teal"
-/>
-        <StatCard icon={<Award className="h-6 w-6" strokeWidth={1.8} />} label="Certificates earned" value="0" tone="orange" />
+          icon={<Wallet className="h-6 w-6" strokeWidth={1.8} />}
+          label="Outstanding balance"
+          value={`TZS ${outstandingBalance.toLocaleString()}`}
+          tone="teal"
+        />
+        <StatCard icon={<Award className="h-6 w-6" strokeWidth={1.8} />} label="Certificate status" value="Not eligible yet" tone="orange" />
       </div>
 
       {/* Quick links */}

@@ -9,8 +9,7 @@ const NAV_LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/courses", label: "Courses" },
   { href: "/#how-to-apply", label: "How to apply", isHashLink: true },
-  { to: "/fees", label: "Fees" },
-  { to: "/contact", label: "Contact" },
+  { to: "/contact", label: "Support" },
 ];
 
 export default function Navbar() {

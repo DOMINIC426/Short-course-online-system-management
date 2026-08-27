@@ -9,7 +9,15 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("scms_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export async function fetchBackendHealth() {
-  const response = await api.get('/api/health');
+  const response = await backendClient.get('/api/health');
   return response.data.status;
 }

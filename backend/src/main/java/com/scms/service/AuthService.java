@@ -1,61 +1,86 @@
 package com.scms.service;
 
 import com.scms.dto.LoginRequest;
-import com.scms.dto.RegisterResponse;
 import com.scms.dto.RegisterUserRequest;
+import com.scms.dto.RegisterResponse;
 import com.scms.entity.Users;
 import com.scms.entity.enums.Role;
+import com.scms.entity.enums.UserStatus;
 import com.scms.exception.UserAlreadyExistException;
+import com.scms.exception.UserNotFoundException;
 import com.scms.jwt.JwtService;
 import com.scms.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@RequiredArgsConstructor
+import java.util.Collections;
+import java.util.Optional;
+
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
 
-    // ************************* REGISTER USER ******************
+    @Transactional
     public RegisterResponse register(RegisterUserRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistException("This email is already registered, go to login page");
+        Optional<Users> existingUser = userRepository.findByEmail(request.getEmail());
+        if (existingUser.isPresent()) {
+            throw new UserAlreadyExistException("User with email " + request.getEmail() + " already exists");
         }
 
-        Users user = modelMapper.map(request, Users.class);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.STUDENT);
+        Users user = Users.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole() != null ? request.getRole() : Role.STUDENT)
+                .status(UserStatus.ACTIVE)
+                .build();
+
         Users savedUser = userRepository.save(user);
-        String token = jwtService.generateToken(savedUser);
 
-        RegisterResponse response = modelMapper.map(savedUser, RegisterResponse.class);
-
-         response.setToken(token);
+        RegisterResponse response = new RegisterResponse();
+        response.setId(savedUser.getId());               // UUID directly
+        response.setFirstName(savedUser.getFirstName());
+        response.setLastName(savedUser.getLastName());
+        response.setEmail(savedUser.getEmail());
+        response.setPhone(savedUser.getPhone());
+        response.setRole(savedUser.getRole());
+        // token not set here
 
         return response;
     }
 
-    // ************************* LOGIN USER ******************
-    public String login(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
-                        loginRequest.getPassword()
-                )
-        );
+    @Transactional(readOnly = true)
+    public String login(LoginRequest request) {
+        Users user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User with email " + request.getEmail() + " not found"));
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new BadCredentialsException("Invalid email or password");
+        }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new BadCredentialsException("User account is not active");
+        }
+
+        UserDetails userDetails = User.builder()
+                .username(user.getEmail())
+                .password(user.getPasswordHash())
+                .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
+                .disabled(user.getStatus() != UserStatus.ACTIVE)
+                .build();
+
         return jwtService.generateToken(userDetails);
     }
-}
+}   

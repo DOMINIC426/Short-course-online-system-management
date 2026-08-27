@@ -14,25 +14,28 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterUserRequest{
-        @NotBlank(message = "First name is required")
-        @Size(min = 2, max = 100, message = "First name must be between 2 and 100 characters")
-       private String firstName;
+public class RegisterUserRequest {
 
-        @NotBlank(message = "Last name is required")
-        @Size(min = 2, max = 100, message = "Last name must be between 2 and 100 characters")
-       private String lastName;
+    @NotBlank(message = "First name is required")
+    @Size(min = 2, max = 100, message = "First name must be between 2 and 100 characters")
+    private String firstName;
 
-        @NotBlank(message = "Email is required")
-        @Email(message = "Invalid email format")
-       private String email;
+    @NotBlank(message = "Last name is required")
+    @Size(min = 2, max = 100, message = "Last name must be between 2 and 100 characters")
+    private String lastName;
 
-        @NotBlank(message = "Password is required")
-        @Size(min = 8, message = "Password must be at least 8 characters")
-       private String password;
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    private String email;
 
-        @NotNull(message = "Role is required")
-       private Role role;
+    @NotBlank(message = "Phone number is required")
+    @Size(max = 20, message = "Phone number must be at most 20 characters")
+    private String phone;
 
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    private String password;
 
+    @NotNull(message = "Role is required")
+    private Role role;
 }

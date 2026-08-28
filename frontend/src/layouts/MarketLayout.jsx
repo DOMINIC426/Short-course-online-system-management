@@ -65,7 +65,7 @@ export default function MarketLayout() {
         <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-8">
           <button className="lg:hidden" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu /></button>
           <p className="text-sm font-semibold text-slate-500">Market Operations</p>
-          <div className="flex items-center gap-3 text-sm font-semibold"><span className="hidden sm:inline">M. Officer</span><span className="grid h-8 w-8 place-items-center rounded-full bg-[#07529b] text-xs text-white">MO</span></div>
+          <div className="flex items-center gap-3 text-sm font-semibold"><span className="hidden sm:inline">M. Officer</span><span className="grid h-8 w-8 place-items-center rounded-full bg-[#07529b] text-xs text-white">MO</span><button onClick={logout} title="Log out" aria-label="Log out" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-2 text-slate-600 hover:bg-slate-50 hover:text-[#07529b]"><LogOut className="h-4 w-4" /><span className="hidden sm:inline">Log out</span></button></div>
         </header>
         <main className="p-4 sm:p-8"><Outlet /></main>
       </div>

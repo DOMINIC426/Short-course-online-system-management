@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Loader2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import PasswordInput from "../../components/shared/PasswordInput.jsx";
 
@@ -12,12 +13,19 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
   const { register } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -33,12 +41,30 @@ export default function RegisterPage() {
         phone: phone.trim(),
         password,
       });
-      navigate("/login");
+
+      setIsSuccess(true);
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (err) {
       setError(err.message || "Could not create account. Please try again.");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (isSuccess) {
+    return (
+      <section className="mx-auto max-w-md px-6 py-20 text-center">
+        <div className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
+          <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
+          <h2 className="mt-4 text-xl font-bold text-slate-900">Account Created Successfully!</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Redirecting you to the login page...
+          </p>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -108,7 +134,9 @@ export default function RegisterPage() {
           label="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          showStrength={true}
         />
+
         <PasswordInput
           id="confirmPassword"
           label="Confirm password"
@@ -121,9 +149,16 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-udom-accent px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95 disabled:opacity-60"
+          className="flex w-full items-center justify-center rounded-md bg-udom-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
         >
-          {loading ? "Creating account..." : "Create account"}
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            "Create account"
+          )}
         </button>
       </form>
 

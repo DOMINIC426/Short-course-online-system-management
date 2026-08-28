@@ -21,7 +21,6 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // Fetch full user details from backend DB whenever a session exists
   async function fetchUserProfile() {
     try {
       const response = await api.get("/api/v1/student/profile");
@@ -84,7 +83,6 @@ export function AuthProvider({ children }) {
       setUser(loggedInUser);
       localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
 
-      // Trigger profile fetch from database immediately after successful login
       await fetchUserProfile();
 
       return loggedInUser;
@@ -102,23 +100,29 @@ export function AuthProvider({ children }) {
   async function register({ firstName, lastName, email, phone, password }) {
     try {
       const response = await api.post("/api/v1/student/register", {
-        firstName,
-        lastName,
-        email,
-        phone,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        phoneNumber: phone.trim(),
         password,
       });
+
       return response.data;
     } catch (err) {
       const data = err.response?.data;
       let errorMessage = "Registration failed. Please try again.";
+
       if (typeof data === "string") {
         errorMessage = data;
       } else if (data?.message) {
         errorMessage = data.message;
       } else if (data?.error) {
         errorMessage = data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
+
       throw new Error(errorMessage);
     }
   }

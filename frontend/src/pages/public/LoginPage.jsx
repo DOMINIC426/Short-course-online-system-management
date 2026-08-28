@@ -7,6 +7,8 @@ function redirectPathForRole(role) {
   switch (role) {
     case "STUDENT":
       return "/dashboard";
+    case "MARKETING_OFFICER":
+      return "/market/dashboard";
     // Other roles' dashboards will be added here as far as they are complete:
     // case "ADMIN": return "/admin/dashboard";
     // case "COORDINATOR": return "/registrar/dashboard";

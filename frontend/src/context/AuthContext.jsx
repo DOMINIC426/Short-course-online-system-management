@@ -18,40 +18,22 @@ export function AuthProvider({ children }) {
   });
 
   async function login(email, password) {
-    try {
-      const response = await api.post("/api/v1/auth/login", { email, password });
-      const loggedInUser = response.data;
-      setUser(loggedInUser);
-      localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
-      return loggedInUser;
-    } catch (err) {
-      // TEMPORARY fallback until backend auth is ready — remove once CORS/endpoint is fixed
-      const fakeUser = {
-        firstName: "Test",
-        lastName: "Student",
-        email,
-        role: "STUDENT",
-      };
-      setUser(fakeUser);
-      localStorage.setItem("scms_user", JSON.stringify(fakeUser));
-      return fakeUser;
-    }
+    const response = await api.post("/api/v1/auth/login", { email, password });
+    const loggedInUser = response.data;
+    setUser(loggedInUser);
+    localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
+    return loggedInUser;
   }
 
   async function register({ firstName, lastName, email, password }) {
-    try {
-      const response = await api.post("/api/v1/auth/register", {
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        password,
-        role: "STUDENT",
-      });
-      return response.data;
-    } catch (err) {
-      // TEMPORARY fallback until backend auth is ready — remove once CORS/endpoint is fixed
-      return { firstName, lastName, email };
-    }
+    const response = await api.post("/api/v1/auth/register", {
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      password,
+      role: "STUDENT",
+    });
+    return response.data;
   }
 
   async function updateProfile({ levelOfEducation, nationality, identificationNumber }) {

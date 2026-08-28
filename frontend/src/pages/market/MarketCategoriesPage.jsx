@@ -1,0 +1,12 @@
+import { useEffect, useState } from "react";
+import { createCategory, getCategories } from "../../api/marketApi.js";
+
+export default function MarketCategoriesPage() {
+  const [categories, setCategories] = useState([]);
+  const [form, setForm] = useState({ name: "", description: "" });
+  const [message, setMessage] = useState("");
+  async function load() { setCategories(await getCategories()); }
+  useEffect(() => { load().catch(() => setMessage("Unable to load categories.")); }, []);
+  async function submit(event) { event.preventDefault(); try { await createCategory(form); setForm({ name: "", description: "" }); setMessage("Category created successfully."); await load(); } catch (error) { setMessage(error.response?.data?.message || "Unable to create category."); } }
+  return <section className="mx-auto max-w-7xl"><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#07529b]">Catalogue structure</p><h1 className="mt-2 text-3xl font-extrabold">Categories</h1>{message && <p className="mt-5 rounded-lg bg-blue-50 p-3 text-sm font-semibold text-[#07529b]">{message}</p>}<form onSubmit={submit} className="mt-6 grid gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-3"><label className="text-sm font-semibold">Category name<input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" /></label><label className="text-sm font-semibold sm:col-span-2">Description<input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" /></label><button className="rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-bold text-white sm:col-span-3">Add category</button></form><div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><table className="w-full text-left text-sm"><thead className="bg-blue-50 text-xs uppercase tracking-wide"><tr><th className="px-5 py-3">Name</th><th className="px-5 py-3">Description</th></tr></thead><tbody>{categories.map((category) => <tr key={category.id} className="border-t border-slate-100"><td className="px-5 py-3 font-bold">{category.name}</td><td className="px-5 py-3 text-slate-500">{category.description || "No description"}</td></tr>)}</tbody></table></div></section>;
+}

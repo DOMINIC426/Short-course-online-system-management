@@ -16,6 +16,11 @@ import MyApplicationsPage from "./pages/student/MyApplicationsPage";
 import MyPaymentsPage from "./pages/student/MyPaymentsPage";
 import AnnouncementsPage from "./pages/student/AnnouncementsPage";
 import CertificatesPage from "./pages/student/CertificatesPage";
+import MarketLayout from "./layouts/MarketLayout.jsx";
+import MarketDashboardPage from "./pages/market/MarketDashboardPage.jsx";
+import MarketCoursesPage from "./pages/market/MarketCoursesPage.jsx";
+import MarketCategoriesPage from "./pages/market/MarketCategoriesPage.jsx";
+import MarketInstructorsPage from "./pages/market/MarketInstructorsPage.jsx";
 
 export default function App() {
   return (
@@ -38,6 +43,13 @@ export default function App() {
         <Route path="/payments" element={<MyPaymentsPage />} />
         <Route path="/announcements" element={<AnnouncementsPage />} />
         <Route path="/certificates" element={<CertificatesPage />} />
+      </Route>
+
+      <Route element={<MarketLayout />}>
+        <Route path="/market/dashboard" element={<MarketDashboardPage />} />
+        <Route path="/market/courses" element={<MarketCoursesPage />} />
+        <Route path="/market/categories" element={<MarketCategoriesPage />} />
+        <Route path="/market/instructors" element={<MarketInstructorsPage />} />
       </Route>
     </Routes>
   );

@@ -3,6 +3,10 @@ package com.scms.controller;
 import com.scms.dto.market.CourseStatsResponse;
 import com.scms.dto.market.CreateShortCourseDto;
 import com.scms.dto.market.ShortCourseResponse;
+import com.scms.dto.market.UpdateShortCourseDto;
+import com.scms.dto.market.CategoryResponse;
+import com.scms.dto.market.CreateCategoryDto;
+import com.scms.dto.market.InstructorResponse;
 import com.scms.entity.enums.CourseStatus;
 import com.scms.service.market.MarketService;
 import jakarta.validation.Valid;
@@ -33,7 +37,7 @@ public class MarketController {
     @PatchMapping("/courses/{id}")
     public ResponseEntity<ShortCourseResponse> editCourse(
             @PathVariable Long id,
-            @RequestBody CreateShortCourseDto dto) {
+            @Valid @RequestBody UpdateShortCourseDto dto) {
         return ResponseEntity.ok(marketService.editCourse(id, dto));
     }
 
@@ -68,6 +72,21 @@ public class MarketController {
     @GetMapping("/courses/{courseId}/stats")
     public ResponseEntity<CourseStatsResponse> getCourseStats(@PathVariable Long courseId) {
         return ResponseEntity.ok(marketService.getCourseRegistrationStats(courseId));
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<CategoryResponse>> getCategories() {
+        return ResponseEntity.ok(marketService.getCategories());
+    }
+
+    @PostMapping("/categories")
+    public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CreateCategoryDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(marketService.createCategory(dto));
+    }
+
+    @GetMapping("/instructors")
+    public ResponseEntity<List<InstructorResponse>> getInstructors() {
+        return ResponseEntity.ok(marketService.getInstructors());
     }
 
 }

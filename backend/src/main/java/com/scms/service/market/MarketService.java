@@ -4,45 +4,66 @@ import com.scms.dto.market.CourseStatsResponse;
 import com.scms.dto.market.CreateShortCourseDto;
 import com.scms.dto.market.ShortCourseResponse;
 import com.scms.entity.CourseCategory;
+import com.scms.entity.CourseInstructor;
+import com.scms.entity.Instructor;
 import com.scms.entity.ShortCourse;
 import com.scms.entity.Users;
 import com.scms.entity.Venue;
 import com.scms.entity.enums.CourseStatus;
+import com.scms.entity.enums.Role;
 import com.scms.exception.CourseAlreadyExistException;
 import com.scms.exception.ResourceNotFoundException;
+import com.scms.repository.CourseEnrollmentRepository;
+import com.scms.repository.CourseInstructorRepository;
 import com.scms.repository.CourseCategoryRepository;
+import com.scms.repository.InstructorRepository;
 import com.scms.repository.ShortCourseRepository;
 import com.scms.repository.UserRepository;
 import com.scms.repository.VenueRepository;
-import lombok.Getter;
+import com.scms.dto.market.UpdateShortCourseDto;
+import com.scms.dto.market.CreateCategoryDto;
+import com.scms.dto.market.CategoryResponse;
+import com.scms.dto.market.InstructorResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.time.LocalDate;
+import java.util.stream.Collectors;
 
-@Setter
-@Getter
 @RequiredArgsConstructor
 @Service
 public class MarketService {
 
     private final ModelMapper modelMapper;
     private final ShortCourseRepository shortCourseRepository;
+    private final CourseInstructorRepository courseInstructorRepository;
+    private final CourseEnrollmentRepository courseEnrollmentRepository;
+    private final InstructorRepository instructorRepository;
     private final CourseCategoryRepository categoryRepository;
     private final VenueRepository venueRepository;
     private final UserRepository userRepository;
 
     // ************************************************************* CREATE COURSE
-    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional
     public ShortCourseResponse registerCourse(CreateShortCourseDto request) {
-        if (shortCourseRepository.existsByTitle(request.getTitle())) {
-            throw new CourseAlreadyExistException("Course with title " + request.getTitle() + " already exists");
-        }
+        validateCourseDates(request.getStartDate(), request.getEndDate(), request.getRegOpenDate(), request.getRegCloseDate());
+        validateStudentLimits(request.getMinStudents(), request.getMaxStudents());
+        validateUniqueCourseFields(request.getTitle(), request.getCourseCode(), null);
 
         ShortCourse shortCourse = modelMapper.map(request, ShortCourse.class);
+        shortCourse.setId(null); // Explicitly reset ID to prevent ModelMapper ambiguity
+
+        // Automatically resolve authenticated user from SecurityContext
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users creator = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found: " + currentUserEmail));
+        shortCourse.setCreatedBy(creator);
 
         if (request.getCategoryId() != null) {
             CourseCategory category = categoryRepository.findById(request.getCategoryId())
@@ -56,25 +77,21 @@ public class MarketService {
             shortCourse.setVenue(venue);
         }
 
-        if (request.getCreatedById() != null) {
-            Users creator = userRepository.findById(request.getCreatedById())
-                    .orElseThrow(() -> new ResourceNotFoundException("User with ID " + request.getCreatedById() + " not found"));
-            shortCourse.setCreatedBy(creator);
-        }
-
         if (shortCourse.getStatus() == null) {
             shortCourse.setStatus(CourseStatus.DRAFT);
         }
 
-        ShortCourse savedCourse = shortCourseRepository.save(shortCourse);
-        return modelMapper.map(savedCourse, ShortCourseResponse.class);
+        return toResponse(shortCourseRepository.save(shortCourse));
     }
 
     // **************************************** EDIT COURSE
-    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
-    public ShortCourseResponse editCourse(Long id, CreateShortCourseDto request) {
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional
+    public ShortCourseResponse editCourse(Long id, UpdateShortCourseDto request) {
         ShortCourse shortCourse = shortCourseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course with ID " + id + " not found"));
+
+        validateUniqueCourseFields(request.getTitle(), request.getCourseCode(), id);
 
         if (request.getCourseCode() != null) {
             shortCourse.setCourseCode(request.getCourseCode());
@@ -123,29 +140,35 @@ public class MarketService {
             shortCourse.setVenue(venue);
         }
 
-        ShortCourse savedCourse = shortCourseRepository.save(shortCourse);
-        return modelMapper.map(savedCourse, ShortCourseResponse.class);
+            validateCourseDates(shortCourse.getStartDate(), shortCourse.getEndDate(),
+                shortCourse.getRegOpenDate(), shortCourse.getRegCloseDate());
+            validateStudentLimits(shortCourse.getMinStudents(), shortCourse.getMaxStudents());
+
+            return toResponse(shortCourseRepository.save(shortCourse));
     }
 
     // ******************************************************** DELETE THE COURSE
-    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional
     public String deleteCourse(Long id) {
         ShortCourse shortCourse = shortCourseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course with ID " + id + " not found"));
 
         shortCourseRepository.delete(shortCourse);
-        return "Courses " + shortCourse.getTitle() + " has been deleted";
+        return "Course " + shortCourse.getTitle() + " has been deleted";
     }
 
-    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional(readOnly = true)
     public List<ShortCourseResponse> getAllCourses() {
         List<ShortCourse> courses = shortCourseRepository.findAll();
         return courses.stream()
-                .map(c -> modelMapper.map(c, ShortCourseResponse.class))
+            .map(this::toResponse)
                 .toList();
     }
 
-    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional
     public String setCourseAvailable(Long id) {
         ShortCourse shortCourse = shortCourseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course with ID " + id + " not found"));
@@ -156,7 +179,8 @@ public class MarketService {
         return "Course '" + shortCourse.getTitle() + "' is now available";
     }
 
-    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional
     public String setCourseUnavailable(Long id) {
         ShortCourse shortCourse = shortCourseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course with ID " + id + " not found"));
@@ -167,46 +191,129 @@ public class MarketService {
         return "Course '" + shortCourse.getTitle() + "' is now unavailable";
     }
 
-    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional(readOnly = true)
     public List<ShortCourseResponse> getVisibleCourse(CourseStatus status) {
         List<ShortCourse> courses = shortCourseRepository.findAllByStatus(status);
         return courses.stream()
-                .map(c -> modelMapper.map(c, ShortCourseResponse.class))
+            .map(this::toResponse)
                 .toList();
     }
 
-
     // **************************************** ASSIGN INSTRUCTOR
-    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional
     public ShortCourseResponse assignInstructor(Long courseId, Long instructorId) {
         ShortCourse shortCourse = shortCourseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with ID: " + courseId));
 
-        Users instructor = userRepository.findById(instructorId)
+        Users instructorUser = userRepository.findById(instructorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Instructor not found with ID: " + instructorId));
 
-        // Assign instructor (ensure ShortCourse entity has instructor field/relation)
-        // shortCourse.setInstructor(instructor);
+        if (instructorUser.getRole() != Role.INSTRUCTOR) {
+            throw new ResourceNotFoundException("User with ID " + instructorId + " is not an instructor");
+        }
 
-        ShortCourse savedCourse = shortCourseRepository.save(shortCourse);
-        return modelMapper.map(savedCourse, ShortCourseResponse.class);
+        Instructor instructor = instructorRepository.findByUserId(instructorId)
+            .orElseThrow(() -> new ResourceNotFoundException("Instructor profile not found for user ID: " + instructorId));
+        if (!courseInstructorRepository.existsByCourseIdAndInstructorUserId(courseId, instructorId)) {
+            courseInstructorRepository.save(CourseInstructor.builder()
+                .course(shortCourse)
+                .instructor(instructor)
+                .assignedDate(LocalDate.now())
+                .build());
+        }
+
+        return toResponse(shortCourse);
     }
 
+        @PreAuthorize("hasRole('MARKETING_OFFICER')")
+        @Transactional(readOnly = true)
+        public List<CategoryResponse> getCategories() {
+        return categoryRepository.findAll().stream()
+            .map(category -> new CategoryResponse(category.getId(), category.getCategoryName(), category.getDescription()))
+            .toList();
+        }
+
+        @PreAuthorize("hasRole('MARKETING_OFFICER')")
+        @Transactional
+        public CategoryResponse createCategory(CreateCategoryDto request) {
+        CourseCategory category = CourseCategory.builder()
+            .categoryName(request.getName())
+            .description(request.getDescription())
+            .build();
+        CourseCategory saved = categoryRepository.save(category);
+        return new CategoryResponse(saved.getId(), saved.getCategoryName(), saved.getDescription());
+        }
+
+        @PreAuthorize("hasRole('MARKETING_OFFICER')")
+        @Transactional(readOnly = true)
+        public List<InstructorResponse> getInstructors() {
+        return instructorRepository.findAll().stream()
+            .map(instructor -> new InstructorResponse(
+                instructor.getId(),
+                instructor.getUser().getId(),
+                instructor.getUser().getFirstName() + " " + instructor.getUser().getLastName(),
+                instructor.getUser().getEmail(),
+                instructor.getUser().getStatus().name()))
+            .toList();
+        }
+
     // **************************************** VIEW REGISTRATION STATISTICS
-    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional(readOnly = true)
     public CourseStatsResponse getCourseRegistrationStats(Long courseId) {
         ShortCourse shortCourse = shortCourseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with ID: " + courseId));
 
-        // Query registration count from your Enrollment repository
-        // long registeredCount = enrollmentRepository.countByCourseId(courseId);
-        long registeredCount = 0;
-
         return CourseStatsResponse.builder()
                 .courseId(shortCourse.getId())
                 .courseTitle(shortCourse.getTitle())
-                .totalRegisteredStudents(registeredCount)
+                .totalRegisteredStudents(courseEnrollmentRepository.countByCourseId(courseId))
                 .maxStudents(shortCourse.getMaxStudents())
                 .build();
+    }
+
+    private ShortCourseResponse toResponse(ShortCourse course) {
+        ShortCourseResponse response = modelMapper.map(course, ShortCourseResponse.class);
+        if (course.getCategory() != null) {
+            response.setCategoryId(course.getCategory().getId());
+            response.setCategoryName(course.getCategory().getCategoryName());
+        }
+        if (course.getVenue() != null) {
+            response.setVenueId(course.getVenue().getId());
+            response.setVenueName(course.getVenue().getVenueName());
+        }
+        if (course.getCreatedBy() != null) {
+            response.setCreatedById(course.getCreatedBy().getId());
+            response.setCreatedByUsername(course.getCreatedBy().getUsername());
+        }
+        return response;
+    }
+
+    private void validateUniqueCourseFields(String title, String courseCode, Long id) {
+        if (title != null && (id == null
+                ? shortCourseRepository.existsByTitle(title)
+                : shortCourseRepository.existsByTitleAndIdNot(title, id))) {
+            throw new CourseAlreadyExistException("Course with title " + title + " already exists");
+        }
+        if (courseCode != null && (id == null
+                ? shortCourseRepository.existsByCourseCode(courseCode)
+                : shortCourseRepository.existsByCourseCodeAndIdNot(courseCode, id))) {
+            throw new CourseAlreadyExistException("Course with code " + courseCode + " already exists");
+        }
+    }
+
+    private void validateCourseDates(LocalDate startDate, LocalDate endDate,
+                                     LocalDate registrationOpenDate, LocalDate registrationCloseDate) {
+        if (startDate.isAfter(endDate) || registrationOpenDate.isAfter(registrationCloseDate)) {
+            throw new IllegalArgumentException("Course and registration dates must be in chronological order");
+        }
+    }
+
+    private void validateStudentLimits(Integer minStudents, Integer maxStudents) {
+        if (minStudents > maxStudents) {
+            throw new IllegalArgumentException("Minimum students cannot exceed maximum students");
+        }
     }
 }

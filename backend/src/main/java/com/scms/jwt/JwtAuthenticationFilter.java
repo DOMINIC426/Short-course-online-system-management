@@ -1,6 +1,5 @@
 package com.scms.jwt;
 
-import com.scms.jwt.JwtService;
 import com.scms.security.CustomUserDetailsService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;

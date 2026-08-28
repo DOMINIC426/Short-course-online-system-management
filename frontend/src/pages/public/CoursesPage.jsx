@@ -1,13 +1,13 @@
 import { useSearchParams } from "react-router-dom";
-import CourseCard from "../components/CourseCard";
-import { FEATURED_COURSES } from "../data/homeData.js";
+import CourseCard from "../../components/public/CourseCard.jsx";
+import { FEATURED_COURSES } from "../../data/homeData.js";
 
 export default function CoursesPage() {
   const [searchParams] = useSearchParams();
   const search = searchParams.get("search") || "";
 
   const filteredCourses = FEATURED_COURSES.filter((course) =>
-    course.name.toLowerCase().includes(search.toLowerCase())
+    course.courseName.toLowerCase().includes(search.toLowerCase())
   );
 
   return (

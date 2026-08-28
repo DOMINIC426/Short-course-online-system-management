@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 
 const QUICK_LINKS = [
   { to: "/courses", label: "All short courses" },
-  { to: "/how-to-apply", label: "Application process" },
-  { to: "/fees", label: "Fees & payment" },
+  { to: "/#how-to-apply", label: "Application process" },
 ];
 
 export default function Footer() {

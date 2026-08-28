@@ -1,9 +1,9 @@
 // src/components/HowItWorks.jsx
-import { STEPS } from "../data/homeData";
+import { STEPS } from "../../data/homeData";
 
 export default function HowItWorks() {
   return (
-    <section className="bg-white py-16">
+    <section id="how-to-apply" className="scroll-mt-20 bg-white py-16">
       <div className="mx-auto max-w-6xl px-6">
         <h2 className="text-center text-2xl font-bold text-gray-900">
           How to apply

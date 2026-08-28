@@ -1,15 +1,21 @@
 // src/App.jsx
 import { Routes, Route } from "react-router-dom";
-import PublicLayout from "./components/PublicLayout";
-import PortalLayout from "./components/PortalLayout";
-import HomePage from "./pages/HomePage";
-import CoursesPage from "./pages/CoursesPage";
-import CourseDetailPage from "./pages/CourseDetailPage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import DashboardPage from "./pages/DashboardPage";
+import PublicLayout from "./layouts/PublicLayout";
+import StudentLayout from "./layouts/StudentLayout";
+import HomePage from "./pages/public/HomePage";
+import CoursesPage from "./pages/public/CoursesPage";
+import CourseDetailPage from "./pages/public/CourseDetailPage";
+import LoginPage from "./pages/public/LoginPage";
+import RegisterPage from "./pages/public/RegisterPage";
+import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/public/ResetPasswordPage";
+import DashboardPage from "./pages/student/DashboardPage";
+import ProfilePage from "./pages/student/ProfilePage";
+import ApplyPage from "./pages/student/ApplyPage";
+import MyApplicationsPage from "./pages/student/MyApplicationsPage";
+import MyPaymentsPage from "./pages/student/MyPaymentsPage";
+import AnnouncementsPage from "./pages/student/AnnouncementsPage";
+import CertificatesPage from "./pages/student/CertificatesPage";
 
 export default function App() {
   return (
@@ -24,8 +30,14 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Route>
 
-      <Route element={<PortalLayout />}>
+      <Route element={<StudentLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/intakes/:intakeId/apply" element={<ApplyPage />} />
+        <Route path="/applications" element={<MyApplicationsPage />} />
+        <Route path="/payments" element={<MyPaymentsPage />} />
+        <Route path="/announcements" element={<AnnouncementsPage />} />
+        <Route path="/certificates" element={<CertificatesPage />} />
       </Route>
     </Routes>
   );

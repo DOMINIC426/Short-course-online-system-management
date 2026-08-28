@@ -1,7 +1,7 @@
 // src/components/FeaturedCourses.jsx
 import { Link } from "react-router-dom";
 import CourseCard from "./CourseCard";
-import { FEATURED_COURSES } from "../data/homeData";
+import { FEATURED_COURSES } from "../../data/homeData";
 
 export default function FeaturedCourses() {
   return (
@@ -24,7 +24,7 @@ export default function FeaturedCourses() {
             to="/courses"
             className="inline-flex items-center gap-2 text-sm font-semibold text-udom-primary transition hover:text-udom-primary-dark"
           >
-            View all programmes <span aria-hidden="true">→</span>
+            View all courses <span aria-hidden="true">→</span>
           </Link>
         </div>
 

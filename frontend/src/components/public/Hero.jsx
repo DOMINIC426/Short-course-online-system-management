@@ -40,7 +40,7 @@ export default function Hero() {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search for a course, certificate, or skill"
+            placeholder="Search for a course or skill"
             className="w-full rounded-md border border-white/20 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-udom-accent"
           />
           <button

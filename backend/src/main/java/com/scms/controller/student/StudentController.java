@@ -1,17 +1,12 @@
 package com.scms.controller.student;
 
-import com.scms.dto.student.CourseResponse;
-import com.scms.dto.student.EnrollmentRequest;
-import com.scms.dto.student.EnrollmentResponse;
-import com.scms.dto.student.StudentRegisterRequest;
-import com.scms.dto.student.StudentRegisterResponse;
-import com.scms.service.student.StudentCourseService;
-import com.scms.service.student.StudentEnrollmentService;
-import com.scms.service.student.StudentRegistrationService;
+import com.scms.dto.student.*;
+import com.scms.service.student.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +19,11 @@ public class StudentController {
     private final StudentCourseService courseService;
     private final StudentRegistrationService registrationService;
     private final StudentEnrollmentService enrollmentService;
+    private final StudentDashboardService dashboardService;
+    private final StudentPaymentService paymentService;
+    private final StudentAnnouncementService announcementService;
+    private final StudentCertificateService certificateService;
+    private final StudentNotificationService notificationService;
 
     // --- Public course catalogue ---
     @GetMapping("/courses/public")
@@ -39,11 +39,47 @@ public class StudentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // --- Course enrollment (authenticated) ---
+    // --- Course enrollment (student only) ---
     @PostMapping("/enroll")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<EnrollmentResponse> enrollInCourse(
             @Valid @RequestBody EnrollmentRequest request) {
         EnrollmentResponse response = enrollmentService.enroll(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // --- Student dashboard (student only) ---
+    @GetMapping("/dashboard")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<EnrollmentResponse>> getDashboard() {
+        return ResponseEntity.ok(dashboardService.getMyEnrollments());
+    }
+
+    // --- Payment history (student only) ---
+    @GetMapping("/payments")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<PaymentHistoryResponse>> getPaymentHistory() {
+        return ResponseEntity.ok(paymentService.getMyPayments());
+    }
+
+    // --- Announcements for student ---
+    @GetMapping("/announcements")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<StudentAnnouncementResponse>> getMyAnnouncements() {
+        return ResponseEntity.ok(announcementService.getMyAnnouncements());
+    }
+
+    // --- Certificate eligibility status ---
+    @GetMapping("/certificates")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<StudentCertificateResponse>> getMyCertificates() {
+        return ResponseEntity.ok(certificateService.getMyCertificates());
+    }
+
+    // --- Notifications ---
+    @GetMapping("/notifications")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<StudentNotificationResponse>> getMyNotifications() {
+        return ResponseEntity.ok(notificationService.getMyNotifications());
     }
 }

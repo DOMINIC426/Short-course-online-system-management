@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,6 +18,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+@EnableMethodSecurity
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -40,6 +42,7 @@ public class SecurityConfiguration {
                 .requestMatchers("/error").permitAll() // Permits validation and error dispatching
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/", "/actuator/health").permitAll()
+                 .requestMatchers("/api/v1/student/enroll").hasRole("STUDENT")
                 .requestMatchers("/api/v1/student/courses/public").permitAll()
                 .requestMatchers("/api/v1/student/register").permitAll()
                 .anyRequest().authenticated()

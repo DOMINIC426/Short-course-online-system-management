@@ -37,3 +37,8 @@ export async function getInstructors() {
   const response = await api.get("/api/v1/market/instructors");
   return response.data;
 }
+
+export async function createInstructor(instructor) {
+  const response = await api.post("/api/v1/market/instructors", instructor);
+  return response.data;
+}

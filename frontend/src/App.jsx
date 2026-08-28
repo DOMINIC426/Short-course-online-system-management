@@ -21,6 +21,7 @@ import MarketDashboardPage from "./pages/market/MarketDashboardPage.jsx";
 import MarketCoursesPage from "./pages/market/MarketCoursesPage.jsx";
 import MarketCategoriesPage from "./pages/market/MarketCategoriesPage.jsx";
 import MarketInstructorsPage from "./pages/market/MarketInstructorsPage.jsx";
+import MarketSettingsPage from "./pages/market/MarketSettingsPage.jsx";
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="/market/courses" element={<MarketCoursesPage />} />
         <Route path="/market/categories" element={<MarketCategoriesPage />} />
         <Route path="/market/instructors" element={<MarketInstructorsPage />} />
+        <Route path="/market/settings" element={<MarketSettingsPage />} />
       </Route>
     </Routes>
   );

@@ -8,7 +8,6 @@ const LINKS = [
   ["/market/courses", "Short Courses", BookOpen],
   ["/market/categories", "Categories", Tags],
   ["/market/instructors", "Instructors", Users],
-  ["/market/reports", "Reports", BarChart3],
   ["/market/settings", "Settings", Settings],
 ];
 

@@ -1,4 +1,3 @@
-// src/api/backendClient.js
 import axios from "axios";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
@@ -18,6 +17,7 @@ api.interceptors.request.use((config) => {
 });
 
 export async function fetchBackendHealth() {
-  const response = await backendClient.get('/api/health');
+  // Changed backendClient -> api
+  const response = await api.get('/api/health'); 
   return response.data.status;
 }

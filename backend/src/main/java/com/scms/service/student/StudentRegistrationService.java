@@ -2,11 +2,13 @@ package com.scms.service.student;
 
 import com.scms.dto.student.StudentRegisterRequest;
 import com.scms.dto.student.StudentRegisterResponse;
+import com.scms.entity.Student;
 import com.scms.entity.Users;
 import com.scms.entity.enums.Role;
 import com.scms.entity.enums.UserStatus;
 import com.scms.exception.UserAlreadyExistException;
 import com.scms.repository.UserRepository;
+import com.scms.repository.student.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.util.Optional;
 public class StudentRegistrationService {
 
     private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -29,7 +32,7 @@ public class StudentRegistrationService {
             throw new UserAlreadyExistException("User with email " + request.getEmail() + " already exists");
         }
 
-        // Create new student user
+        // Create user account
         Users user = Users.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -41,6 +44,12 @@ public class StudentRegistrationService {
                 .build();
 
         Users savedUser = userRepository.save(user);
+
+        // Create student profile linked to user
+        Student student = Student.builder()
+                .user(savedUser)
+                .build();
+        studentRepository.save(student);
 
         return StudentRegisterResponse.builder()
                 .id(savedUser.getId())

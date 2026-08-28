@@ -24,4 +24,8 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     List<Users> findUsersByRoleAndEmailDomain(@Param("role") Role role, @Param("domain") String domain);
 
     long countByRole(Role role);
+
+
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM Users u WHERE u.phone = :phone")
+    boolean existsByPhone(@Param("phone") String phone);
 }

@@ -36,7 +36,7 @@ public class MarketService {
     private final UserRepository userRepository;
 
     // ************************************************************* CREATE COURSE
-    @PreAuthorize("hasRole('MARKET_OFFICER')")
+    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
     public ShortCourseResponse registerCourse(CreateShortCourseDto request) {
         if (shortCourseRepository.existsByTitle(request.getTitle())) {
             throw new CourseAlreadyExistException("Course with title " + request.getTitle() + " already exists");
@@ -71,7 +71,7 @@ public class MarketService {
     }
 
     // **************************************** EDIT COURSE
-    @PreAuthorize("hasRole('MARKET_OFFICER')")
+    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
     public ShortCourseResponse editCourse(Long id, CreateShortCourseDto request) {
         ShortCourse shortCourse = shortCourseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course with ID " + id + " not found"));
@@ -128,7 +128,7 @@ public class MarketService {
     }
 
     // ******************************************************** DELETE THE COURSE
-    @PreAuthorize("hasRole('MARKET_OFFICER')")
+    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
     public String deleteCourse(Long id) {
         ShortCourse shortCourse = shortCourseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course with ID " + id + " not found"));
@@ -137,7 +137,7 @@ public class MarketService {
         return "Courses " + shortCourse.getTitle() + " has been deleted";
     }
 
-    @PreAuthorize("hasRole('MARKET_OFFICER')")
+    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
     public List<ShortCourseResponse> getAllCourses() {
         List<ShortCourse> courses = shortCourseRepository.findAll();
         return courses.stream()
@@ -145,7 +145,7 @@ public class MarketService {
                 .toList();
     }
 
-    @PreAuthorize("hasRole('MARKET_OFFICER')")
+    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
     public String setCourseAvailable(Long id) {
         ShortCourse shortCourse = shortCourseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course with ID " + id + " not found"));
@@ -156,7 +156,7 @@ public class MarketService {
         return "Course '" + shortCourse.getTitle() + "' is now available";
     }
 
-    @PreAuthorize("hasRole('MARKET_OFFICER')")
+    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
     public String setCourseUnavailable(Long id) {
         ShortCourse shortCourse = shortCourseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course with ID " + id + " not found"));
@@ -167,7 +167,7 @@ public class MarketService {
         return "Course '" + shortCourse.getTitle() + "' is now unavailable";
     }
 
-    @PreAuthorize("hasRole('MARKET_OFFICER')")
+    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
     public List<ShortCourseResponse> getVisibleCourse(CourseStatus status) {
         List<ShortCourse> courses = shortCourseRepository.findAllByStatus(status);
         return courses.stream()
@@ -177,7 +177,7 @@ public class MarketService {
 
 
     // **************************************** ASSIGN INSTRUCTOR
-    @PreAuthorize("hasRole('MARKET_OFFICER')")
+    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
     public ShortCourseResponse assignInstructor(Long courseId, Long instructorId) {
         ShortCourse shortCourse = shortCourseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with ID: " + courseId));
@@ -193,7 +193,7 @@ public class MarketService {
     }
 
     // **************************************** VIEW REGISTRATION STATISTICS
-    @PreAuthorize("hasRole('MARKET_OFFICER')")
+    @PreAuthorize("hasRole(' MARKETING_OFFICER')")
     public CourseStatsResponse getCourseRegistrationStats(Long courseId) {
         ShortCourse shortCourse = shortCourseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with ID: " + courseId));

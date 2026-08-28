@@ -306,8 +306,20 @@ public class MarketService {
 
     private void validateCourseDates(LocalDate startDate, LocalDate endDate,
                                      LocalDate registrationOpenDate, LocalDate registrationCloseDate) {
-        if (startDate.isAfter(endDate) || registrationOpenDate.isAfter(registrationCloseDate)) {
-            throw new IllegalArgumentException("Course and registration dates must be in chronological order");
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Course end date cannot be before its start date");
+        }
+        if (registrationOpenDate.isAfter(startDate)) {
+            throw new IllegalArgumentException("Registration open date cannot be after the course start date");
+        }
+        if (registrationCloseDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Registration close date cannot be after the course end date");
+        }
+        if (!registrationOpenDate.isBefore(registrationCloseDate)) {
+            throw new IllegalArgumentException("Registration close date must be after the registration open date");
+        }
+        if (registrationCloseDate.equals(startDate)) {
+            throw new IllegalArgumentException("Registration close date cannot be the same as the course start date");
         }
     }
 

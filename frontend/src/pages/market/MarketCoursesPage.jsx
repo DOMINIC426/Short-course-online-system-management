@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Edit3, Trash2, Plus } from "lucide-react";
-import { createCourse, deleteCourse, getCourses, setCourseStatus } from "../../api/marketApi.js";
+import { createCourse, deleteCourse, getCourses, setCourseStatus, updateCourse } from "../../api/marketApi.js";
 
 const initialForm = { courseCode: "", title: "", description: "", duration: "", startDate: "", endDate: "", regOpenDate: "", regCloseDate: "", courseFee: "", maxStudents: "", minStudents: "" };
 
@@ -10,6 +10,7 @@ export default function MarketCoursesPage() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState("");
+  const [dateError, setDateError] = useState("");
   const [studentError, setStudentError] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
@@ -62,7 +63,10 @@ export default function MarketCoursesPage() {
       setStudentError("");
     }
 
-    if (event.target.name === "startDate" && event.target.value < today) {
+    const dateFields = ["startDate", "endDate", "regOpenDate", "regCloseDate"];
+    if (editingCourse && !dateFields.includes(event.target.name)) {
+      setDateError("");
+    } else if (event.target.name === "startDate" && event.target.value < today) {
       setDateError("Start date cannot be in the past.");
     } else if (nextForm.endDate && nextForm.startDate && nextForm.endDate < nextForm.startDate) {
       setDateError("End date cannot be before the start date.");
@@ -81,20 +85,27 @@ export default function MarketCoursesPage() {
 
   async function submit(event) {
     event.preventDefault();
-    if (form.startDate < today) return setDateError("Start date cannot be in the past.");
-    if (form.endDate < form.startDate) return setDateError("End date cannot be before the start date.");
-    if (form.regOpenDate > form.startDate) return setDateError("Registration open date cannot be after the course start date.");
-    if (form.regCloseDate > form.endDate) return setDateError("Registration close date cannot be after the course end date.");
-    if (form.regCloseDate <= form.regOpenDate) return setDateError("Registration close date must be after the registration open date.");
-    if (form.regCloseDate === form.startDate) return setDateError("Registration close date cannot be the same as the course start date.");
+    const dateFields = ["startDate", "endDate", "regOpenDate", "regCloseDate"];
+    const datesChanged = !editingCourse || dateFields.some((field) => form[field] !== (editingCourse[field] || ""));
+    if (datesChanged) {
+      if (form.startDate < today) return setDateError("Start date cannot be in the past.");
+      if (form.endDate < form.startDate) return setDateError("End date cannot be before the start date.");
+      if (form.regOpenDate > form.startDate) return setDateError("Registration open date cannot be after the course start date.");
+      if (form.regCloseDate > form.endDate) return setDateError("Registration close date cannot be after the course end date.");
+      if (form.regCloseDate <= form.regOpenDate) return setDateError("Registration close date must be after the registration open date.");
+      if (form.regCloseDate === form.startDate) return setDateError("Registration close date cannot be the same as the course start date.");
+    }
     if (Number(form.minStudents) > Number(form.maxStudents)) return setStudentError("Minimum students cannot be greater than maximum students.");
 
-    const payload = {
+    const fullPayload = {
       ...form,
       courseFee: Number(form.courseFee),
       maxStudents: Number(form.maxStudents),
       minStudents: Number(form.minStudents),
     };
+    const payload = editingCourse
+      ? Object.fromEntries(Object.entries(fullPayload).filter(([field, value]) => String(value) !== String(editingCourse[field] ?? "")))
+      : fullPayload;
 
     try {
       if (editingCourse) {

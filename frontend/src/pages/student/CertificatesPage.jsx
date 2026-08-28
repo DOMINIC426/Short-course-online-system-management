@@ -1,5 +1,6 @@
-import { Award } from "lucide-react";
-import { MY_CERTIFICATES } from "../../data/certificatesData.js";
+import { useEffect, useState } from "react";
+import { Award, Loader2 } from "lucide-react";
+import { api } from "../../api/backendClient.js";
 
 const STATUS_STYLES = {
   PENDING: "bg-amber-50 text-amber-700",
@@ -9,10 +10,35 @@ const STATUS_STYLES = {
 };
 
 function formatStatus(status) {
-  return status.replace(/_/g, " ").toLowerCase().replace(/^\w/, (letter) => letter.toUpperCase());
+  if (!status) return "Pending";
+  return status
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/^\w/, (letter) => letter.toUpperCase());
 }
 
 export default function CertificatesPage() {
+  const [certificates, setCertificates] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCertificates() {
+      try {
+        setLoading(true);
+        const res = await api.get("/api/v1/student/certificates");
+        if (Array.isArray(res.data)) {
+          setCertificates(res.data);
+        }
+      } catch (err) {
+        console.warn("Failed to retrieve certificate statuses:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCertificates();
+  }, []);
+
   return (
     <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
       <p className="text-sm font-semibold uppercase tracking-wide text-udom-primary">
@@ -23,29 +49,54 @@ export default function CertificatesPage() {
         Check your certificate eligibility for each enrolled course.
       </p>
 
-      {MY_CERTIFICATES.length === 0 ? (
+      {/* Loading state */}
+      {loading ? (
+        <div className="mt-10 flex flex-col items-center justify-center p-10">
+          <Loader2 className="h-8 w-8 animate-spin text-udom-primary" />
+          <p className="mt-2 text-sm text-slate-500">Checking certificate eligibility...</p>
+        </div>
+      ) : certificates.length === 0 ? (
+        /* Empty state */
         <div className="mt-10 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
           <Award className="mx-auto h-10 w-10 text-slate-300" strokeWidth={1.5} />
           <p className="mt-4 text-sm font-semibold text-slate-700">No certificate records yet</p>
-          <p className="mt-1 text-sm text-slate-500">Certificate records appear after you enroll in a course.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Certificate records appear after you enroll in a course.
+          </p>
         </div>
       ) : (
+        /* Real database results */
         <div className="mt-8 space-y-4">
-          {MY_CERTIFICATES.map((certificate) => (
-            <article key={certificate.id} className="rounded-2xl border border-slate-200 bg-white p-5">
+          {certificates.map((cert) => (
+            <article
+              key={cert.certificateId || cert.enrollmentId}
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <Award className="mt-0.5 h-5 w-5 flex-shrink-0 text-udom-primary" strokeWidth={1.8} />
                   <div>
-                    <p className="font-semibold text-slate-900">{certificate.courseName}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{certificate.intakeName}</p>
+                    <p className="font-semibold text-slate-900">
+                      {cert.courseTitle || "Course Certificate"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      Enrollment ID: <span className="font-mono text-slate-700">{cert.enrollmentId}</span>
+                    </p>
                   </div>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${STATUS_STYLES[certificate.status] || "bg-slate-100 text-slate-600"}`}>
-                  {formatStatus(certificate.status)}
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                    STATUS_STYLES[cert.status] || "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {formatStatus(cert.status)}
                 </span>
               </div>
-              <p className="mt-4 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-600">{certificate.reason}</p>
+              {cert.reason && (
+                <p className="mt-4 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-600">
+                  {cert.reason}
+                </p>
+              )}
             </article>
           ))}
         </div>

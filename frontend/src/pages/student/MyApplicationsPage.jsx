@@ -1,9 +1,45 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MY_APPLICATIONS } from "../../data/applicationsData.js";
+import { FileText, Loader2 } from "lucide-react";
 import ApplicationStatusBadge from "../../components/shared/ApplicationStatusBadge.jsx";
-import { FileText } from "lucide-react";
+import { api } from "../../api/backendClient.js";
+
+function formatDate(dateStr) {
+  if (!dateStr) return "N/A";
+  try {
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
 
 export default function MyApplicationsPage() {
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchMyApplications() {
+      try {
+        setLoading(true);
+        // Call backending API endpoint to get current student's enrollments/applications
+        const res = await api.get("/api/v1/student/enrollments");
+        if (Array.isArray(res.data)) {
+          setApplications(res.data);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch applications from database:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMyApplications();
+  }, []);
+
   return (
     <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
       <p className="text-sm font-semibold uppercase tracking-wide text-udom-primary">
@@ -16,7 +52,12 @@ export default function MyApplicationsPage() {
         Track the status of every course application you've submitted.
       </p>
 
-      {MY_APPLICATIONS.length === 0 ? (
+      {loading ? (
+        <div className="mt-12 flex flex-col items-center justify-center p-10">
+          <Loader2 className="h-8 w-8 animate-spin text-udom-primary" />
+          <p className="mt-2 text-sm text-slate-500">Loading your applications...</p>
+        </div>
+      ) : applications.length === 0 ? (
         <div className="mt-10 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
           <FileText className="mx-auto h-10 w-10 text-slate-300" strokeWidth={1.5} />
           <p className="mt-4 text-sm font-semibold text-slate-700">No applications yet</p>
@@ -41,22 +82,25 @@ export default function MyApplicationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {MY_APPLICATIONS.map((app) => (
-                <tr key={app.id}>
+              {applications.map((app) => (
+                <tr key={app.enrollmentId || app.id}>
                   <td className="px-5 py-4">
-                    <p className="font-semibold text-slate-900">{app.courseName}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {app.courseCode} &middot; {app.intakeName} &middot; {app.applicationNumber}
+                    <p className="font-semibold text-slate-900">
+                      {app.courseTitle || app.title || "Course Application"}
                     </p>
-                    {app.status === "REJECTED" && app.rejectionReason && (
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      ID: #{app.enrollmentId || app.id} 
+                      {app.controlNumber ? ` · Control No: ${app.controlNumber}` : ""}
+                    </p>
+                    {app.enrollmentStatus === "REJECTED" && app.rejectionReason && (
                       <p className="mt-1 text-xs text-red-600">Reason: {app.rejectionReason}</p>
                     )}
                   </td>
                   <td className="hidden px-5 py-4 text-slate-600 sm:table-cell">
-                    {app.applicationDate}
+                    {formatDate(app.registrationDate || app.createdAt)}
                   </td>
                   <td className="px-5 py-4">
-                    <ApplicationStatusBadge status={app.status} />
+                    <ApplicationStatusBadge status={app.enrollmentStatus || app.status || "PENDING"} />
                   </td>
                 </tr>
               ))}

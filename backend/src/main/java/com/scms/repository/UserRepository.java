@@ -17,15 +17,11 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     Optional<Users> findByEmail(String email);
 
+    boolean existsByEmailAndIdNot(String email, Long id);
+
+    boolean existsByPhoneAndIdNot(String phone, Long id);
+
     List<Users> findAllByRole(Role role);
-
-    List<Users> findAllByOrderByCreatedAtDesc();
-
-    List<Users> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-            String firstName,
-            String lastName,
-            String email
-    );
 
     @Query("SELECT u FROM Users u WHERE u.role = :role AND u.email LIKE %:domain%")
     List<Users> findUsersByRoleAndEmailDomain(
@@ -35,6 +31,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     long countByRole(Role role);
 
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM Users u WHERE u.phone = :phone")
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END " +
+           "FROM Users u WHERE u.phone = :phone")
     boolean existsByPhone(@Param("phone") String phone);
 }

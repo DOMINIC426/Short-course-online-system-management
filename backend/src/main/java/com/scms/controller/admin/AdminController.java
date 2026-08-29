@@ -3,12 +3,19 @@ package com.scms.controller.admin;
 import com.scms.dto.admin.AssignRoleRequest;
 import com.scms.dto.admin.CreateUserRequest;
 import com.scms.dto.admin.ResetPasswordRequest;
+import com.scms.dto.admin.RolePermissionRequest;
+import com.scms.dto.admin.RolePermissionResponse;
 import com.scms.dto.admin.RoleResponse;
 import com.scms.dto.admin.StudentResponse;
+import com.scms.dto.admin.UpdatePermissionRequest;
 import com.scms.dto.admin.UpdateUserRequest;
 import com.scms.dto.admin.UserResponse;
+import com.scms.dto.admin.PermissionRequest;
+import com.scms.dto.admin.PermissionResponse;
 import com.scms.entity.enums.Role;
 import com.scms.entity.enums.UserStatus;
+import com.scms.service.admin.AdminPermissionService;
+import com.scms.service.admin.AdminRolePermissionService;
 import com.scms.service.admin.AdminRoleService;
 import com.scms.service.admin.AdminService;
 import com.scms.service.admin.AdminStudentService;
@@ -28,13 +35,15 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(
         name = "Admin Management",
-        description = "Administrative operations for managing users, students and system roles"
+        description = "Administrative operations for managing users, students, roles, permissions and role-based access control"
 )
 public class AdminController {
 
     private final AdminService adminService;
     private final AdminStudentService adminStudentService;
     private final AdminRoleService adminRoleService;
+    private final AdminPermissionService adminPermissionService;
+    private final AdminRolePermissionService adminRolePermissionService;
 
 
     // ============================================================
@@ -49,7 +58,6 @@ public class AdminController {
     public ResponseEntity<UserResponse> createUser(
             @Valid @RequestBody CreateUserRequest request
     ) {
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(adminService.createUser(request));
@@ -81,7 +89,6 @@ public class AdminController {
             )
             @PathVariable Long id
     ) {
-
         return ResponseEntity.ok(
                 adminService.getUserById(id)
         );
@@ -102,7 +109,6 @@ public class AdminController {
 
             @Valid @RequestBody UpdateUserRequest request
     ) {
-
         return ResponseEntity.ok(
                 adminService.updateUser(id, request)
         );
@@ -121,7 +127,6 @@ public class AdminController {
             )
             @PathVariable Long id
     ) {
-
         return ResponseEntity.ok(
                 adminService.activateUser(id)
         );
@@ -140,7 +145,6 @@ public class AdminController {
             )
             @PathVariable Long id
     ) {
-
         return ResponseEntity.ok(
                 adminService.deactivateUser(id)
         );
@@ -161,7 +165,6 @@ public class AdminController {
 
             @Valid @RequestBody ResetPasswordRequest request
     ) {
-
         adminService.resetPassword(id, request);
 
         return ResponseEntity.noContent().build();
@@ -212,7 +215,6 @@ public class AdminController {
             )
             @PathVariable Long id
     ) {
-
         return ResponseEntity.ok(
                 adminStudentService.getStudentById(id)
         );
@@ -231,7 +233,6 @@ public class AdminController {
             )
             @PathVariable Long id
     ) {
-
         return ResponseEntity.ok(
                 adminStudentService.activateStudent(id)
         );
@@ -250,7 +251,6 @@ public class AdminController {
             )
             @PathVariable Long id
     ) {
-
         return ResponseEntity.ok(
                 adminStudentService.deactivateStudent(id)
         );
@@ -286,7 +286,6 @@ public class AdminController {
             )
             @PathVariable Role role
     ) {
-
         return ResponseEntity.ok(
                 adminRoleService.getRole(role)
         );
@@ -307,9 +306,158 @@ public class AdminController {
 
             @Valid @RequestBody AssignRoleRequest request
     ) {
-
         return ResponseEntity.ok(
                 adminService.assignRole(id, request)
         );
+    }
+
+
+    // ============================================================
+    // PERMISSION MANAGEMENT
+    // ============================================================
+
+    @Operation(
+            summary = "Create a new permission",
+            description = "Allows an administrator to create a new system permission that can later be assigned to roles."
+    )
+    @PostMapping("/permissions")
+    public ResponseEntity<PermissionResponse> createPermission(
+            @Valid @RequestBody PermissionRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(adminPermissionService.createPermission(request));
+    }
+
+
+    @Operation(
+            summary = "View all permissions",
+            description = "Retrieves all permissions currently defined in the system."
+    )
+    @GetMapping("/permissions")
+    public ResponseEntity<List<PermissionResponse>> getAllPermissions() {
+
+        return ResponseEntity.ok(
+                adminPermissionService.getAllPermissions()
+        );
+    }
+
+
+    @Operation(
+            summary = "View a specific permission",
+            description = "Retrieves detailed information about a specific permission using its ID."
+    )
+    @GetMapping("/permissions/{id}")
+    public ResponseEntity<PermissionResponse> getPermissionById(
+            @Parameter(
+                    description = "Unique ID of the permission",
+                    example = "1"
+            )
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                adminPermissionService.getPermissionById(id)
+        );
+    }
+
+
+    @Operation(
+            summary = "Update a permission",
+            description = "Allows an administrator to update the name and description of an existing permission."
+    )
+    @PutMapping("/permissions/{id}")
+    public ResponseEntity<PermissionResponse> updatePermission(
+            @Parameter(
+                    description = "Unique ID of the permission to update",
+                    example = "1"
+            )
+            @PathVariable Long id,
+
+            @Valid @RequestBody UpdatePermissionRequest request
+    ) {
+        return ResponseEntity.ok(
+                adminPermissionService.updatePermission(id, request)
+        );
+    }
+
+
+    @Operation(
+            summary = "Delete a permission",
+            description = "Deletes an existing permission from the system."
+    )
+    @DeleteMapping("/permissions/{id}")
+    public ResponseEntity<Void> deletePermission(
+            @Parameter(
+                    description = "Unique ID of the permission to delete",
+                    example = "1"
+            )
+            @PathVariable Long id
+    ) {
+        adminPermissionService.deletePermission(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+
+    // ============================================================
+    // ROLE-PERMISSION / RBAC MANAGEMENT
+    // ============================================================
+
+    @Operation(
+            summary = "View permissions assigned to a role",
+            description = "Retrieves all permissions currently assigned to the specified system role."
+    )
+    @GetMapping("/roles/{role}/permissions")
+    public ResponseEntity<List<RolePermissionResponse>> getPermissionsByRole(
+            @Parameter(
+                    description = "System role whose permissions should be retrieved",
+                    example = "ADMIN"
+            )
+            @PathVariable Role role
+    ) {
+        return ResponseEntity.ok(
+                adminRolePermissionService.getPermissionsByRole(role)
+        );
+    }
+
+
+    @Operation(
+            summary = "Assign a permission to a role",
+            description = "Allows an administrator to assign an existing permission to a system role."
+    )
+    @PostMapping("/roles/permissions")
+    public ResponseEntity<RolePermissionResponse> assignPermissionToRole(
+            @Valid @RequestBody RolePermissionRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(adminRolePermissionService.assignPermission(request));
+    }
+
+
+    @Operation(
+            summary = "Remove a permission from a role",
+            description = "Removes a specific permission assignment from the specified system role."
+    )
+    @DeleteMapping("/roles/{role}/permissions/{permissionId}")
+    public ResponseEntity<Void> removePermissionFromRole(
+            @Parameter(
+                    description = "System role from which the permission should be removed",
+                    example = "ADMIN"
+            )
+            @PathVariable Role role,
+
+            @Parameter(
+                    description = "Unique ID of the permission to remove",
+                    example = "1"
+            )
+            @PathVariable Long permissionId
+    ) {
+        adminRolePermissionService.removePermission(
+                role,
+                permissionId
+        );
+
+        return ResponseEntity.noContent().build();
     }
 }

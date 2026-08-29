@@ -23,6 +23,8 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     List<Users> findAllByRole(Role role);
 
+    List<Users> findAllByOrderByCreatedAtDesc();
+
     @Query("SELECT u FROM Users u WHERE u.role = :role AND u.email LIKE %:domain%")
     List<Users> findUsersByRoleAndEmailDomain(
             @Param("role") Role role,

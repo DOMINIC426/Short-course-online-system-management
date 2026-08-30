@@ -31,6 +31,8 @@ import com.scms.dto.admin.SystemSettingRequest;
 import com.scms.dto.admin.SystemSettingResponse;
 import com.scms.dto.admin.UpdateSystemSettingRequest;
 import com.scms.service.admin.AdminSystemSettingService;
+import com.scms.dto.admin.AuditLogResponse;
+import com.scms.service.admin.AdminAuditLogService;
 
 import java.util.List;
 
@@ -49,6 +51,7 @@ public class AdminController {
     private final AdminPermissionService adminPermissionService;
     private final AdminRolePermissionService adminRolePermissionService;
     private final AdminSystemSettingService adminSystemSettingService;
+    private final AdminAuditLogService adminAuditLogService;
 
 
     // ============================================================
@@ -567,5 +570,124 @@ public ResponseEntity<Void> deleteSetting(
     adminSystemSettingService.deleteSetting(id);
 
     return ResponseEntity.noContent().build();
+}
+// ============================================================
+// AUDIT LOGS
+// ============================================================
+
+@Operation(
+        summary = "View all audit logs",
+        description = "Retrieves all system audit logs ordered from the most recent activity to the oldest activity."
+)
+@GetMapping("/audit-logs")
+public ResponseEntity<List<AuditLogResponse>> getAllAuditLogs() {
+
+    return ResponseEntity.ok(
+            adminAuditLogService.getAllAuditLogs()
+    );
+}
+
+
+@Operation(
+        summary = "View a specific audit log",
+        description = "Retrieves a specific audit log using its unique ID."
+)
+@GetMapping("/audit-logs/{id}")
+public ResponseEntity<AuditLogResponse> getAuditLogById(
+        @Parameter(
+                description = "Unique ID of the audit log",
+                example = "1"
+        )
+        @PathVariable Long id
+) {
+
+    return ResponseEntity.ok(
+            adminAuditLogService.getAuditLogById(id)
+    );
+}
+
+
+@Operation(
+        summary = "View audit logs by user",
+        description = "Retrieves all audit activities performed by a specific user."
+)
+@GetMapping("/audit-logs/user/{userId}")
+public ResponseEntity<List<AuditLogResponse>> getAuditLogsByUser(
+        @Parameter(
+                description = "ID of the user whose activities should be retrieved",
+                example = "5"
+        )
+        @PathVariable Long userId
+) {
+
+    return ResponseEntity.ok(
+            adminAuditLogService.getAuditLogsByUser(userId)
+    );
+}
+
+
+@Operation(
+        summary = "View audit logs by entity",
+        description = "Retrieves audit logs associated with a specific entity, such as USER, STUDENT, or SYSTEM_SETTING."
+)
+@GetMapping("/audit-logs/entity/{entity}")
+public ResponseEntity<List<AuditLogResponse>> getAuditLogsByEntity(
+        @Parameter(
+                description = "Name of the entity",
+                example = "USER"
+        )
+        @PathVariable String entity
+) {
+
+    return ResponseEntity.ok(
+            adminAuditLogService.getAuditLogsByEntity(entity)
+    );
+}
+
+
+@Operation(
+        summary = "View audit logs by action",
+        description = "Retrieves audit logs associated with a specific action, such as CREATE, UPDATE, DELETE, ACTIVATE, or DEACTIVATE."
+)
+@GetMapping("/audit-logs/action/{action}")
+public ResponseEntity<List<AuditLogResponse>> getAuditLogsByAction(
+        @Parameter(
+                description = "Action performed in the system",
+                example = "UPDATE"
+        )
+        @PathVariable String action
+) {
+
+    return ResponseEntity.ok(
+            adminAuditLogService.getAuditLogsByAction(action)
+    );
+}
+
+
+@Operation(
+        summary = "View entity history",
+        description = "Retrieves the complete audit history of a specific entity record."
+)
+@GetMapping("/audit-logs/entity/{entity}/{entityId}")
+public ResponseEntity<List<AuditLogResponse>> getEntityHistory(
+        @Parameter(
+                description = "Name of the entity",
+                example = "USER"
+        )
+        @PathVariable String entity,
+
+        @Parameter(
+                description = "ID of the entity record",
+                example = "10"
+        )
+        @PathVariable Long entityId
+) {
+
+    return ResponseEntity.ok(
+            adminAuditLogService.getAuditLogsByEntityAndId(
+                    entity,
+                    entityId
+            )
+    );
 }
 }

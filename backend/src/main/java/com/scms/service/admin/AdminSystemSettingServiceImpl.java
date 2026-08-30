@@ -21,9 +21,13 @@ public class AdminSystemSettingServiceImpl implements AdminSystemSettingService 
     private final AuditLogService auditLogService;
 
     @Override
-    public SystemSettingResponse createSetting(SystemSettingRequest request) {
+    public SystemSettingResponse createSetting(
+            SystemSettingRequest request
+    ) {
 
-        if (systemSettingRepository.existsBySettingKey(request.getSettingKey())) {
+        if (systemSettingRepository.existsBySettingKey(
+                request.getSettingKey()
+        )) {
             throw new IllegalArgumentException(
                     "System setting with key '" +
                             request.getSettingKey() +
@@ -37,15 +41,18 @@ public class AdminSystemSettingServiceImpl implements AdminSystemSettingService 
                 .description(request.getDescription())
                 .build();
 
-        SystemSetting savedSetting = systemSettingRepository.save(setting);
+        SystemSetting savedSetting =
+                systemSettingRepository.save(setting);
+
         auditLogService.log(
-        "CREATE",
-        "SYSTEM_SETTING",
-        savedSetting.getId(),
-        null,
-        savedSetting.getSettingKey() + "=" +
-                savedSetting.getSettingValue()
-);
+                "CREATE",
+                "SYSTEM_SETTING",
+                savedSetting.getId(),
+                null,
+                savedSetting.getSettingKey() +
+                        "=" +
+                        savedSetting.getSettingValue()
+        );
 
         return mapToResponse(savedSetting);
     }
@@ -71,7 +78,9 @@ public class AdminSystemSettingServiceImpl implements AdminSystemSettingService 
 
     @Override
     @Transactional(readOnly = true)
-    public SystemSettingResponse getSettingByKey(String settingKey) {
+    public SystemSettingResponse getSettingByKey(
+            String settingKey
+    ) {
 
         SystemSetting setting = systemSettingRepository
                 .findBySettingKey(settingKey)
@@ -94,11 +103,32 @@ public class AdminSystemSettingServiceImpl implements AdminSystemSettingService 
 
         SystemSetting setting = findSetting(id);
 
+        /*
+         * Store old values before updating.
+         */
+        String oldValue =
+                "settingKey=" + setting.getSettingKey() +
+                ", settingValue=" + setting.getSettingValue() +
+                ", description=" + setting.getDescription();
+
         setting.setSettingValue(request.getSettingValue());
         setting.setDescription(request.getDescription());
 
         SystemSetting updatedSetting =
                 systemSettingRepository.save(setting);
+
+        String newValue =
+                "settingKey=" + updatedSetting.getSettingKey() +
+                ", settingValue=" + updatedSetting.getSettingValue() +
+                ", description=" + updatedSetting.getDescription();
+
+        auditLogService.log(
+                "UPDATE",
+                "SYSTEM_SETTING",
+                updatedSetting.getId(),
+                oldValue,
+                newValue
+        );
 
         return mapToResponse(updatedSetting);
     }
@@ -107,6 +137,19 @@ public class AdminSystemSettingServiceImpl implements AdminSystemSettingService 
     public void deleteSetting(Long id) {
 
         SystemSetting setting = findSetting(id);
+
+        String oldValue =
+                "settingKey=" + setting.getSettingKey() +
+                ", settingValue=" + setting.getSettingValue() +
+                ", description=" + setting.getDescription();
+
+        auditLogService.log(
+                "DELETE",
+                "SYSTEM_SETTING",
+                setting.getId(),
+                oldValue,
+                null
+        );
 
         systemSettingRepository.delete(setting);
     }

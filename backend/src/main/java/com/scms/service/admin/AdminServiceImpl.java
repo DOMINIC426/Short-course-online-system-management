@@ -54,13 +54,14 @@ public class AdminServiceImpl implements AdminService {
                 .build();
 
         Users savedUser = userRepository.save(user);
+
         auditLogService.log(
-        "CREATE",
-        "USER",
-        savedUser.getId(),
-        null,
-        savedUser.getEmail()
-);
+                "CREATE",
+                "USER",
+                savedUser.getId(),
+                null,
+                savedUser.getEmail()
+        );
 
         return mapToResponse(savedUser);
     }
@@ -110,6 +111,17 @@ public class AdminServiceImpl implements AdminService {
             );
         }
 
+        /*
+         * Store old values before updating the user.
+         * Password is intentionally not included.
+         */
+        String oldValue =
+                "firstName=" + user.getFirstName() +
+                ", lastName=" + user.getLastName() +
+                ", email=" + user.getEmail() +
+                ", phone=" + user.getPhone() +
+                ", role=" + user.getRole();
+
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
@@ -117,20 +129,21 @@ public class AdminServiceImpl implements AdminService {
         user.setRole(request.getRole());
 
         Users updatedUser = userRepository.save(user);
-        String newValue =
-        updatedUser.getFirstName() + " " +
-        updatedUser.getLastName() + ", " +
-        updatedUser.getEmail() + ", " +
-        updatedUser.getPhone() + ", " +
-        updatedUser.getRole();
 
-auditLogService.log(
-        "UPDATE",
-        "USER",
-        updatedUser.getId(),
-        oldValue,
-        newValue
-);
+        String newValue =
+                "firstName=" + updatedUser.getFirstName() +
+                ", lastName=" + updatedUser.getLastName() +
+                ", email=" + updatedUser.getEmail() +
+                ", phone=" + updatedUser.getPhone() +
+                ", role=" + updatedUser.getRole();
+
+        auditLogService.log(
+                "UPDATE",
+                "USER",
+                updatedUser.getId(),
+                oldValue,
+                newValue
+        );
 
         return mapToResponse(updatedUser);
     }
@@ -140,16 +153,19 @@ auditLogService.log(
 
         Users user = findUser(id);
 
+        String oldValue = "status=" + user.getStatus();
+
         user.setStatus(UserStatus.ACTIVE);
 
         Users updatedUser = userRepository.save(user);
+
         auditLogService.log(
-        "ACTIVATE",
-        "USER",
-        updatedUser.getId(),
-        "status=" + UserStatus.INACTIVE,
-        "status=" + UserStatus.ACTIVE
-);
+                "ACTIVATE",
+                "USER",
+                updatedUser.getId(),
+                oldValue,
+                "status=" + updatedUser.getStatus()
+        );
 
         return mapToResponse(updatedUser);
     }
@@ -159,16 +175,19 @@ auditLogService.log(
 
         Users user = findUser(id);
 
+        String oldValue = "status=" + user.getStatus();
+
         user.setStatus(UserStatus.INACTIVE);
 
         Users updatedUser = userRepository.save(user);
+
         auditLogService.log(
-        "DEACTIVATE",
-        "USER",
-        updatedUser.getId(),
-        "status=" + UserStatus.ACTIVE,
-        "status=" + UserStatus.INACTIVE
-);
+                "DEACTIVATE",
+                "USER",
+                updatedUser.getId(),
+                oldValue,
+                "status=" + updatedUser.getStatus()
+        );
 
         return mapToResponse(updatedUser);
     }
@@ -181,6 +200,9 @@ auditLogService.log(
 
         Users user = findUser(id);
 
+        /*
+         * Password values are never stored in audit logs.
+         */
         user.setPasswordHash(
                 passwordEncoder.encode(
                         request.getNewPassword()
@@ -188,11 +210,12 @@ auditLogService.log(
         );
 
         userRepository.save(user);
+
         auditLogService.log(
-        "RESET_PASSWORD",
-        "USER",
-        user.getId()
-);
+                "RESET_PASSWORD",
+                "USER",
+                user.getId()
+        );
     }
 
     @Override
@@ -203,16 +226,21 @@ auditLogService.log(
 
         Users user = findUser(id);
 
+        String oldRole = user.getRole() != null
+                ? user.getRole().name()
+                : null;
+
         user.setRole(request.getRole());
 
         Users updatedUser = userRepository.save(user);
+
         auditLogService.log(
-        "ASSIGN_ROLE",
-        "USER",
-        updatedUser.getId(),
-        "role=" + oldRole,
-        "role=" + updatedUser.getRole()
-);
+                "ASSIGN_ROLE",
+                "USER",
+                updatedUser.getId(),
+                "role=" + oldRole,
+                "role=" + updatedUser.getRole()
+        );
 
         return mapToResponse(updatedUser);
     }

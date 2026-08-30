@@ -24,6 +24,7 @@ public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
     @Override
     public UserResponse createUser(CreateUserRequest request) {
@@ -53,6 +54,13 @@ public class AdminServiceImpl implements AdminService {
                 .build();
 
         Users savedUser = userRepository.save(user);
+        auditLogService.log(
+        "CREATE",
+        "USER",
+        savedUser.getId(),
+        null,
+        savedUser.getEmail()
+);
 
         return mapToResponse(savedUser);
     }
@@ -109,6 +117,20 @@ public class AdminServiceImpl implements AdminService {
         user.setRole(request.getRole());
 
         Users updatedUser = userRepository.save(user);
+        String newValue =
+        updatedUser.getFirstName() + " " +
+        updatedUser.getLastName() + ", " +
+        updatedUser.getEmail() + ", " +
+        updatedUser.getPhone() + ", " +
+        updatedUser.getRole();
+
+auditLogService.log(
+        "UPDATE",
+        "USER",
+        updatedUser.getId(),
+        oldValue,
+        newValue
+);
 
         return mapToResponse(updatedUser);
     }
@@ -121,6 +143,13 @@ public class AdminServiceImpl implements AdminService {
         user.setStatus(UserStatus.ACTIVE);
 
         Users updatedUser = userRepository.save(user);
+        auditLogService.log(
+        "ACTIVATE",
+        "USER",
+        updatedUser.getId(),
+        "status=" + UserStatus.INACTIVE,
+        "status=" + UserStatus.ACTIVE
+);
 
         return mapToResponse(updatedUser);
     }
@@ -133,6 +162,13 @@ public class AdminServiceImpl implements AdminService {
         user.setStatus(UserStatus.INACTIVE);
 
         Users updatedUser = userRepository.save(user);
+        auditLogService.log(
+        "DEACTIVATE",
+        "USER",
+        updatedUser.getId(),
+        "status=" + UserStatus.ACTIVE,
+        "status=" + UserStatus.INACTIVE
+);
 
         return mapToResponse(updatedUser);
     }
@@ -152,6 +188,11 @@ public class AdminServiceImpl implements AdminService {
         );
 
         userRepository.save(user);
+        auditLogService.log(
+        "RESET_PASSWORD",
+        "USER",
+        user.getId()
+);
     }
 
     @Override
@@ -165,6 +206,13 @@ public class AdminServiceImpl implements AdminService {
         user.setRole(request.getRole());
 
         Users updatedUser = userRepository.save(user);
+        auditLogService.log(
+        "ASSIGN_ROLE",
+        "USER",
+        updatedUser.getId(),
+        "role=" + oldRole,
+        "role=" + updatedUser.getRole()
+);
 
         return mapToResponse(updatedUser);
     }

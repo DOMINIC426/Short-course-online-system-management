@@ -18,6 +18,7 @@ import java.util.List;
 public class AdminSystemSettingServiceImpl implements AdminSystemSettingService {
 
     private final SystemSettingRepository systemSettingRepository;
+    private final AuditLogService auditLogService;
 
     @Override
     public SystemSettingResponse createSetting(SystemSettingRequest request) {
@@ -37,6 +38,14 @@ public class AdminSystemSettingServiceImpl implements AdminSystemSettingService 
                 .build();
 
         SystemSetting savedSetting = systemSettingRepository.save(setting);
+        auditLogService.log(
+        "CREATE",
+        "SYSTEM_SETTING",
+        savedSetting.getId(),
+        null,
+        savedSetting.getSettingKey() + "=" +
+                savedSetting.getSettingValue()
+);
 
         return mapToResponse(savedSetting);
     }

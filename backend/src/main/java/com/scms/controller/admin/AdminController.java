@@ -41,7 +41,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(
         name = "Admin Management",
-        description = "Administrative operations for managing users, students, roles, permissions and role-based access control"
+        description = "Administrative operations for managing users, students, roles, permissions, role-based access control and AuditLogs"
 )
 public class AdminController {
 

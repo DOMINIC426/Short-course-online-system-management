@@ -27,6 +27,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.scms.dto.admin.SystemSettingRequest;
+import com.scms.dto.admin.SystemSettingResponse;
+import com.scms.dto.admin.UpdateSystemSettingRequest;
+import com.scms.service.admin.AdminSystemSettingService;
 
 import java.util.List;
 
@@ -44,6 +48,7 @@ public class AdminController {
     private final AdminRoleService adminRoleService;
     private final AdminPermissionService adminPermissionService;
     private final AdminRolePermissionService adminRolePermissionService;
+    private final AdminSystemSettingService adminSystemSettingService;
 
 
     // ============================================================
@@ -460,4 +465,107 @@ public class AdminController {
 
         return ResponseEntity.noContent().build();
     }
+    // ============================================================
+// SYSTEM SETTINGS
+// ============================================================
+
+@Operation(
+        summary = "Create a system setting",
+        description = "Allows an administrator to create a new system setting using a unique setting key, value, and description."
+)
+@PostMapping("/settings")
+public ResponseEntity<SystemSettingResponse> createSetting(
+        @Valid @RequestBody SystemSettingRequest request
+) {
+    return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(adminSystemSettingService.createSetting(request));
+}
+
+
+@Operation(
+        summary = "View all system settings",
+        description = "Retrieves all system settings configured in the Short Course Management System."
+)
+@GetMapping("/settings")
+public ResponseEntity<List<SystemSettingResponse>> getAllSettings() {
+
+    return ResponseEntity.ok(
+            adminSystemSettingService.getAllSettings()
+    );
+}
+
+
+@Operation(
+        summary = "View a specific system setting",
+        description = "Retrieves a system setting using its unique ID."
+)
+@GetMapping("/settings/{id}")
+public ResponseEntity<SystemSettingResponse> getSettingById(
+        @Parameter(
+                description = "Unique ID of the system setting",
+                example = "1"
+        )
+        @PathVariable Long id
+) {
+    return ResponseEntity.ok(
+            adminSystemSettingService.getSettingById(id)
+    );
+}
+
+
+@Operation(
+        summary = "View a system setting by key",
+        description = "Retrieves a system setting using its unique setting key."
+)
+@GetMapping("/settings/key/{settingKey}")
+public ResponseEntity<SystemSettingResponse> getSettingByKey(
+        @Parameter(
+                description = "Unique key of the system setting",
+                example = "SYSTEM_NAME"
+        )
+        @PathVariable String settingKey
+) {
+    return ResponseEntity.ok(
+            adminSystemSettingService.getSettingByKey(settingKey)
+    );
+}
+
+
+@Operation(
+        summary = "Update a system setting",
+        description = "Allows an administrator to update the value and description of an existing system setting. The setting key cannot be changed."
+)
+@PutMapping("/settings/{id}")
+public ResponseEntity<SystemSettingResponse> updateSetting(
+        @Parameter(
+                description = "Unique ID of the system setting to update",
+                example = "1"
+        )
+        @PathVariable Long id,
+
+        @Valid @RequestBody UpdateSystemSettingRequest request
+) {
+    return ResponseEntity.ok(
+            adminSystemSettingService.updateSetting(id, request)
+    );
+}
+
+
+@Operation(
+        summary = "Delete a system setting",
+        description = "Deletes an existing system setting from the system using its unique ID."
+)
+@DeleteMapping("/settings/{id}")
+public ResponseEntity<Void> deleteSetting(
+        @Parameter(
+                description = "Unique ID of the system setting to delete",
+                example = "1"
+        )
+        @PathVariable Long id
+) {
+    adminSystemSettingService.deleteSetting(id);
+
+    return ResponseEntity.noContent().build();
+}
 }

@@ -4,10 +4,10 @@ import { BookOpen, CheckCircle2, Clock3, Plus, Users } from "lucide-react";
 import { getCourses } from "../../api/marketApi.js";
 
 const cards = [
-  ["Total short courses", "BookOpen", "bg-orange-500"],
-  ["Published courses", "CheckCircle2", "bg-blue-700"],
-  ["Draft courses", "Clock3", "bg-slate-700"],
-  ["Available seats", "Users", "bg-emerald-600"],
+  ["Total short courses", "BookOpen", "bg-orange-300"],
+  ["Published courses", "CheckCircle2", "bg-blue-300"],
+  ["Draft courses", "Clock3", "bg-orange-300"],
+  ["Available seats", "Users", "bg-blue-300"],
 ];
 
 export default function MarketDashboardPage() {
@@ -31,7 +31,7 @@ export default function MarketDashboardPage() {
       </div>
       {error && <p className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map(([label, icon, color], index) => { const Icon = { BookOpen, CheckCircle2, Clock3, Users }[icon]; return <div key={label} className={`${color} rounded-xl p-5 text-white shadow-sm`}><Icon className="h-6 w-6 opacity-90" /><p className="mt-7 text-xs font-semibold uppercase tracking-wide text-white/75">{label}</p><p className="mt-1 text-3xl font-extrabold">{values[index]}</p></div>; })}
+        {cards.map(([label, icon, color], index) => { const Icon = { BookOpen, CheckCircle2, Clock3, Users }[icon]; return <div key={label} className={`${color} rounded-xl p-5 text-white shadow-sm font-bold`}><Icon className="h-6 w-6 opacity-90" /><p className="mt-7 text-xs font-semibold uppercase tracking-wide text-white/75">{label}</p><p className="mt-1 text-3xl font-extrabold">{values[index]}</p></div>; })}
       </div>
       <div className="mt-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><h2 className="font-extrabold">Recent courses</h2><Link to="/market/courses" className="text-sm font-bold text-[#07529b]">Manage all</Link></div><div className="overflow-x-auto"><table className="w-full min-w-160 text-left text-sm"><thead className="bg-blue-50 text-xs uppercase tracking-wide text-slate-600"><tr><th className="px-5 py-3">Course</th><th className="px-5 py-3">Category</th><th className="px-5 py-3">Fee</th><th className="px-5 py-3">Status</th></tr></thead><tbody>{courses.slice(0, 5).map((course) => <tr key={course.id} className="border-t border-slate-100"><td className="px-5 py-3 font-semibold">{course.title}</td><td className="px-5 py-3 text-slate-500">{course.categoryName || "Uncategorised"}</td><td className="px-5 py-3">TZS {Number(course.courseFee).toLocaleString()}</td><td className="px-5 py-3"><span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">{course.status}</span></td></tr>)}</tbody></table></div></div>
     </section>

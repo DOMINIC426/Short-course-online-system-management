@@ -8,6 +8,7 @@ const LINKS = [
   ["/market/courses", "Short Courses", BookOpen],
   ["/market/categories", "Categories", Tags],
   ["/market/instructors", "Instructors", Users],
+  ["/market/manage-instructors", "Manage instructors", Users],
   ["/market/settings", "Settings", Settings],
 ];
 
@@ -45,9 +46,6 @@ export default function MarketLayout() {
         <Navigation />
         <div className="border-t border-white/15 p-4">
           <p className="truncate text-xs text-blue-100">{user.email}</p>
-          <button onClick={logout} className="mt-3 flex items-center gap-2 text-sm font-semibold text-white/90 hover:text-white">
-            <LogOut className="h-4 w-4" /> Log out
-          </button>
         </div>
       </aside>
 

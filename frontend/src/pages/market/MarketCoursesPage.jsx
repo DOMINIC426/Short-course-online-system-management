@@ -72,8 +72,8 @@ export default function MarketCoursesPage() {
       setDateError("End date cannot be before the start date.");
     } else if (nextForm.regOpenDate && nextForm.regOpenDate > nextForm.startDate) {
       setDateError("Registration open date cannot be after the course start date.");
-    } else if (nextForm.regCloseDate && nextForm.regCloseDate > nextForm.endDate) {
-      setDateError("Registration close date cannot be after the course end date.");
+    } else if (nextForm.regCloseDate && nextForm.regCloseDate >= nextForm.endDate) {
+      setDateError("Registration close date must be before the course end date.");
     } else if (nextForm.regOpenDate && nextForm.regCloseDate && nextForm.regCloseDate <= nextForm.regOpenDate) {
       setDateError("Registration close date must be after the registration open date.");
     } else if (nextForm.regCloseDate && nextForm.startDate && nextForm.regCloseDate === nextForm.startDate) {
@@ -91,7 +91,7 @@ export default function MarketCoursesPage() {
       if (form.startDate < today) return setDateError("Start date cannot be in the past.");
       if (form.endDate < form.startDate) return setDateError("End date cannot be before the start date.");
       if (form.regOpenDate > form.startDate) return setDateError("Registration open date cannot be after the course start date.");
-      if (form.regCloseDate > form.endDate) return setDateError("Registration close date cannot be after the course end date.");
+      if (form.regCloseDate >= form.endDate) return setDateError("Registration close date must be before the course end date.");
       if (form.regCloseDate <= form.regOpenDate) return setDateError("Registration close date must be after the registration open date.");
       if (form.regCloseDate === form.startDate) return setDateError("Registration close date cannot be the same as the course start date.");
     }

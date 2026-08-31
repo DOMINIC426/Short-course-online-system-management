@@ -24,8 +24,13 @@ import com.scms.dto.market.UpdateShortCourseDto;
 import com.scms.dto.market.CreateCategoryDto;
 import com.scms.dto.market.CategoryResponse;
 import com.scms.dto.market.InstructorResponse;
+import com.scms.dto.market.AssignedCourseResponse;
+import com.scms.dto.market.CreateInstructorDto;
+import com.scms.entity.enums.UserStatus;
+import com.scms.exception.UserAlreadyExistException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -47,6 +52,7 @@ public class MarketService {
     private final CourseCategoryRepository categoryRepository;
     private final VenueRepository venueRepository;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // ************************************************************* CREATE COURSE
     @PreAuthorize("hasRole('MARKETING_OFFICER')")
@@ -205,7 +211,7 @@ public class MarketService {
     @Transactional
     public ShortCourseResponse assignInstructor(Long courseId, Long instructorId) {
         ShortCourse shortCourse = shortCourseRepository.findById(courseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Course not found with ID: " + courseId));
+                .orElseThrow(() -> new ResourceNotFoundException("Course does not exist (ID: " + courseId + ")"));
 
         Users instructorUser = userRepository.findById(instructorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Instructor not found with ID: " + instructorId));
@@ -225,6 +231,55 @@ public class MarketService {
         }
 
         return toResponse(shortCourse);
+    }
+
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional
+    public InstructorResponse createInstructor(CreateInstructorDto request) {
+        ShortCourse course = shortCourseRepository.findById(request.getCourseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Course does not exist (ID: " + request.getCourseId() + ")"));
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new UserAlreadyExistException("An account with this email already exists");
+        }
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new UserAlreadyExistException("An account with this phone number already exists");
+        }
+
+        Users user = userRepository.save(Users.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .passwordHash(passwordEncoder.encode("123456"))
+                .role(Role.INSTRUCTOR)
+                .status(UserStatus.ACTIVE)
+                .build());
+
+        Instructor instructor = instructorRepository.save(Instructor.builder().user(user).build());
+        courseInstructorRepository.save(CourseInstructor.builder()
+                .course(course)
+                .instructor(instructor)
+                .assignedDate(LocalDate.now())
+                .build());
+
+        return new InstructorResponse(
+                instructor.getId(),
+                user.getId(),
+                user.getFirstName() + " " + user.getLastName(),
+                user.getEmail(),
+                user.getStatus().name(),
+                List.of(new AssignedCourseResponse(course.getId(), course.getCourseCode(), course.getTitle())));
+    }
+
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional
+    public String removeInstructorFromCourse(Long courseId, Long instructorId) {
+        CourseInstructor assignment = courseInstructorRepository.findByCourseIdAndInstructorId(courseId, instructorId)
+                .orElseThrow(() -> new ResourceNotFoundException("This instructor is not assigned to the selected course"));
+
+        courseInstructorRepository.delete(assignment);
+        return "Instructor removed from course successfully";
     }
 
         @PreAuthorize("hasRole('MARKETING_OFFICER')")
@@ -250,14 +305,33 @@ public class MarketService {
         @Transactional(readOnly = true)
         public List<InstructorResponse> getInstructors() {
         return instructorRepository.findAll().stream()
-            .map(instructor -> new InstructorResponse(
-                instructor.getId(),
-                instructor.getUser().getId(),
-                instructor.getUser().getFirstName() + " " + instructor.getUser().getLastName(),
-                instructor.getUser().getEmail(),
-                instructor.getUser().getStatus().name()))
+            .map(instructor -> {
+                List<AssignedCourseResponse> assignedCourses = courseInstructorRepository.findAllByInstructorId(instructor.getId()).stream()
+                    .map(assignment -> new AssignedCourseResponse(
+                        assignment.getCourse().getId(),
+                        assignment.getCourse().getCourseCode(),
+                        assignment.getCourse().getTitle()))
+                    .toList();
+                return new InstructorResponse(
+                    instructor.getId(),
+                    instructor.getUser().getId(),
+                    instructor.getUser().getFirstName() + " " + instructor.getUser().getLastName(),
+                    instructor.getUser().getEmail(),
+                    instructor.getUser().getStatus().name(),
+                    assignedCourses);
+            })
             .toList();
         }
+
+    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @Transactional
+    public String deleteInstructor(Long instructorId) {
+        Instructor instructor = instructorRepository.findById(instructorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Instructor does not exist"));
+
+        userRepository.delete(instructor.getUser());
+        return "Instructor deleted successfully";
+    }
 
     // **************************************** VIEW REGISTRATION STATISTICS
     @PreAuthorize("hasRole('MARKETING_OFFICER')")
@@ -312,8 +386,8 @@ public class MarketService {
         if (registrationOpenDate.isAfter(startDate)) {
             throw new IllegalArgumentException("Registration open date cannot be after the course start date");
         }
-        if (registrationCloseDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("Registration close date cannot be after the course end date");
+        if (!registrationCloseDate.isBefore(endDate)) {
+            throw new IllegalArgumentException("Registration close date must be before the course end date");
         }
         if (!registrationOpenDate.isBefore(registrationCloseDate)) {
             throw new IllegalArgumentException("Registration close date must be after the registration open date");

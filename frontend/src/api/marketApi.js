@@ -42,3 +42,11 @@ export async function createInstructor(instructor) {
   const response = await api.post("/api/v1/market/instructors", instructor);
   return response.data;
 }
+
+export async function removeInstructorFromCourse(courseId, instructorId) {
+  return api.delete(`/api/v1/market/courses/${courseId}/instructors/${instructorId}`);
+}
+
+export async function deleteInstructor(instructorId) {
+  return api.delete(`/api/v1/market/instructors/${instructorId}`);
+}

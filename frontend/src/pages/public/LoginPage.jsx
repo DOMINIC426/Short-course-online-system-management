@@ -9,6 +9,10 @@ function redirectPathForRole(role) {
       return "/dashboard";
     case "INSTRUCTOR":
       return "/instructor/dashboard";
+    case "MARKETING_OFFICER":
+    case "MARKET_OFFICER":
+    case "MARKET":
+      return "/market/dashboard"; // Added leading slash '/'
     default:
       return "/dashboard";
   }

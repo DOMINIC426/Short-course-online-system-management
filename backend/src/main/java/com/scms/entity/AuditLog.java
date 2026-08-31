@@ -8,14 +8,17 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "audit_logs",
+@Table(
+        name = "audit_logs",
         indexes = {
                 @Index(name = "idx_audit_user", columnList = "user_id"),
                 @Index(name = "idx_audit_entity", columnList = "entity, entity_id"),
                 @Index(name = "idx_audit_timestamp", columnList = "timestamp")
-        })
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,6 +29,9 @@ public class AuditLog extends BaseEntity {
     @JoinColumn(name = "user_id")
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private Users user;
+
+    @Column(name = "timestamp", nullable = false)
+    private LocalDateTime timestamp;
 
     @Column(name = "action", nullable = false, length = 30)
     private String action;
@@ -41,4 +47,11 @@ public class AuditLog extends BaseEntity {
 
     @Column(name = "new_value", columnDefinition = "TEXT")
     private String newValue;
+
+    @PrePersist
+    protected void onAuditCreate() {
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now();
+        }
+    }
 }

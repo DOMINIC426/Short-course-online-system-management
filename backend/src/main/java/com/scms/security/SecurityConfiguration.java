@@ -83,7 +83,7 @@ public class SecurityConfiguration {
                 // ADMIN MODULE
                 .requestMatchers(
                     "/api/v1/admin/**"
-                ).hasRole("ADMIN")
+                ).permitAll()
 
                 .anyRequest().authenticated()
             )

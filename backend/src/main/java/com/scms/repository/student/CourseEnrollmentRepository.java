@@ -16,6 +16,8 @@ public interface CourseEnrollmentRepository extends JpaRepository<CourseEnrollme
     Optional<CourseEnrollment> findByStudentAndCourse(Student student, ShortCourse course);
 
     long countByCourse(ShortCourse course);
+    long countByCourseId(Long courseId);
+
 
      Optional<CourseEnrollment> findByControlNumber(String controlNumber);
      

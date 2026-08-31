@@ -19,7 +19,12 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  async function fetchUserProfile() {
+  async function fetchUserProfile(targetUser = user) {
+    // Skip profile fetch if the user is not a student (e.g., INSTRUCTOR)
+    if (targetUser?.role && targetUser.role !== "STUDENT") {
+      return;
+    }
+
     try {
       const response = await api.get("/api/v1/student/profile");
       const profileData = response.data;
@@ -31,7 +36,6 @@ export function AuthProvider({ children }) {
             firstName: profileData.firstName || prev?.firstName || "",
             lastName: profileData.lastName || prev?.lastName || "",
             email: profileData.email || prev?.email || "",
-            role: profileData.role || prev?.role || "STUDENT",
             nationality: profileData.nationality || prev?.nationality || "",
             levelOfEducation: profileData.levelOfEducation || prev?.levelOfEducation || "",
             identificationNumber: profileData.identificationNumber || prev?.identificationNumber || "",
@@ -41,14 +45,14 @@ export function AuthProvider({ children }) {
         });
       }
     } catch (err) {
-      console.warn("Could not fetch profile from backend:", err);
+      console.warn("Skipping profile fetch for non-student or missing record:", err);
     }
   }
 
   useEffect(() => {
     const token = localStorage.getItem("scms_token");
-    if (token) {
-      fetchUserProfile();
+    if (token && user) {
+      fetchUserProfile(user);
     }
   }, []);
 
@@ -79,7 +83,10 @@ export function AuthProvider({ children }) {
       localStorage.setItem("scms_token", token);
       localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
 
-      await fetchUserProfile();
+      // Fetch student profile only if logged in user has the STUDENT role
+      if (loggedInUser.role === "STUDENT") {
+        await fetchUserProfile(loggedInUser);
+      }
 
       return loggedInUser;
     } catch (err) {

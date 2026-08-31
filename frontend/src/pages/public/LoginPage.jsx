@@ -8,7 +8,7 @@ function redirectPathForRole(role) {
     case "STUDENT":
       return "/dashboard";
     case "INSTRUCTOR":
-      return "/instructor";
+      return "/instructor/dashboard";
     default:
       return "/dashboard";
   }

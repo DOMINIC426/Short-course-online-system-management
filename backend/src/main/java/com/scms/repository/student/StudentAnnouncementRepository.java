@@ -2,12 +2,12 @@ package com.scms.repository.student;
 
 import com.scms.entity.Announcement;
 import com.scms.entity.Student;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface StudentAnnouncementRepository extends JpaRepository<Announcement, Long> {
@@ -19,5 +19,5 @@ public interface StudentAnnouncementRepository extends JpaRepository<Announcemen
             )
             ORDER BY a.createdAt DESC
             """)
-    List<Announcement> findAllForStudent(@Param("student") Student student);
+    Page<Announcement> findAllForStudent(@Param("student") Student student, Pageable pageable);
 }

@@ -1,13 +1,19 @@
 package com.scms.service.student;
 
+import com.scms.dto.student.PaginatedResponse;
 import com.scms.dto.student.PaymentHistoryResponse;
 import com.scms.entity.PaymentTransaction;
 import com.scms.entity.Student;
 import com.scms.entity.Users;
+import com.scms.exception.ResourceNotFoundException;
 import com.scms.repository.UserRepository;
 import com.scms.repository.student.StudentPaymentRepository;
 import com.scms.repository.student.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,18 +30,29 @@ public class StudentPaymentService {
     private final StudentPaymentRepository paymentRepository;
 
     @Transactional(readOnly = true)
-    public List<PaymentHistoryResponse> getMyPayments() {
+    public PaginatedResponse<PaymentHistoryResponse> getMyPayments(int page, int size) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Users user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Student student = studentRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Student profile not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Student profile not found"));
 
-        List<PaymentTransaction> payments = paymentRepository.findAllByStudent(student);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("paymentDate").descending());
+        Page<PaymentTransaction> paymentPage = paymentRepository.findAllByStudent(student, pageable);
 
-        return payments.stream()
+        List<PaymentHistoryResponse> content = paymentPage.getContent().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+
+        return PaginatedResponse.<PaymentHistoryResponse>builder()
+                .content(content)
+                .page(paymentPage.getNumber())
+                .size(paymentPage.getSize())
+                .totalElements(paymentPage.getTotalElements())
+                .totalPages(paymentPage.getTotalPages())
+                .last(paymentPage.isLast())
+                .first(paymentPage.isFirst())
+                .build();
     }
 
     private PaymentHistoryResponse mapToResponse(PaymentTransaction payment) {

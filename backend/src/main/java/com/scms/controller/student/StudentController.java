@@ -27,8 +27,18 @@ public class StudentController {
 
     // --- Public course catalogue ---
     @GetMapping("/courses/public")
-    public ResponseEntity<List<CourseResponse>> getPublicCourses() {
-        return ResponseEntity.ok(courseService.getPublicCourses());
+    public ResponseEntity<PaginatedResponse<CourseResponse>> getPublicCourses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "title") String sortBy,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(courseService.getPublicCourses(page, size, sortBy, categoryId, keyword));
+    }
+
+    @GetMapping("/courses/{courseId}")
+    public ResponseEntity<CourseDetailResponse> getCourseDetail(@PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.getCourseDetail(courseId));
     }
 
     // --- Student registration ---
@@ -39,7 +49,7 @@ public class StudentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // --- Course enrollment (student only) ---
+    // --- Course enrollment ---
     @PostMapping("/enroll")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<EnrollmentResponse> enrollInCourse(
@@ -48,28 +58,34 @@ public class StudentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // --- Student dashboard (student only) ---
+    // --- Student dashboard ---
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<List<EnrollmentResponse>> getDashboard() {
-        return ResponseEntity.ok(dashboardService.getMyEnrollments());
+    public ResponseEntity<PaginatedResponse<EnrollmentResponse>> getDashboard(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(dashboardService.getMyEnrollments(page, size));
     }
 
-    // --- Payment history (student only) ---
+    // --- Payment history ---
     @GetMapping("/payments")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<List<PaymentHistoryResponse>> getPaymentHistory() {
-        return ResponseEntity.ok(paymentService.getMyPayments());
+    public ResponseEntity<PaginatedResponse<PaymentHistoryResponse>> getPaymentHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(paymentService.getMyPayments(page, size));
     }
 
-    // --- Announcements for student ---
+    // --- Announcements ---
     @GetMapping("/announcements")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<List<StudentAnnouncementResponse>> getMyAnnouncements() {
-        return ResponseEntity.ok(announcementService.getMyAnnouncements());
+    public ResponseEntity<PaginatedResponse<StudentAnnouncementResponse>> getMyAnnouncements(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(announcementService.getMyAnnouncements(page, size));
     }
 
-    // --- Certificate eligibility status ---
+    // --- Certificate eligibility ---
     @GetMapping("/certificates")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<List<StudentCertificateResponse>> getMyCertificates() {
@@ -79,7 +95,16 @@ public class StudentController {
     // --- Notifications ---
     @GetMapping("/notifications")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<List<StudentNotificationResponse>> getMyNotifications() {
-        return ResponseEntity.ok(notificationService.getMyNotifications());
+    public ResponseEntity<PaginatedResponse<StudentNotificationResponse>> getMyNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(notificationService.getMyNotifications(page, size));
+    }
+
+    @PatchMapping("/notifications/{notificationId}/read")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<Void> markNotificationAsRead(@PathVariable Long notificationId) {
+        notificationService.markAsRead(notificationId);
+        return ResponseEntity.ok().build();
     }
 }

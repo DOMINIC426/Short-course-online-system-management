@@ -5,7 +5,8 @@ import com.scms.dto.admin.SystemSettingResponse;
 import com.scms.dto.admin.UpdateSystemSettingRequest;
 import com.scms.entity.SystemSetting;
 import com.scms.exception.UserNotFoundException;
-import com.scms.repository.SystemSettingRepository;
+import com.scms.repository.admin.SystemSettingRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

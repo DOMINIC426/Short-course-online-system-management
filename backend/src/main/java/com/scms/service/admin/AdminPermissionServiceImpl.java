@@ -5,7 +5,8 @@ import com.scms.dto.admin.PermissionResponse;
 import com.scms.dto.admin.UpdatePermissionRequest;
 import com.scms.entity.Permission;
 import com.scms.exception.UserNotFoundException;
-import com.scms.repository.PermissionRepository;
+import com.scms.repository.admin.PermissionRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

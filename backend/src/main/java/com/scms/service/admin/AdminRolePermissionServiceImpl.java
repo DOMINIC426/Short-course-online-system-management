@@ -6,8 +6,9 @@ import com.scms.entity.Permission;
 import com.scms.entity.RolePermission;
 import com.scms.entity.enums.Role;
 import com.scms.exception.UserNotFoundException;
-import com.scms.repository.PermissionRepository;
-import com.scms.repository.RolePermissionRepository;
+import com.scms.repository.admin.PermissionRepository;
+import com.scms.repository.admin.RolePermissionRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

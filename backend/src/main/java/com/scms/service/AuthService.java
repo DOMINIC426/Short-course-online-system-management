@@ -5,6 +5,7 @@ import com.scms.dto.LoginResponse;
 import com.scms.dto.RegisterUserRequest;
 import com.scms.dto.RegisterResponse;
 import com.scms.entity.Users;
+import com.scms.service.admin.AuditLogService;
 import com.scms.entity.enums.Role;
 import com.scms.entity.enums.UserStatus;
 import com.scms.exception.UserAlreadyExistException;
@@ -30,6 +31,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public RegisterResponse register(RegisterUserRequest request) {
@@ -49,6 +51,9 @@ public class AuthService {
                 .build();
 
         Users savedUser = userRepository.save(user);
+
+        // Audit log
+        auditLogService.logAction("CREATE", "USER", savedUser.getId(), null, savedUser.getEmail(), savedUser);
 
         RegisterResponse response = new RegisterResponse();
         response.setId(savedUser.getId());
@@ -81,6 +86,9 @@ public class AuthService {
                 .build();
 
         String token = jwtService.generateToken(userDetails);
+
+        // Audit log
+        auditLogService.logAction("LOGIN", "USER", user.getId(), null, user.getEmail(), user);
 
         return LoginResponse.builder()
                 .token(token)

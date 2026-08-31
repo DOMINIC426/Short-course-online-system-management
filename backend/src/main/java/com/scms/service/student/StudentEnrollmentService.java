@@ -9,14 +9,15 @@ import com.scms.entity.Users;
 import com.scms.entity.enums.CourseStatus;
 import com.scms.entity.enums.EnrollmentStatus;
 import com.scms.entity.enums.PaymentStatus;
-import com.scms.exception.UserNotFoundException;
+import com.scms.exception.BusinessRuleViolationException;
+import com.scms.exception.ResourceNotFoundException;
 import com.scms.repository.UserRepository;
-import com.scms.repository.student.StudentCourseRepository;
+import com.scms.service.admin.AuditLogService;
 import com.scms.repository.student.CourseEnrollmentRepository;
+import com.scms.repository.student.StudentCourseRepository;
 import com.scms.repository.student.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,78 +33,76 @@ public class StudentEnrollmentService {
     private final CourseEnrollmentRepository enrollmentRepository;
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
-
+    private final AuditLogService auditLogService;
     @Transactional
     public EnrollmentResponse enroll(EnrollmentRequest request) {
-        // Get current authenticated user email
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
         Users user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Ensure the current user is a student
         Student student = studentRepository.findByUser(user)
-                .orElseThrow(() -> new UserNotFoundException("Student profile not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Student profile not found"));
 
-        // Fetch course with pessimistic lock to avoid overbooking
         ShortCourse course = courseRepository.findByIdForUpdate(request.getCourseId())
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
 
-        // Business rule checks
         validateEnrollmentEligibility(student, course);
 
-        // Create enrollment
         CourseEnrollment enrollment = CourseEnrollment.builder()
                 .student(student)
                 .course(course)
                 .registrationDate(LocalDateTime.now())
                 .enrollmentStatus(EnrollmentStatus.REGISTERED)
                 .paymentStatus(PaymentStatus.UNPAID)
-                .controlNumber(generateControlNumber())
+                .controlNumber(generateUniqueControlNumber())
                 .amountRequired(course.getCourseFee())
                 .amountPaid(BigDecimal.ZERO)
                 .balance(course.getCourseFee())
                 .build();
 
         CourseEnrollment saved = enrollmentRepository.save(enrollment);
-
+        auditLogService.logAction("CREATE", "ENROLLMENT", saved.getId(), null, student.getId().toString(), user);
         return mapToResponse(saved);
     }
 
     private void validateEnrollmentEligibility(Student student, ShortCourse course) {
-        // Course must be published or registration open
         if (course.getStatus() != CourseStatus.PUBLISHED &&
             course.getStatus() != CourseStatus.REGISTRATION_OPEN) {
-            throw new IllegalStateException("Course is not open for registration");
+            throw new BusinessRuleViolationException("Course is not open for registration");
         }
 
-        // Check registration dates
         LocalDateTime now = LocalDateTime.now();
         if (course.getRegOpenDate() != null && now.isBefore(course.getRegOpenDate().atStartOfDay())) {
-            throw new IllegalStateException("Registration has not started yet");
+            throw new BusinessRuleViolationException("Registration has not started yet");
         }
         if (course.getRegCloseDate() != null && now.isAfter(course.getRegCloseDate().plusDays(1).atStartOfDay())) {
-            throw new IllegalStateException("Registration has closed");
+            throw new BusinessRuleViolationException("Registration has closed");
         }
 
-        // Check capacity
         long enrolledCount = enrollmentRepository.countByCourse(course);
         if (course.getMaxStudents() != null && enrolledCount >= course.getMaxStudents()) {
-            throw new IllegalStateException("Course is full");
+            throw new BusinessRuleViolationException("Course is full");
         }
 
-        // Check duplicate enrollment
         boolean alreadyEnrolled = enrollmentRepository
                 .findByStudentAndCourse(student, course)
                 .isPresent();
         if (alreadyEnrolled) {
-            throw new IllegalStateException("Student is already enrolled in this course");
+            throw new BusinessRuleViolationException("Student is already enrolled in this course");
         }
     }
 
-    private String generateControlNumber() {
-        // Simple unique control number; can be enhanced with format
-        return "CTRL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    private String generateUniqueControlNumber() {
+        String controlNumber;
+        int attempts = 0;
+        do {
+            controlNumber = "CTRL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            attempts++;
+        } while (enrollmentRepository.findByControlNumber(controlNumber).isPresent() && attempts < 5);
+        if (attempts >= 5) {
+            throw new IllegalStateException("Unable to generate unique control number");
+        }
+        return controlNumber;
     }
 
     private EnrollmentResponse mapToResponse(CourseEnrollment enrollment) {

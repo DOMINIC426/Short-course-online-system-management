@@ -1,4 +1,4 @@
-package com.scms.repository;
+package com.scms.repository.admin;
 
 import com.scms.entity.RolePermission;
 import com.scms.entity.enums.Role;

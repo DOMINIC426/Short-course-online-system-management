@@ -3,7 +3,8 @@ package com.scms.service.admin;
 import com.scms.dto.admin.AuditLogResponse;
 import com.scms.entity.AuditLog;
 import com.scms.exception.UserNotFoundException;
-import com.scms.repository.AuditLogRepository;
+import com.scms.repository.admin.AuditLogRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

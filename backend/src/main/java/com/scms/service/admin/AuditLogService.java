@@ -2,8 +2,9 @@ package com.scms.service.admin;
 
 import com.scms.entity.AuditLog;
 import com.scms.entity.Users;
-import com.scms.repository.AuditLogRepository;
 import com.scms.repository.UserRepository;
+import com.scms.repository.admin.AuditLogRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

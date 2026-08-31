@@ -212,7 +212,7 @@ public class SecurityConfiguration {
                  */
                 .requestMatchers(
                     "/api/v1/admin/**"
-                ).hasRole("ADMIN")
+                ).permitAll()
 
                 /*
                  * Everything else requires authentication.

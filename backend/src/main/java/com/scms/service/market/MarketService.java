@@ -13,7 +13,7 @@ import com.scms.entity.enums.CourseStatus;
 import com.scms.entity.enums.Role;
 import com.scms.exception.CourseAlreadyExistException;
 import com.scms.exception.ResourceNotFoundException;
-import com.scms.repository.CourseEnrollmentRepository;
+import com.scms.repository.student.CourseEnrollmentRepository;
 import com.scms.repository.CourseInstructorRepository;
 import com.scms.repository.CourseCategoryRepository;
 import com.scms.repository.InstructorRepository;

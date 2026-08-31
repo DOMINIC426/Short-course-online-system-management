@@ -1,11 +1,20 @@
 import { useState } from "react";
 import { Outlet, Navigate, Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-<<<<<<< HEAD:frontend/src/components/PortalLayout.jsx
-import { LayoutDashboard, FileText, CreditCard, CalendarCheck, Award, UserCircle, ClipboardCheck, MessageSquare, Menu, X, LogOut } from "lucide-react";
-=======
-import { LayoutDashboard, FileText, CreditCard, Megaphone, Award, UserCircle, BookOpen, Menu, X, LogOut } from "lucide-react";
->>>>>>> a4f1965724c3fd04c95910c636ef10f350d16671:frontend/src/layouts/StudentLayout.jsx
+import {
+  LayoutDashboard,
+  FileText,
+  CreditCard,
+  Award,
+  UserCircle,
+  ClipboardCheck,
+  MessageSquare,
+  Menu,
+  X,
+  LogOut,
+  BookOpen,
+  Megaphone,
+} from "lucide-react";
 
 const STUDENT_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -80,20 +89,24 @@ export default function StudentLayout() {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const displayName =
+    user.fullName ||
+    (user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.username);
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       {/* Desktop sidebar */}
       <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-slate-200 bg-white sm:flex">
         <Link to="/" className="flex items-center gap-2 border-b border-slate-200 px-6 py-5">
           <img src="/udom-logo.png" alt="University of Dodoma logo" className="h-8 w-8" />
-          <span className="text-sm font-semibold text-slate-900">{isInstructor ? "Instructor Portal" : "Student Portal"}</span>
+          <span className="text-sm font-semibold text-slate-900">
+            {isInstructor ? "Instructor Portal" : "Student Portal"}
+          </span>
         </Link>
         <SidebarLinks links={portalLinks} />
         <div className="border-t border-slate-200 px-3 py-4">
           <p className="px-3 text-xs text-slate-500">Signed in as</p>
-          <p className="truncate px-3 text-sm font-semibold text-slate-900">
-            {user.fullName || user.username}
-          </p>
+          <p className="truncate px-3 text-sm font-semibold text-slate-900">{displayName}</p>
           <LogoutButton onClick={logout} />
         </div>
       </aside>
@@ -107,16 +120,21 @@ export default function StudentLayout() {
           />
           <aside className="absolute left-0 top-0 flex h-full w-64 flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-              <span className="text-sm font-semibold text-slate-900">Student Portal</span>
-              <button onClick={() => setIsDrawerOpen(false)} className="text-slate-500" aria-label="Close menu">
+              <span className="text-sm font-semibold text-slate-900">
+                {isInstructor ? "Instructor Portal" : "Student Portal"}
+              </span>
+              <button
+                onClick={() => setIsDrawerOpen(false)}
+                className="text-slate-500"
+                aria-label="Close menu"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <SidebarLinks links={portalLinks} onLinkClick={() => setIsDrawerOpen(false)} />
             <div className="border-t border-slate-200 px-3 py-4">
-              <p className="truncate px-3 text-sm font-semibold text-slate-900">
-               {user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.username}
-              </p>
+              <p className="px-3 text-xs text-slate-500">Signed in as</p>
+              <p className="truncate px-3 text-sm font-semibold text-slate-900">{displayName}</p>
               <LogoutButton onClick={logout} />
             </div>
           </aside>
@@ -133,7 +151,9 @@ export default function StudentLayout() {
           >
             <Menu className="h-5 w-5 text-slate-700" />
           </button>
-          <span className="text-sm font-semibold text-slate-900">{isInstructor ? "Instructor Portal" : "Student Portal"}</span>
+          <span className="text-sm font-semibold text-slate-900">
+            {isInstructor ? "Instructor Portal" : "Student Portal"}
+          </span>
           <div className="w-9" />
         </header>
 

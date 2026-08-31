@@ -3,6 +3,7 @@ import { api } from "../api/backendClient.js";
 
 const AuthContext = createContext(null);
 
+<<<<<<< HEAD
 function decodeToken(token) {
   try {
     const payload = token.split(".")[1];
@@ -11,6 +12,14 @@ function decodeToken(token) {
   } catch {
     return null;
   }
+=======
+function normalizeProfileFields(data) {
+  return {
+    levelOfEducation: data.levelOfEducation ?? data.level_of_education ?? "",
+    nationality: data.nationality ?? "",
+    identificationNumber: data.identificationNumber ?? data.identification_number ?? "",
+  };
+>>>>>>> a4f1965724c3fd04c95910c636ef10f350d16671
 }
 
 export function AuthProvider({ children }) {
@@ -19,8 +28,9 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  async function login(username, password) {
+  async function login(email, password) {
     try {
+<<<<<<< HEAD
       const response = await api.post("/api/v1/auth/login", { email: username, password });
       const token = response.data;
       const claims = decodeToken(token);
@@ -32,6 +42,10 @@ export function AuthProvider({ children }) {
         role: String(claims?.role || "STUDENT").toUpperCase(),
         token,
       };
+=======
+      const response = await api.post("/api/v1/auth/login", { email, password });
+      const loggedInUser = response.data;
+>>>>>>> a4f1965724c3fd04c95910c636ef10f350d16671
       setUser(loggedInUser);
       localStorage.setItem("scms_token", token);
       localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
@@ -40,12 +54,19 @@ export function AuthProvider({ children }) {
       // TEMPORARY fallback until backend auth is ready — remove once CORS/endpoint is fixed
       const fakeRole = username.toLowerCase().includes("instructor") ? "INSTRUCTOR" : "STUDENT";
       const fakeUser = {
+<<<<<<< HEAD
         username,
         firstName: username,
         lastName: "",
         email: "",
         phone: "",
         role: fakeRole,
+=======
+        firstName: "Test",
+        lastName: "Student",
+        email,
+        role: "STUDENT",
+>>>>>>> a4f1965724c3fd04c95910c636ef10f350d16671
       };
       setUser(fakeUser);
       localStorage.removeItem("scms_token");
@@ -54,30 +75,36 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function register({ firstName, lastName, username, email, phone, password }) {
+  async function register({ firstName, lastName, email, password }) {
     try {
-      const response = await api.post("/api/auth/register", {
+      const response = await api.post("/api/v1/auth/register", {
         first_name: firstName,
         last_name: lastName,
-        username,
         email,
-        phone,
         password,
+        role: "STUDENT",
       });
       return response.data;
     } catch (err) {
-      // TEMPORARY fallback until backend auth is ready — to be removed once CORS/endpoint is fixed
-      return { firstName, lastName, username, email, phone };
+      // TEMPORARY fallback until backend auth is ready — remove once CORS/endpoint is fixed
+      return { firstName, lastName, email };
     }
   }
 
-  async function forgotPassword(identifier) {
-    const response = await api.post("/api/auth/forgot-password", { identifier });
+  async function updateProfile({ levelOfEducation, nationality, identificationNumber }) {
+    const updatedUser = { ...user, levelOfEducation, nationality, identificationNumber };
+    setUser(updatedUser);
+    localStorage.setItem("scms_user", JSON.stringify(updatedUser));
+    return updatedUser;
+  }
+
+  async function forgotPassword(email) {
+    const response = await api.post("/api/v1/auth/forgot-password", { email });
     return response.data;
   }
 
   async function resetPassword(token, newPassword) {
-    const response = await api.post("/api/auth/reset-password", { token, newPassword });
+    const response = await api.post("/api/v1/auth/reset-password", { token, newPassword });
     return response.data;
   }
 
@@ -89,7 +116,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, forgotPassword, resetPassword }}
+      value={{ user, login, register, logout, forgotPassword, resetPassword, updateProfile }}
     >
       {children}
     </AuthContext.Provider>

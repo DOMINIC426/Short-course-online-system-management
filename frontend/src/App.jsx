@@ -30,7 +30,7 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Route>
 
-      <Route element={<PortalLayout />}>
+      <Route element={<StudentLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/instructor" element={<Instructor />} />
         <Route path="/instructor/courses" element={<MyCoursesPage />} />

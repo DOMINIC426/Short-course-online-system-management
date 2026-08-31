@@ -2,6 +2,7 @@ package com.scms.repository;
 
 import com.scms.entity.Users;
 import com.scms.entity.enums.Role;
+import com.scms.entity.enums.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,9 +20,35 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     List<Users> findAllByRole(Role role);
 
-
-    @Query("SELECT u FROM Users u WHERE u.role = :role AND u.email LIKE %:domain%")
-    List<Users> findUsersByRoleAndEmailDomain(@Param("role") Role role, @Param("domain") String domain);
+    List<Users> findAllByOrderByCreatedAtDesc();
 
     long countByRole(Role role);
+
+    long countByStatus(UserStatus status);
+
+    boolean existsByEmailAndIdNot(String email, Long id);
+
+    boolean existsByPhoneAndIdNot(String phone, Long id);
+
+    @Query("""
+            SELECT u
+            FROM Users u
+            WHERE u.role = :role
+            AND u.email LIKE %:domain%
+            """)
+    List<Users> findUsersByRoleAndEmailDomain(
+            @Param("role") Role role,
+            @Param("domain") String domain
+    );
+
+    @Query("""
+            SELECT CASE
+                WHEN COUNT(u) > 0
+                THEN true
+                ELSE false
+            END
+            FROM Users u
+            WHERE u.phone = :phone
+            """)
+    boolean existsByPhone(@Param("phone") String phone);
 }

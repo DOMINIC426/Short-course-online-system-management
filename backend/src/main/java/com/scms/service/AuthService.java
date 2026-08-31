@@ -1,6 +1,7 @@
 package com.scms.service;
 
 import com.scms.dto.LoginRequest;
+import com.scms.dto.LoginResponse;
 import com.scms.dto.RegisterUserRequest;
 import com.scms.dto.RegisterResponse;
 import com.scms.entity.Users;
@@ -50,19 +51,17 @@ public class AuthService {
         Users savedUser = userRepository.save(user);
 
         RegisterResponse response = new RegisterResponse();
-        response.setId(savedUser.getId());               // UUID directly
+        response.setId(savedUser.getId());
         response.setFirstName(savedUser.getFirstName());
         response.setLastName(savedUser.getLastName());
         response.setEmail(savedUser.getEmail());
         response.setPhone(savedUser.getPhone());
         response.setRole(savedUser.getRole());
-        // token not set here
-
         return response;
     }
 
     @Transactional(readOnly = true)
-    public String login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
         Users user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User with email " + request.getEmail() + " not found"));
 
@@ -81,6 +80,13 @@ public class AuthService {
                 .disabled(user.getStatus() != UserStatus.ACTIVE)
                 .build();
 
-        return jwtService.generateToken(userDetails);
+        String token = jwtService.generateToken(userDetails);
+
+        return LoginResponse.builder()
+                .token(token)
+                .userId(user.getId())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .build();
     }
-}   
+}

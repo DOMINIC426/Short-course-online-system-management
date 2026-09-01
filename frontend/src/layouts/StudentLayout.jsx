@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, Navigate, Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
@@ -14,6 +14,7 @@ import {
   LogOut,
   BookOpen,
   Megaphone,
+  Bell,
 } from "lucide-react";
 
 const STUDENT_LINKS = [
@@ -45,10 +46,10 @@ function SidebarLinks({ links, onLinkClick }) {
             to={link.to}
             onClick={onLinkClick}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
+              `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
                 isActive
-                  ? "bg-udom-primary/10 text-udom-primary"
-                  : "text-slate-600 hover:bg-slate-100"
+                  ? "bg-white/12 text-white shadow-sm ring-1 ring-white/10"
+                  : "text-blue-100 hover:bg-white/10 hover:text-white"
               }`
             }
           >
@@ -65,7 +66,7 @@ function LogoutButton({ onClick }) {
   return (
     <button
       onClick={onClick}
-      className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+      className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/8 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 hover:text-white"
     >
       <LogOut className="h-4 w-4" strokeWidth={2} />
       Log out
@@ -76,13 +77,47 @@ function LogoutButton({ onClick }) {
 export default function StudentLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const userMenuRef = useRef(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const isInstructor = String(user?.role || "").toUpperCase() === "INSTRUCTOR";
   const isInstructorRoute = location.pathname.startsWith("/instructor");
   const portalLinks = isInstructor ? INSTRUCTOR_LINKS : STUDENT_LINKS;
-  const displayName = user?.firstName
+  const displayName = user && user.firstName
     ? `${user.firstName} ${user.lastName || ""}`.trim()
     : user?.email || "Student";
+  const initials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "JD";
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+
+    function handleEscapeKey(event) {
+      if (event.key === "Escape") {
+        setIsUserMenuOpen(false);
+        setIsDrawerOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscapeKey);
+
+    document.body.style.overflow = isDrawerOpen ? "hidden" : "";
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+      document.body.style.overflow = "";
+    };
+  }, [isDrawerOpen]);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -105,70 +140,125 @@ export default function StudentLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-slate-200 bg-white sm:flex">
-        <Link to="/" className="flex items-center gap-2 border-b border-slate-200 px-6 py-5">
-          <img src="/udom-logo.png" alt="University of Dodoma logo" className="h-8 w-8" />
-          <span className="text-sm font-semibold text-slate-900">
-            {isInstructor ? "Instructor Portal" : "Student Portal"}
-          </span>
-        </Link>
-        <SidebarLinks links={portalLinks} />
-        <div className="border-t border-slate-200 px-3 py-4">
-          <p className="px-3 text-xs text-slate-500">Signed in as</p>
-          <p className="truncate px-3 text-sm font-semibold text-slate-900">{displayName}</p>
-          <LogoutButton onClick={logout} />
+    <div className="flex min-h-screen bg-[#edf2f8] text-slate-800">
+      <aside className="hidden w-[290px] flex-shrink-0 flex-col bg-[#0b4d94] text-white sm:flex">
+        <div className="flex items-center gap-3 px-5 py-5">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20">
+            <img src="/udom-logo.png" alt="University of Dodoma logo" className="h-8 w-8" />
+          </div>
+          <div className="leading-tight">
+            <p className="text-[1.05rem] font-bold">University of Dodoma</p>
+            <p className="text-[11px] text-white/75">Embracing Knowledge</p>
+          </div>
         </div>
+
+        <SidebarLinks links={portalLinks} />
       </aside>
 
-      {/* Mobile drawer overlay */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-40 sm:hidden">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-slate-900/40"
             onClick={() => setIsDrawerOpen(false)}
           />
-          <aside className="absolute left-0 top-0 flex h-full w-64 flex-col bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-              <span className="text-sm font-semibold text-slate-900">
-                {isInstructor ? "Instructor Portal" : "Student Portal"}
-              </span>
+          <aside className="absolute left-0 top-0 flex h-full w-[280px] flex-col bg-[#0b4d94] text-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20">
+                  <img src="/udom-logo.png" alt="University of Dodoma logo" className="h-7 w-7" />
+                </div>
+                <span className="text-sm font-bold">Student Portal</span>
+              </div>
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="text-slate-500"
+                className="rounded-lg p-2 text-white/80 transition hover:bg-white/5"
                 aria-label="Close menu"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <SidebarLinks links={portalLinks} onLinkClick={() => setIsDrawerOpen(false)} />
-            <div className="border-t border-slate-200 px-3 py-4">
-              <p className="px-3 text-xs text-slate-500">Signed in as</p>
-              <p className="truncate px-3 text-sm font-semibold text-slate-900">{displayName}</p>
-              <LogoutButton onClick={logout} />
-            </div>
           </aside>
         </div>
       )}
 
       <div className="flex flex-1 flex-col">
-        {/* Mobile top bar */}
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:hidden">
-          <button
-            onClick={() => setIsDrawerOpen(true)}
-            className="p-2"
-            aria-label="Open menu"
-          >
-            <Menu className="h-5 w-5 text-slate-700" />
-          </button>
-          <span className="text-sm font-semibold text-slate-900">
-            {isInstructor ? "Instructor Portal" : "Student Portal"}
-          </span>
-          <div className="w-9" />
+        <header className="flex h-[90px] items-center justify-between border-b border-slate-200 bg-white px-5 shadow-sm sm:px-8">
+          <div className="flex items-center gap-3 sm:hidden">
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="rounded-lg p-2 text-slate-700 transition hover:bg-slate-100"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="hidden flex-1 sm:block" />
+
+          <div className="flex items-center gap-3">
+            <Link
+              to="/announcements"
+              onClick={() => setIsUserMenuOpen(false)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100"
+              aria-label="Announcements"
+            >
+              <Bell className="h-4 w-4" strokeWidth={2} />
+            </Link>
+
+            <div ref={userMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsUserMenuOpen((value) => !value)}
+                className="flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-2 py-1.5 text-left shadow-sm transition hover:bg-slate-100"
+              >
+                <div className="relative">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0b4d94] text-xs font-bold text-white">
+                    {initials}
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_0_2px_rgba(16,185,129,0.18)] animate-pulse">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                  </span>
+                </div>
+              </button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 top-full z-50 mt-3 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                  <div className="flex items-center gap-3 px-2 py-2">
+                    <div className="relative">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0b4d94] text-sm font-bold text-white">
+                        {initials}
+                      </div>
+                      <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14),0_0_18px_rgba(52,211,153,0.9)] animate-pulse" aria-label="online status">
+                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{displayName}</p>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-emerald-600">
+                        Online
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      logout();
+                    }}
+                    className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-red-600"
+                  >
+                    <LogOut className="h-4 w-4" strokeWidth={2} />
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </header>
 
-        <main className="flex-1">
+        <main className="flex-1 px-5 py-6 sm:px-8 sm:py-8">
           <Outlet />
         </main>
       </div>

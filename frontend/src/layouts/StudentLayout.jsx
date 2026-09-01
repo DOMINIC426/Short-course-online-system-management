@@ -85,13 +85,21 @@ export default function StudentLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  if (isInstructorRoute && !isInstructor) {
-    return <Navigate to="/dashboard" replace />;
+  // Only STUDENT role can access this layout
+  if (user.role !== "STUDENT") {
+    // Redirect to appropriate dashboard based on their role
+    const rolePathMap = {
+      ADMIN: "/admin/dashboard",
+      COORDINATOR: "/coordinator/dashboard",
+      INSTRUCTOR: "/instructor/dashboard",
+      MARKETING_OFFICER: "/market/dashboard",
+    };
+    const redirectPath = rolePathMap[user.role];
+    if (redirectPath) {
+      return <Navigate to={redirectPath} replace />;
+    }
+    return <Navigate to="/login" replace />;
   }
-
-  const displayName =
-    user.fullName ||
-    (user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.username);
 
   return (
     <div className="flex min-h-screen bg-slate-50">

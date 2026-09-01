@@ -8,8 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -21,20 +23,18 @@ public class AuditLogService {
     /**
      * Logs an action performed by the currently authenticated user.
      *
-     * This method automatically obtains the current user from
-     * Spring Security's SecurityContext.
+     * REQUIRES_NEW is intentionally used because audit logging
+     * is a WRITE operation.
      *
-     * Example:
+     * This ensures that the audit INSERT gets its own writable
+     * transaction even when the calling service is using:
      *
-     * auditLogService.log(
-     *     "CREATE",
-     *     "COURSE",
-     *     course.getId(),
-     *     null,
-     *     course.toString()
-     * );
+     * @Transactional(readOnly = true)
      */
-    @Transactional
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            readOnly = false
+    )
     public void log(
             String action,
             String entity,
@@ -52,6 +52,7 @@ public class AuditLogService {
                 .entityId(entityId)
                 .oldValue(oldValue)
                 .newValue(newValue)
+                .timestamp(LocalDateTime.now())
                 .build();
 
         auditLogRepository.save(auditLog);
@@ -59,17 +60,11 @@ public class AuditLogService {
 
     /**
      * Logs an action without old/new values.
-     *
-     * Useful for actions such as:
-     *
-     * - LOGIN
-     * - LOGOUT
-     * - CREATE
-     * - DELETE
-     * - APPROVE
-     * - REJECT
      */
-    @Transactional
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            readOnly = false
+    )
     public void log(
             String action,
             String entity,
@@ -87,17 +82,11 @@ public class AuditLogService {
 
     /**
      * Logs an action using an explicitly provided user.
-     *
-     * This method preserves the functionality from the original
-     * AuditLogService where the caller can provide the Users object.
-     *
-     * Useful when:
-     *
-     * - The action is performed on behalf of another user.
-     * - The authenticated user has already been resolved.
-     * - The operation is executed outside the normal security context.
      */
-    @Transactional
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            readOnly = false
+    )
     public void logAction(
             String action,
             String entity,
@@ -108,22 +97,25 @@ public class AuditLogService {
     ) {
 
         AuditLog auditLog = AuditLog.builder()
+                .user(user)
                 .action(action)
                 .entity(entity)
                 .entityId(entityId)
                 .oldValue(oldValue)
                 .newValue(newValue)
-                .user(user)
+                .timestamp(LocalDateTime.now())
                 .build();
 
         auditLogRepository.save(auditLog);
     }
 
     /**
-     * Convenience method for explicitly provided user
-     * without old/new values.
+     * Convenience method for explicitly provided user.
      */
-    @Transactional
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            readOnly = false
+    )
     public void logAction(
             String action,
             String entity,
@@ -142,13 +134,7 @@ public class AuditLogService {
     }
 
     /**
-     * Returns the currently authenticated user.
-     *
-     * The JWT authentication filter is expected to place the
-     * authenticated user's identity into Spring Security's
-     * SecurityContext.
-     *
-     * The authentication name is expected to be the user's email.
+     * Gets the currently authenticated user from Spring Security.
      */
     private Users getCurrentUser() {
 
@@ -157,9 +143,6 @@ public class AuditLogService {
                         .getContext()
                         .getAuthentication();
 
-        /*
-         * No authenticated user.
-         */
         if (authentication == null ||
                 !authentication.isAuthenticated()) {
 
@@ -173,21 +156,13 @@ public class AuditLogService {
             return null;
         }
 
-        /*
-         * The JWT authentication should provide the user's
-         * email as authentication.getName().
-         */
         String email = authentication.getName();
 
         if (email == null || email.isBlank()) {
             return null;
         }
 
-        /*
-         * Resolve the authenticated user from the database.
-         */
         return userRepository.findByEmail(email)
                 .orElse(null);
     }
 }
-

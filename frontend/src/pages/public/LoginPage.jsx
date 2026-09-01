@@ -7,12 +7,14 @@ function redirectPathForRole(role) {
   switch (role) {
     case "STUDENT":
       return "/dashboard";
+    case "ADMIN":
+      return "/admin/dashboard";
+    case "COORDINATOR":
+      return "/coordinator/dashboard";
     case "INSTRUCTOR":
       return "/instructor/dashboard";
     case "MARKETING_OFFICER":
-    case "MARKET_OFFICER":
-    case "MARKET":
-      return "/market/dashboard"; // Added leading slash '/'
+      return "/market/dashboard";
     default:
       return "/dashboard";
   }
@@ -34,7 +36,8 @@ export default function LoginPage() {
       const loggedInUser = await login(email, password);
       navigate(redirectPathForRole(loggedInUser.role));
     } catch (err) {
-      setError(err.message || "Invalid email or password. Please try again.");
+      const backendMessage = err?.response?.data?.message;
+      setError(backendMessage || "Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }

@@ -29,10 +29,9 @@ public class SecurityConfiguration {
     private final RateLimitFilter rateLimitFilter;
 
     /**
-     * Password encoder used for securely hashing user passwords.
+     * BCrypt password encoder.
      *
-     * BCrypt is intentionally slow and salted, making it suitable
-     * for storing passwords securely.
+     * Passwords must NEVER be stored as plain text.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -42,13 +41,19 @@ public class SecurityConfiguration {
     /**
      * Main Spring Security filter chain.
      *
-     * This configuration combines:
-     * - JWT authentication
-     * - Rate limiting
-     * - Stateless sessions
-     * - CORS
-     * - Security headers
-     * - Role-based endpoint authorization
+     * Security flow:
+     *
+     * Request
+     *   ↓
+     * CORS
+     *   ↓
+     * Rate Limiting
+     *   ↓
+     * JWT Authentication
+     *   ↓
+     * Authorization
+     *   ↓
+     * Controller
      */
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -58,17 +63,21 @@ public class SecurityConfiguration {
         http
 
             /*
-             * CSRF protection is disabled because the application
-             * uses stateless JWT authentication.
+             * ---------------------------------------------------------
+             * CSRF
+             * ---------------------------------------------------------
              *
-             * IMPORTANT:
-             * If JWT authentication is later stored in cookies,
-             * CSRF protection should be reconsidered.
+             * The API uses stateless JWT authentication.
+             *
+             * If JWT authentication is later moved into cookies,
+             * CSRF protection must be reconsidered.
              */
             .csrf(csrf -> csrf.disable())
 
             /*
-             * Enable CORS using the centralized configuration below.
+             * ---------------------------------------------------------
+             * CORS
+             * ---------------------------------------------------------
              */
             .cors(cors ->
                 cors.configurationSource(
@@ -77,10 +86,13 @@ public class SecurityConfiguration {
             )
 
             /*
+             * ---------------------------------------------------------
+             * SESSION MANAGEMENT
+             * ---------------------------------------------------------
+             *
              * JWT authentication is stateless.
              *
-             * The server does not maintain an HTTP session
-             * for authenticated users.
+             * Spring must NOT create HTTP sessions for authentication.
              */
             .sessionManagement(session ->
                 session.sessionCreationPolicy(
@@ -89,80 +101,94 @@ public class SecurityConfiguration {
             )
 
             /*
-             * Security-related HTTP headers.
+             * ---------------------------------------------------------
+             * SECURITY HEADERS
+             * ---------------------------------------------------------
              */
             .headers(headers -> headers
 
                 /*
-                 * Prevent MIME type sniffing.
+                 * Keep X-Content-Type-Options enabled.
                  *
-                 * Spring Security enables this by default.
+                 * This prevents MIME type sniffing.
+                 *
+                 * DO NOT disable contentTypeOptions().
                  */
-                .contentTypeOptions(contentType ->
-                    contentType.disable()
-                )
+                .contentTypeOptions(contentType -> {
+                    // Spring Security default: nosniff
+                })
 
                 /*
-                 * Prevent the application from being embedded
-                 * inside frames/iframes.
+                 * Prevent clickjacking / iframe embedding.
                  */
                 .frameOptions(frame ->
                     frame.deny()
                 )
 
                 /*
-                 * The old X-XSS-Protection browser header is deprecated.
-                 * Modern browsers rely on CSP and other protections.
+                 * X-XSS-Protection is obsolete/deprecated
+                 * in modern browsers, so we do not enable it.
                  */
                 .xssProtection(xss ->
                     xss.disable()
                 )
 
                 /*
-                 * Enable HTTP Strict Transport Security (HSTS).
+                 * HSTS.
                  *
-                 * This tells browsers to use HTTPS for this domain.
+                 * This should be enabled only when the application
+                 * is actually accessed over HTTPS.
                  *
-                 * NOTE:
-                 * HSTS should normally be enabled only when the application
-                 * is actually served over HTTPS in production.
+                 * Spring Security also normally applies HSTS only
+                 * to secure requests.
                  */
                 .httpStrictTransportSecurity(hsts ->
                     hsts
                         .includeSubDomains(true)
+                        .preload(false)
                         .maxAgeInSeconds(31536000)
                 )
             )
 
             /*
-             * Authorization rules.
+             * ---------------------------------------------------------
+             * AUTHORIZATION
+             * ---------------------------------------------------------
              */
             .authorizeHttpRequests(auth -> auth
 
                 /*
-                 * Authentication endpoints.
+                 * =====================================================
+                 * PUBLIC AUTHENTICATION ENDPOINTS
+                 * =====================================================
                  *
-                 * Examples:
-                 * POST /api/v1/auth/login
-                 * POST /api/v1/auth/register
-                 * POST /api/v1/auth/refresh
+                 * Login, registration, refresh, etc.
                  *
-                 * Authentication endpoints must be publicly accessible
-                 * because users do not have a JWT before login.
+                 * These endpoints are public because a user does not
+                 * have a JWT before authentication.
+                 *
+                 * RateLimitFilter still protects these endpoints.
                  */
                 .requestMatchers(
                     "/api/v1/auth/**"
                 ).permitAll()
 
                 /*
-                 * Spring's default error endpoint.
+                 * Spring error endpoint.
                  */
                 .requestMatchers(
                     "/error"
                 ).permitAll()
 
                 /*
-                 * Swagger / OpenAPI documentation.
+                 * =====================================================
+                 * API DOCUMENTATION
+                 * =====================================================
+                 *
+                 * Keep these public during development.
+                 *
+                 * For production, consider protecting Swagger/OpenAPI
+                 * or disabling it entirely.
                  */
                 .requestMatchers(
                     "/v3/api-docs/**",
@@ -171,7 +197,9 @@ public class SecurityConfiguration {
                 ).permitAll()
 
                 /*
-                 * Public application endpoints.
+                 * =====================================================
+                 * HEALTH CHECK
+                 * =====================================================
                  */
                 .requestMatchers(
                     "/",
@@ -179,55 +207,70 @@ public class SecurityConfiguration {
                 ).permitAll()
 
                 /*
-                 * Public student course endpoint.
-                 *
-                 * No JWT required.
+                 * =====================================================
+                 * PUBLIC STUDENT COURSE ENDPOINT
+                 * =====================================================
                  */
                 .requestMatchers(
                     "/api/v1/student/courses/public"
                 ).permitAll()
 
                 /*
-                 * Student registration endpoint.
+                 * =====================================================
+                 * STUDENT REGISTRATION
+                 * =====================================================
                  *
-                 * No JWT required because the student does not
+                 * Registration is public because the student does not
                  * have an authenticated account yet.
+                 *
+                 * RateLimitFilter protects this endpoint.
                  */
                 .requestMatchers(
                     "/api/v1/student/register"
                 ).permitAll()
 
                 /*
-                 * ADMIN MODULE.
+                 * =====================================================
+                 * ADMIN MODULE
+                 * =====================================================
                  *
-                 * Every endpoint under:
+                 * CRITICAL:
                  *
-                 * /api/v1/admin/**
+                 * Do NOT use permitAll() here.
                  *
-                 * requires the ADMIN role.
-                 *
-                 * hasRole("ADMIN") internally checks for:
+                 * hasRole("ADMIN") checks for:
                  *
                  * ROLE_ADMIN
+                 *
+                 * Therefore the authenticated user's authorities
+                 * must contain ROLE_ADMIN.
                  */
                 .requestMatchers(
                     "/api/v1/admin/**"
-                ).permitAll()
+                ).hasRole("ADMIN")
 
                 /*
-                 * Everything else requires authentication.
+                 * =====================================================
+                 * EVERYTHING ELSE
+                 * =====================================================
+                 *
+                 * Any endpoint not explicitly declared public above
+                 * requires authentication.
                  */
                 .anyRequest().authenticated()
             )
 
             /*
-             * Rate limiting filter.
+             * ---------------------------------------------------------
+             * RATE LIMITING FILTER
+             * ---------------------------------------------------------
              *
-             * This is executed before the standard Spring Security
-             * username/password authentication filter.
+             * Rate limiting must execute before normal authentication
+             * processing so that public endpoints such as:
              *
-             * It helps protect the application against excessive
-             * requests and abuse.
+             * POST /api/v1/auth/login
+             *
+             * are protected even before a JWT exists.
              */
             .addFilterBefore(
                 rateLimitFilter,
@@ -235,10 +278,15 @@ public class SecurityConfiguration {
             )
 
             /*
-             * JWT authentication filter.
+             * ---------------------------------------------------------
+             * JWT AUTHENTICATION FILTER
+             * ---------------------------------------------------------
              *
-             * This extracts and validates the JWT and establishes
-             * the authenticated SecurityContext.
+             * Extracts and validates:
+             *
+             * Authorization: Bearer <JWT>
+             *
+             * and establishes the authenticated SecurityContext.
              */
             .addFilterBefore(
                 jwtAuthenticationFilter,
@@ -251,13 +299,15 @@ public class SecurityConfiguration {
     /**
      * Centralized CORS configuration.
      *
-     * Frontend:
+     * Current frontend:
+     *
      * http://localhost:5174
      *
-     * This is appropriate for the current Docker/development
-     * configuration where the frontend is exposed as:
+     * Docker mapping:
      *
      * 5174:5173
+     *
+     * means the browser accesses the frontend through port 5174.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -266,18 +316,14 @@ public class SecurityConfiguration {
                 new CorsConfiguration();
 
         /*
-         * Trusted frontend origin.
+         * ---------------------------------------------------------
+         * TRUSTED ORIGINS
+         * ---------------------------------------------------------
          *
-         * Do NOT use:
+         * Never use "*" together with allowCredentials(true).
          *
-         *     "*"
-         *
-         * together with:
-         *
-         *     allowCredentials(true)
-         *
-         * because wildcard origins cannot be used for
-         * credentialed CORS requests.
+         * Add production frontend origin through configuration
+         * rather than hardcoding it when deploying.
          */
         configuration.setAllowedOrigins(
             List.of(
@@ -286,7 +332,9 @@ public class SecurityConfiguration {
         );
 
         /*
-         * HTTP methods allowed from the frontend.
+         * ---------------------------------------------------------
+         * HTTP METHODS
+         * ---------------------------------------------------------
          */
         configuration.setAllowedMethods(
             List.of(
@@ -300,30 +348,80 @@ public class SecurityConfiguration {
         );
 
         /*
-         * Headers allowed from the frontend.
+         * ---------------------------------------------------------
+         * REQUEST HEADERS
+         * ---------------------------------------------------------
          *
-         * Authorization is required for:
+         * Authorization:
+         *     Bearer <JWT>
          *
-         * Authorization: Bearer <JWT>
+         * Content-Type:
+         *     application/json
          *
-         * Content-Type is required for JSON/API requests.
+         * Accept:
+         *     application/json
          */
         configuration.setAllowedHeaders(
             List.of(
                 HttpHeaders.AUTHORIZATION,
-                HttpHeaders.CONTENT_TYPE
+                HttpHeaders.CONTENT_TYPE,
+                HttpHeaders.ACCEPT
             )
         );
 
         /*
-         * Allow credentials for credentialed cross-origin requests.
+         * ---------------------------------------------------------
+         * CREDENTIALS
+         * ---------------------------------------------------------
          *
-         * This must NOT be combined with allowedOrigins("*").
+         * Required if the frontend sends credentialed requests.
+         *
+         * This must NOT be combined with:
+         *
+         * allowedOrigins("*")
          */
         configuration.setAllowCredentials(true);
 
         /*
-         * Register this CORS configuration for all endpoints.
+         * ---------------------------------------------------------
+         * EXPOSE RATE-LIMIT HEADERS
+         * ---------------------------------------------------------
+         *
+         * Browsers normally do not expose arbitrary response headers
+         * to JavaScript unless they are explicitly exposed.
+         *
+         * This allows the frontend to read:
+         *
+         * X-RateLimit-Limit
+         * X-RateLimit-Remaining
+         * X-RateLimit-Reset
+         * Retry-After
+         */
+        configuration.setExposedHeaders(
+            List.of(
+                "X-RateLimit-Limit",
+                "X-RateLimit-Remaining",
+                "X-RateLimit-Reset",
+                "Retry-After"
+            )
+        );
+
+        /*
+         * ---------------------------------------------------------
+         * CACHE DURATION FOR PREFLIGHT
+         * ---------------------------------------------------------
+         *
+         * Browser can cache successful CORS preflight information
+         * for one hour.
+         */
+        configuration.setMaxAge(3600L);
+
+        /*
+         * ---------------------------------------------------------
+         * REGISTER CORS CONFIGURATION
+         * ---------------------------------------------------------
+         *
+         * Applies to all endpoints.
          */
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
@@ -336,4 +434,3 @@ public class SecurityConfiguration {
         return source;
     }
 }
-

@@ -5,8 +5,9 @@ import com.scms.dto.LoginResponse;
 import com.scms.dto.RegisterUserRequest;
 import com.scms.dto.RegisterResponse;
 import com.scms.entity.Users;
+import com.scms.exception.TooManyRequestsException;
 import com.scms.service.admin.AuditLogService;
-import com.scms.entity.enums.Role;
+import com.scms.entity.enums.Role;  
 import com.scms.entity.enums.UserStatus;
 import com.scms.exception.UserAlreadyExistException;
 import com.scms.exception.UserNotFoundException;
@@ -32,6 +33,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuditLogService auditLogService;
+    private final AccountLoginRateLimiter accountLoginRateLimiter;
+
 
     @Transactional
     public RegisterResponse register(RegisterUserRequest request) {
@@ -97,6 +100,10 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         Users user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User with email " + request.getEmail() + " not found"));
+
+      if (!accountLoginRateLimiter.isAllowed(request.getEmail())) {
+        throw new TooManyRequestsException("Too many login attempts for this account. Please try again later.");       
+      }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid email or password");

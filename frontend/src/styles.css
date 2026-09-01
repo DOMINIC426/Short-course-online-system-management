@@ -19,6 +19,14 @@ body {
   color: #0f172a;
 }
 
+body, button, input, textarea, select {
+  font-family: var(--font-sans);
+}
+
+#root {
+  font-family: var(--font-sans);
+}
+
 a {
   text-decoration: none;
 }

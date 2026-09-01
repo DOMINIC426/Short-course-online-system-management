@@ -2,8 +2,11 @@
 package com.scms.exception;
 
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -198,6 +201,57 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String,String>> invalidArgument(IllegalArgumentException ex){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentials(
+            BadCredentialsException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage() != null ? ex.getMessage() : "Invalid email or password",
+                request
+        );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDenied(
+            AccessDeniedException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "You do not have permission to access this resource.",
+                request
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex,
+            WebRequest request) {
+
+        String message = ex.getMostSpecificCause() != null
+                ? ex.getMostSpecificCause().getMessage()
+                : ex.getMessage();
+
+        String userMessage = "A user with the same email or phone number already exists.";
+
+        if (message != null) {
+            String lower = message.toLowerCase();
+            if (lower.contains("email") || lower.contains("uk_users_email")) {
+                userMessage = "This email is already taken.";
+            } else if (lower.contains("phone") || lower.contains("uk_users_phone")) {
+                userMessage = "This phone number is already in use.";
+            }
+        }
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                userMessage,
+                request
+        );
     }
 
     /**

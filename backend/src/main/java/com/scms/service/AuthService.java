@@ -36,8 +36,19 @@ public class AuthService {
     @Transactional
     public RegisterResponse register(RegisterUserRequest request) {
         Optional<Users> existingUser = userRepository.findByEmail(request.getEmail());
+
+        if (existingUser.isPresent() && userRepository.existsByPhone(request.getPhone())) {
+            throw new UserAlreadyExistException(
+                    "This email is already taken and this phone number is already in use."
+            );
+        }
+
         if (existingUser.isPresent()) {
-            throw new UserAlreadyExistException("User with email " + request.getEmail() + " already exists");
+            throw new UserAlreadyExistException("This email is already taken.");
+        }
+
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new UserAlreadyExistException("This phone number is already in use.");
         }
 
         // Set role to STUDENT by default if not provided
@@ -53,10 +64,13 @@ public class AuthService {
                 .status(UserStatus.ACTIVE)
                 .build();
 
-        Users savedUser = userRepository.save(user);
+        Users savedUser = userRepository.saveAndFlush(user);
 
-        // Audit log
-        auditLogService.logAction("CREATE", "USER", savedUser.getId(), null, savedUser.getEmail(), savedUser);
+        // Audit log must be written only after the user row is definitely persisted
+        // in the same transaction; otherwise the FK from audit_logs.user_id can fail.
+        if (savedUser.getId() != null) {
+            auditLogService.logAction("CREATE", "USER", savedUser.getId(), null, savedUser.getEmail(), savedUser);
+        }
 
         // Generate JWT token for auto-login
         UserDetails userDetails = User.builder()

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import PasswordInput from "../../components/shared/PasswordInput.jsx";
+import { getApiErrorMessage } from "../../api/backendClient.js";
 
 function redirectPathForRole(role) {
   switch (role) {
@@ -14,6 +15,8 @@ function redirectPathForRole(role) {
     case "INSTRUCTOR":
       return "/instructor/dashboard";
     case "MARKETING_OFFICER":
+    case "MARKET_OFFICER":
+    case "MARKET":
       return "/market/dashboard";
     default:
       return "/dashboard";
@@ -36,8 +39,8 @@ export default function LoginPage() {
       const loggedInUser = await login(email, password);
       navigate(redirectPathForRole(loggedInUser.role));
     } catch (err) {
-      const backendMessage = err?.response?.data?.message;
-      setError(backendMessage || "Invalid email or password. Please try again.");
+      const backendMessage = getApiErrorMessage(err, "Invalid email or password. Please try again.");
+      setError(backendMessage);
     } finally {
       setLoading(false);
     }

@@ -80,6 +80,9 @@ export default function StudentLayout() {
   const isInstructor = String(user?.role || "").toUpperCase() === "INSTRUCTOR";
   const isInstructorRoute = location.pathname.startsWith("/instructor");
   const portalLinks = isInstructor ? INSTRUCTOR_LINKS : STUDENT_LINKS;
+  const displayName = user?.firstName
+    ? `${user.firstName} ${user.lastName || ""}`.trim()
+    : user?.email || "Student";
 
   if (!user) {
     return <Navigate to="/login" replace />;

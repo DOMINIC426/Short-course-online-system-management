@@ -17,6 +17,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export function getApiErrorMessage(error, fallback = "Something went wrong. Please try again.") {
+  const status = error?.response?.status;
+  const responseData = error?.response?.data;
+  const backendMessage = responseData?.message || responseData?.error || error?.message;
+
+  if (backendMessage && backendMessage !== "An unexpected error occurred") {
+    return backendMessage;
+  }
+
+  if (status === 400) return "The request was invalid. Please check your details and try again.";
+  if (status === 401) return "Invalid email or password. Please try again.";
+  if (status === 403) return "You do not have permission to access this resource.";
+  if (status === 404) return "The requested resource was not found.";
+  if (status === 409) return backendMessage || "This record already exists.";
+  if (status === 500) return "Something went wrong on the server. Please try again later.";
+
+  return fallback;
+}
+
 export async function fetchBackendHealth() {
   const response = await api.get('/api/health');
   return response.data.status;

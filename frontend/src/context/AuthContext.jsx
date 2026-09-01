@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { api } from "../api/backendClient.js";
+import { api, getApiErrorMessage } from "../api/backendClient.js";
 
 const AuthContext = createContext(null);
 
@@ -12,15 +12,15 @@ function normalizeProfileFields(data) {
 }
 
 function normalizeUserResponse(data) {
-  // Map response fields to normalized user object
+  const token = data.token || data.accessToken || data.jwt || "";
   return {
-    id: data.id || data.userId,
+    id: data.id || data.userId || "",
     firstName: data.firstName || data.first_name || "",
     lastName: data.lastName || data.last_name || "",
     email: data.email || "",
-    phone: data.phone || "",
+    phone: data.phone || data.phoneNumber || "",
     role: data.role || "STUDENT",
-    token: data.token || "",
+    token,
     ...normalizeProfileFields(data),
   };
 }
@@ -32,7 +32,6 @@ export function AuthProvider({ children }) {
   });
 
   async function fetchUserProfile(targetUser = user) {
-    // Skip profile fetch if the user is not a student (e.g., INSTRUCTOR)
     if (targetUser?.role && targetUser.role !== "STUDENT") {
       return;
     }
@@ -57,7 +56,7 @@ export function AuthProvider({ children }) {
         });
       }
     } catch (err) {
-      console.warn("Skipping profile fetch for non-student or missing record:", err);
+      console.warn("Skipping profile fetch:", err);
     }
   }
 
@@ -69,26 +68,55 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(email, password) {
-    const response = await api.post("/api/v1/auth/login", { email, password });
-    const loggedInUser = normalizeUserResponse(response.data);
-    setUser(loggedInUser);
-    localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
-    return loggedInUser;
+    try {
+      const response = await api.post("/api/v1/auth/login", { email, password });
+      const loggedInUser = normalizeUserResponse(response.data);
+
+      if (loggedInUser.token) {
+        localStorage.setItem("scms_token", loggedInUser.token);
+      }
+      localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
+      setUser(loggedInUser);
+
+      return loggedInUser;
+    } catch (err) {
+      const message = getApiErrorMessage(err, "Invalid email or password. Please try again.");
+      const wrapped = new Error(message);
+      wrapped.response = err.response;
+      throw wrapped;
+    }
   }
 
   async function register({ firstName, lastName, email, phone, password }) {
-    const response = await api.post("/api/v1/auth/register", {
-      firstName,
-      lastName,
-      email,
-      phone,
+    const payload = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      phoneNumber: phone.trim(),
       password,
       role: "STUDENT",
-    });
+    };
 
-    const registeredUser = normalizeUserResponse(response.data);
+    let response;
+    try {
+      response = await api.post("/api/v1/auth/register", payload);
+    } catch (firstErr) {
+      if (firstErr.response?.status === 404 || firstErr.response?.status === 500) {
+        response = await api.post("/api/v1/student/register", payload);
+      } else {
+        throw firstErr;
+      }
+    }
+
+    const registeredUser = normalizeUserResponse(response.data || {});
+
+    if (registeredUser.token) {
+      localStorage.setItem("scms_token", registeredUser.token);
+    }
     setUser(registeredUser);
     localStorage.setItem("scms_user", JSON.stringify(registeredUser));
+
     return registeredUser;
   }
 
@@ -100,12 +128,12 @@ export function AuthProvider({ children }) {
   }
 
   async function forgotPassword(identifier) {
-    const response = await api.post("/api/auth/forgot-password", { identifier });
+    const response = await api.post("/api/v1/auth/forgot-password", { identifier });
     return response.data;
   }
 
   async function resetPassword(token, newPassword) {
-    const response = await api.post("/api/auth/reset-password", { token, newPassword });
+    const response = await api.post("/api/v1/auth/reset-password", { token, newPassword });
     return response.data;
   }
 
@@ -117,7 +145,16 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, forgotPassword, resetPassword, fetchUserProfile }}
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        forgotPassword,
+        resetPassword,
+        fetchUserProfile,
+        updateProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>

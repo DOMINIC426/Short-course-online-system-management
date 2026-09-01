@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "audit_logs",
@@ -41,4 +42,16 @@ public class AuditLog extends BaseEntity {
 
     @Column(name = "new_value", columnDefinition = "TEXT")
     private String newValue;
+
+    @Column(name = "timestamp", nullable = false)
+    private LocalDateTime timestamp;
+
+    @PrePersist
+    @Override
+    protected void onCreate() {
+        super.onCreate();
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now();
+        }
+    }
 }

@@ -1,22 +1,18 @@
 import { useState } from "react";
 import { Outlet, Navigate, Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { LayoutDashboard, FileText, CreditCard, Megaphone, Award, UserCircle, BookOpen, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, Settings, Users, LogOut, Menu, X } from "lucide-react";
 
-const PORTAL_LINKS = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/courses", label: "Browse courses", icon: BookOpen },
-  { to: "/applications", label: "My courses", icon: FileText },
-  { to: "/payments", label: "My payments", icon: CreditCard },
-  { to: "/announcements", label: "Announcements", icon: Megaphone },
-  { to: "/certificates", label: "Certificate status", icon: Award },
-  { to: "/profile", label: "My profile", icon: UserCircle },
+const ADMIN_LINKS = [
+  { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/admin/settings", label: "Settings", icon: Settings },
+  { to: "/admin/users", label: "Users", icon: Users },
 ];
 
 function SidebarLinks({ onLinkClick }) {
   return (
     <nav className="flex-1 space-y-1 px-3 py-4">
-      {PORTAL_LINKS.map((link) => {
+      {ADMIN_LINKS.map((link) => {
         const Icon = link.icon;
         return (
           <NavLink
@@ -52,7 +48,7 @@ function LogoutButton({ onClick }) {
   );
 }
 
-export default function StudentLayout() {
+export default function AdminLayout() {
   const { user, logout } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -60,20 +56,9 @@ export default function StudentLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  // Only STUDENT role can access this layout
-  if (user.role !== "STUDENT") {
-    // Redirect to appropriate dashboard based on their role
-    const rolePathMap = {
-      ADMIN: "/admin/dashboard",
-      COORDINATOR: "/coordinator/dashboard",
-      INSTRUCTOR: "/instructor/dashboard",
-      MARKETING_OFFICER: "/market/dashboard",
-    };
-    const redirectPath = rolePathMap[user.role];
-    if (redirectPath) {
-      return <Navigate to={redirectPath} replace />;
-    }
-    return <Navigate to="/login" replace />;
+  // Only ADMIN role can access this layout
+  if (user.role !== "ADMIN") {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -82,13 +67,13 @@ export default function StudentLayout() {
       <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-slate-200 bg-white sm:flex">
         <Link to="/" className="flex items-center gap-2 border-b border-slate-200 px-6 py-5">
           <img src="/udom-logo.png" alt="University of Dodoma logo" className="h-8 w-8" />
-          <span className="text-sm font-semibold text-slate-900">Student Portal</span>
+          <span className="text-sm font-semibold text-slate-900">Admin Portal</span>
         </Link>
         <SidebarLinks />
         <div className="border-t border-slate-200 px-3 py-4">
           <p className="px-3 text-xs text-slate-500">Signed in as</p>
           <p className="truncate px-3 text-sm font-semibold text-slate-900">
-            {user.fullName || user.username}
+            {user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.email}
           </p>
           <LogoutButton onClick={logout} />
         </div>
@@ -103,7 +88,7 @@ export default function StudentLayout() {
           />
           <aside className="absolute left-0 top-0 flex h-full w-64 flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-              <span className="text-sm font-semibold text-slate-900">Student Portal</span>
+              <span className="text-sm font-semibold text-slate-900">Admin Portal</span>
               <button onClick={() => setIsDrawerOpen(false)} className="text-slate-500" aria-label="Close menu">
                 <X className="h-5 w-5" />
               </button>
@@ -111,7 +96,7 @@ export default function StudentLayout() {
             <SidebarLinks onLinkClick={() => setIsDrawerOpen(false)} />
             <div className="border-t border-slate-200 px-3 py-4">
               <p className="truncate px-3 text-sm font-semibold text-slate-900">
-               {user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.username}
+                {user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.email}
               </p>
               <LogoutButton onClick={logout} />
             </div>
@@ -119,24 +104,23 @@ export default function StudentLayout() {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col">
-        {/* Mobile top bar */}
+      {/* Main content area */}
+      <main className="flex flex-1 flex-col">
+        {/* Mobile header */}
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:hidden">
+          <span className="text-sm font-semibold text-slate-900">Admin Portal</span>
           <button
             onClick={() => setIsDrawerOpen(true)}
-            className="p-2"
+            className="text-slate-500 hover:bg-slate-100"
             aria-label="Open menu"
           >
-            <Menu className="h-5 w-5 text-slate-700" />
+            <Menu className="h-6 w-6" />
           </button>
-          <span className="text-sm font-semibold text-slate-900">Student Portal</span>
-          <div className="w-9" />
         </header>
-
-        <main className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

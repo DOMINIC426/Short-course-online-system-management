@@ -7,14 +7,14 @@ function redirectPathForRole(role) {
   switch (role) {
     case "STUDENT":
       return "/dashboard";
-    // Other roles' dashboards will be added here as far as they are complete:
-    // case "ADMIN": return "/admin/dashboard";
-    // case "COORDINATOR": return "/registrar/dashboard";
-    // case "FINANCE_OFFICER": return "/finance/dashboard";
-    // case "INSTRUCTOR": return "/instructor/dashboard";
-    // case "CERTIFICATE_OFFICER": return "/certificate-officer/dashboard";
-    // case "QUALITY_ASSURANCE_OFFICER": return "/qa/dashboard";
-    // case "AUDITOR": return "/auditor/dashboard";
+    case "ADMIN":
+      return "/admin/dashboard";
+    case "COORDINATOR":
+      return "/coordinator/dashboard";
+    case "INSTRUCTOR":
+      return "/instructor/dashboard";
+    case "MARKETING_OFFICER":
+      return "/market/dashboard";
     default:
       return "/dashboard";
   }
@@ -36,7 +36,8 @@ export default function LoginPage() {
       const loggedInUser = await login(email, password);
       navigate(redirectPathForRole(loggedInUser.role));
     } catch (err) {
-      setError("Invalid email or password. Please try again.");
+      const backendMessage = err?.response?.data?.message;
+      setError(backendMessage || "Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }

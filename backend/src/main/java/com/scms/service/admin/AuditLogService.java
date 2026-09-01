@@ -52,6 +52,7 @@ public class AuditLogService {
                 .entityId(entityId)
                 .oldValue(oldValue)
                 .newValue(newValue)
+                .timestamp(java.time.LocalDateTime.now())
                 .build();
 
         auditLogRepository.save(auditLog);
@@ -114,6 +115,7 @@ public class AuditLogService {
                 .oldValue(oldValue)
                 .newValue(newValue)
                 .user(user)
+                .timestamp(java.time.LocalDateTime.now())
                 .build();
 
         auditLogRepository.save(auditLog);

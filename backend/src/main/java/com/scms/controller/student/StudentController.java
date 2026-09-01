@@ -24,6 +24,7 @@ public class StudentController {
     private final StudentAnnouncementService announcementService;
     private final StudentCertificateService certificateService;
     private final StudentNotificationService notificationService;
+    private final StudentProfileService profileService;
 
     // --- Public course catalogue ---
     @GetMapping("/courses/public")
@@ -39,6 +40,13 @@ public class StudentController {
     @GetMapping("/courses/{courseId}")
     public ResponseEntity<CourseDetailResponse> getCourseDetail(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.getCourseDetail(courseId));
+    }
+
+    // --- Student profile ---
+    @GetMapping("/profile")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<StudentProfileResponse> getMyProfile() {
+        return ResponseEntity.ok(profileService.getMyProfile());
     }
 
     // --- Student registration ---

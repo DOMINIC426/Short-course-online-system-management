@@ -1,4 +1,4 @@
-package com.scms.entity;
+fgpackage com.scms.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

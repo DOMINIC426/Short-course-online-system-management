@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,18 +31,21 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
+    @Value("${scms.rate-limit.login-per-minute:5}")
+    private int loginLimit;
+
+    @Value("${scms.rate-limit.register-per-minute:10}")
+    private int registerLimit;
+
+    @Value("${scms.rate-limit.general-per-minute:60}")
+    private int generalLimit;
+
     @Value("${scms.rate-limit.fail-closed:false}")
     private boolean failClosed;
 
     @Value("${scms.rate-limit.trust-proxy:false}")
     private boolean trustProxy;
 
-    // Rate limits per minute
-    private static final int LOGIN_LIMIT = 5;
-    private static final int REGISTER_LIMIT = 10;
-    private static final int GENERAL_LIMIT = 60;
-
-    // Lua script for atomic INCR + EXPIRE
     private static final String LUA_SCRIPT = """
             local current = redis.call('INCR', KEYS[1])
             if current == 1 then
@@ -51,14 +55,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return {current, ttl}
             """;
 
-    private final DefaultRedisScript<List> script = new DefaultRedisScript<>(LUA_SCRIPT, java.util.List.class);
+    private final DefaultRedisScript<List> script = new DefaultRedisScript<>(LUA_SCRIPT, List.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        // Skip OPTIONS (CORS preflight)
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -74,20 +77,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         String clientIp = resolveClientIp(request);
         String key = policy.getKeyPrefix() + clientIp;
+        long limit = policy.getLimit();
 
         try {
-            Long limit = policy.getLimit();
-            Long windowSeconds = 60L;
-
-            // Execute Lua script atomically
             List<Long> result = redisTemplate.execute(
                     script,
                     Collections.singletonList(key),
-                    windowSeconds.toString()
+                    "60"
             );
 
             if (result == null || result.size() < 2) {
-                log.warn("Unexpected Redis result for rate limit key {}", key);
+                log.warn("Unexpected Redis result for key {}", key);
                 if (failClosed) {
                     rejectDueToRedisFailure(response);
                     return;
@@ -98,24 +98,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
             long currentCount = result.get(0);
             long ttlSeconds = result.get(1);
-
             long remaining = Math.max(0, limit - currentCount);
 
-            // Set rate limit headers
             response.setHeader("X-RateLimit-Limit", String.valueOf(limit));
             response.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
             response.setHeader("X-RateLimit-Reset", String.valueOf(ttlSeconds));
 
             if (currentCount > limit) {
-                // Limit exceeded
                 log.warn("Rate limit exceeded for policy {}, IP {}, endpoint {}, method {}",
                         policy.name(), clientIp, request.getRequestURI(), request.getMethod());
-
                 rejectTooManyRequests(response, ttlSeconds);
                 return;
             }
 
-            // Request allowed
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
@@ -123,7 +118,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
             if (failClosed) {
                 rejectDueToRedisFailure(response);
             } else {
-                // Fail-open: allow request
                 filterChain.doFilter(request, response);
             }
         }
@@ -131,19 +125,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private RateLimitPolicy determinePolicy(HttpServletRequest request, String path) {
         if (!path.startsWith("/api/v1/")) {
-            return null; // not an API path we rate limit
+            return null;
         }
 
         if ("POST".equalsIgnoreCase(request.getMethod())) {
             if (path.equals("/api/v1/auth/login")) {
-                return RateLimitPolicy.LOGIN;
+                return new RateLimitPolicy("scms:rate-limit:login:", loginLimit, "LOGIN");
             }
             if (path.equals("/api/v1/auth/register") || path.equals("/api/v1/student/register")) {
-                return RateLimitPolicy.REGISTER;
+                return new RateLimitPolicy("scms:rate-limit:register:", registerLimit, "REGISTER");
             }
         }
 
-        return RateLimitPolicy.GENERAL;
+        return new RateLimitPolicy("scms:rate-limit:general:", generalLimit, "GENERAL");
     }
 
     private String resolveClientIp(HttpServletRequest request) {
@@ -162,7 +156,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("timestamp", LocalDateTime.now().toString());
         body.put("status", HttpStatus.TOO_MANY_REQUESTS.value());
         body.put("error", HttpStatus.TOO_MANY_REQUESTS.getReasonPhrase());
         body.put("message", "Too many requests. Please try again later.");
@@ -176,7 +170,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("timestamp", LocalDateTime.now().toString());
         body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         body.put("error", HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
         body.put("message", "Rate limiting service unavailable.");
@@ -184,25 +178,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
         objectMapper.writeValue(response.getWriter(), body);
     }
 
-    private enum RateLimitPolicy {
-        LOGIN("scms:rate-limit:login:", LOGIN_LIMIT),
-        REGISTER("scms:rate-limit:register:", REGISTER_LIMIT),
-        GENERAL("scms:rate-limit:general:", GENERAL_LIMIT);
-
-        private final String keyPrefix;
-        private final long limit;
-
-        RateLimitPolicy(String keyPrefix, long limit) {
-            this.keyPrefix = keyPrefix;
-            this.limit = limit;
-        }
-
+    private record RateLimitPolicy(String keyPrefix, long limit, String name) {
         public String getKeyPrefix() {
             return keyPrefix;
         }
 
         public long getLimit() {
             return limit;
+        }
+
+        public String name() {
+            return name;
         }
     }
 }

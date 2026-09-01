@@ -8,6 +8,7 @@ import com.scms.entity.enums.CourseStatus;
 import com.scms.exception.ResourceNotFoundException;
 import com.scms.repository.student.StudentCourseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ public class StudentCourseService {
     private final StudentCourseRepository courseRepository;
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "publicCourses", key = "#page + '-' + #size + '-' + #sortBy + '-' + #categoryId + '-' + #keyword")
     public PaginatedResponse<CourseResponse> getPublicCourses(
             int page, int size, String sortBy, Long categoryId, String keyword) {
 
@@ -52,6 +54,7 @@ public class StudentCourseService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "courseDetail", key = "#courseId")
     public CourseDetailResponse getCourseDetail(Long courseId) {
         ShortCourse course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));

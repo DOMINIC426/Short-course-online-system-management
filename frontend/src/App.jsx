@@ -5,6 +5,7 @@ import PublicLayout from "./layouts/PublicLayout";
 import StudentLayout from "./layouts/StudentLayout";
 import InstructorLayout from "./layouts/InstructorLayout";
 import MarketLayout from "./layouts/MarketLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 // Shared Components
 import UserProfile from "./components/UserProfile";
@@ -41,6 +42,14 @@ import MarketCoursesPage from "./pages/market/MarketCoursesPage";
 import MarketInstructorsPage from "./pages/market/MarketInstructorsPage";
 import MarketSettingsPage from "./pages/market/MarketSettingsPage";
 
+// Admin Pages
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import UserManagementPage from "./pages/admin/UserManagementPage";
+import RolesPage from "./pages/admin/RolesPage";
+import PermissionsPage from "./pages/admin/PermissionsPage";
+import SystemSettingsPage from "./pages/admin/SystemSettingsPage";
+import AuditLogsPage from "./pages/admin/AuditLogsPage";
+
 export default function App() {
   return (
     <Routes>
@@ -76,6 +85,7 @@ export default function App() {
         <Route path="announcements" element={<InstructorAnnouncementsPage />} />
         <Route path="certificates" element={<InstructorCertificatesPage />} />
         <Route path="profile" element={<UserProfile />} />
+
       </Route>
 
       {/* Market Officer Portal Routes */}
@@ -88,6 +98,16 @@ export default function App() {
         <Route path="manage-instructors" element={<ManageInstructorsPage />} />
         <Route path="settings" element={<MarketSettingsPage />} />
         <Route path="profile" element={<UserProfile />} />
+      </Route>
+
+      {/* Admin Routes */}
+      <Route element={<AdminLayout />}>
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/users" element={<UserManagementPage />} />
+        <Route path="/admin/roles" element={<RolesPage />} />
+        <Route path="/admin/permissions" element={<PermissionsPage />} />
+        <Route path="/admin/settings" element={<SystemSettingsPage />} />
+        <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
       </Route>
 
       {/* Catch-all Fallback */}

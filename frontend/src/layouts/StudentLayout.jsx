@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
+
 import { Outlet, Navigate, Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
@@ -76,16 +77,29 @@ function LogoutButton({ onClick }) {
 
 export default function StudentLayout() {
   const { user, logout } = useAuth();
+
+  const displayName =
+    user?.firstName
+      ? `${user.firstName} ${user.lastName || ""}`.trim()
+      : user?.first_name ||
+        user?.name ||
+        user?.email ||
+        "Student";
+
   const location = useLocation();
   const userMenuRef = useRef(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const isInstructor = String(user?.role || "").toUpperCase() === "INSTRUCTOR";
-  const isInstructorRoute = location.pathname.startsWith("/instructor");
-  const portalLinks = isInstructor ? INSTRUCTOR_LINKS : STUDENT_LINKS;
-  const displayName = user && user.firstName
-    ? `${user.firstName} ${user.lastName || ""}`.trim()
-    : user?.email || "Student";
+
+  const isInstructor =
+    String(user?.role || "").toUpperCase() === "INSTRUCTOR";
+
+  const isInstructorRoute =
+    location.pathname.startsWith("/instructor");
+
+  const portalLinks =
+    isInstructor ? INSTRUCTOR_LINKS : STUDENT_LINKS;
+
   const initials = displayName
     .split(" ")
     .map((part) => part[0])
@@ -265,3 +279,4 @@ export default function StudentLayout() {
     </div>
   );
 }
+

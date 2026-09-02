@@ -79,7 +79,11 @@ public class AuditLogService {
     /**
      * Logs an action using an explicitly provided user.
      */
-    @Transactional(readOnly = false)
+
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            readOnly = false
+    )
     public void logAction(
             String action,
             String entity,

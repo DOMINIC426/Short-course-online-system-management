@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Loader2, AlertCircle, X } from "lucide-react";
@@ -20,7 +21,7 @@ function redirectPathForRole(role) {
     case "MARKET":
       return "/market/dashboard";
     default:
-      return "/dashboard";
+      return "/login";
   }
 }
 
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -36,6 +38,7 @@ export default function LoginPage() {
     event.preventDefault();
     setError("");
     setLoading(true);
+
     try {
       const loggedInUser = await login(email, password);
       navigate(redirectPathForRole(loggedInUser.role));
@@ -45,6 +48,7 @@ export default function LoginPage() {
         "Invalid email or password. Please try again."
       );
       setError(backendMessage);
+
     } finally {
       setLoading(false);
     }
@@ -77,6 +81,7 @@ export default function LoginPage() {
           </div>
         )}
 
+
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label
@@ -94,6 +99,7 @@ export default function LoginPage() {
               className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 transition focus:border-[#0b4d94] focus:outline-none focus:ring-1 focus:ring-[#0b4d94]"
             />
           </div>
+
 
           <div>
             <div className="flex items-center justify-between">
@@ -118,6 +124,7 @@ export default function LoginPage() {
             />
           </div>
 
+
           <button
             type="submit"
             disabled={loading}
@@ -134,6 +141,7 @@ export default function LoginPage() {
           </button>
         </form>
 
+
         <p className="mt-6 text-center text-xs text-slate-600">
           Don't have an account?{" "}
           <Link
@@ -144,6 +152,8 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
+
     </section>
   );
 }
+

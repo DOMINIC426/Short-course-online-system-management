@@ -37,8 +37,6 @@ import InstructorCertificatesPage from "./pages/instructor/InstructorCertificate
 import MarketDashboardPage from "./pages/market/MarketDashboardPage";
 import ManageInstructorsPage from "./pages/market/ManageInstructorsPage";
 import MarketCategoriesPage from "./pages/market/MarketCategoriesPage";
-// Market Pages
-import MarketDashboardPage from "./pages/market/MarketDashboardPage";
 import MarketCoursesPage from "./pages/market/MarketCoursesPage";
 import MarketInstructorsPage from "./pages/market/MarketInstructorsPage";
 import MarketSettingsPage from "./pages/market/MarketSettingsPage";
@@ -90,14 +88,6 @@ export default function App() {
         <Route path="manage-instructors" element={<ManageInstructorsPage />} />
         <Route path="settings" element={<MarketSettingsPage />} />
         <Route path="profile" element={<UserProfile />} />
-      </Route>
-      {/* Market Routes */}
-      <Route path="/market" element={<MarketLayout />}>
-        <Route path="dashboard" element={<MarketDashboardPage />} />
-        <Route path="courses" element={<MarketCoursesPage />} />
-        <Route path="instructors" element={<MarketInstructorsPage />} />
-        <Route path="manage-instructors" element={<MarketInstructorsPage />} />
-        <Route path="settings" element={<MarketSettingsPage />} />
       </Route>
 
       {/* Catch-all Fallback */}

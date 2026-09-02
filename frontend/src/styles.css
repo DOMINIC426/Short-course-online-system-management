@@ -28,11 +28,6 @@ body, button, input, textarea, select {
   font-family: var(--font-sans);
 }
 
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
@@ -93,13 +88,13 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Links */
-a {
+/* Links - Only apply primary blue color to plain text links that don't specify text color */
+a:not([class*="text-"]) {
   color: var(--color-udom-primary);
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
-a:hover {
+a:not([class*="text-"]):hover {
   color: var(--color-udom-primary-dark);
 }

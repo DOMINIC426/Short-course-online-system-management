@@ -17,23 +17,27 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchDashboardAndProfile() {
-      try {
-        const [profileRes, dashboardRes] = await Promise.all([
-          api.get("/api/v1/student/profile").catch(() => null),
-          api.get("/api/v1/student/dashboard").catch(() => null),
-        ]);
+  async function fetchDashboardAndProfile() {
+    try {
+      const [profileRes, dashboardRes] = await Promise.all([
+        api.get("/api/v1/student/profile").catch(() => null),
+        api.get("/api/v1/student/dashboard").catch(() => null),
+      ]);
 
-        if (profileRes?.data) setProfile(profileRes.data);
-        if (Array.isArray(dashboardRes?.data)) setDashboardData(dashboardRes.data);
-      } finally {
-        setLoading(false);
+      if (profileRes?.data) {
+        setProfile(profileRes.data);
       }
+
+      if (Array.isArray(dashboardRes?.data?.content)) {
+        setDashboardData(dashboardRes.data.content);
+      }
+    } finally {
+      setLoading(false);
     }
+  }
 
-    fetchDashboardAndProfile();
-  }, []);
-
+  fetchDashboardAndProfile();
+}, []);
   const firstName = profile?.firstName || profile?.first_name || "";
   const coursesRegisteredCount = dashboardData.length;
   const outstandingBalance = dashboardData.reduce((sum, item) => sum + (item.balance || 0), 0);

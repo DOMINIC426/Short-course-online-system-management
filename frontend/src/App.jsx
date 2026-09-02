@@ -5,6 +5,7 @@ import PublicLayout from "./layouts/PublicLayout";
 import StudentLayout from "./layouts/StudentLayout";
 import InstructorLayout from "./layouts/InstructorLayout";
 import MarketLayout from "./layouts/MarketLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 // Public Pages
 import HomePage from "./pages/public/HomePage";
@@ -38,6 +39,14 @@ import MarketCoursesPage from "./pages/market/MarketCoursesPage";
 import MarketInstructorsPage from "./pages/market/MarketInstructorsPage";
 import MarketSettingsPage from "./pages/market/MarketSettingsPage";
 
+// Admin Pages
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import UserManagementPage from "./pages/admin/UserManagementPage";
+import RolesPage from "./pages/admin/RolesPage";
+import PermissionsPage from "./pages/admin/PermissionsPage";
+import SystemSettingsPage from "./pages/admin/SystemSettingsPage";
+import AuditLogsPage from "./pages/admin/AuditLogsPage";
+
 export default function App() {
   return (
     <Routes>
@@ -70,7 +79,10 @@ export default function App() {
         <Route path="students/:studentId" element={<StudentDetailPage />} />
         <Route path="announcements" element={<InstructorAnnouncementsPage />} />
         <Route path="courses/:intakeId/progress" element={<CourseProgressPage />} />
-        <Route path="courses/:intakeId/certificates" element={<CertificateEligibilityPage />} />
+        <Route
+          path="courses/:intakeId/certificates"
+          element={<CertificateEligibilityPage />}
+        />
       </Route>
 
       {/* Market Routes */}
@@ -80,6 +92,16 @@ export default function App() {
         <Route path="instructors" element={<MarketInstructorsPage />} />
         <Route path="manage-instructors" element={<MarketInstructorsPage />} />
         <Route path="settings" element={<MarketSettingsPage />} />
+      </Route>
+
+      {/* Admin Routes */}
+      <Route element={<AdminLayout />}>
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/users" element={<UserManagementPage />} />
+        <Route path="/admin/roles" element={<RolesPage />} />
+        <Route path="/admin/permissions" element={<PermissionsPage />} />
+        <Route path="/admin/settings" element={<SystemSettingsPage />} />
+        <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
       </Route>
 
       {/* Catch-all Fallback */}

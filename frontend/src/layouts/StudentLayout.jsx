@@ -1,5 +1,4 @@
 ﻿import { useEffect, useRef, useState } from "react";
-
 import { Outlet, Navigate, Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
@@ -20,7 +19,7 @@ import {
 
 const STUDENT_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/courses", label: "Browse courses", icon: BookOpen },
+  { to: "/student/courses", label: "Browse courses", icon: BookOpen },
   { to: "/applications", label: "My courses", icon: FileText },
   { to: "/payments", label: "My payments", icon: CreditCard },
   { to: "/announcements", label: "Announcements", icon: Megaphone },
@@ -93,9 +92,6 @@ export default function StudentLayout() {
 
   const isInstructor =
     String(user?.role || "").toUpperCase() === "INSTRUCTOR";
-
-  const isInstructorRoute =
-    location.pathname.startsWith("/instructor");
 
   const portalLinks =
     isInstructor ? INSTRUCTOR_LINKS : STUDENT_LINKS;
@@ -279,4 +275,3 @@ export default function StudentLayout() {
     </div>
   );
 }
-

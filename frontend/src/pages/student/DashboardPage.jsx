@@ -1,15 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../api/backendClient.js";
-import StatCard from "../../components/shared/StatCard.jsx";
 import { FileText, Wallet, Award, BookOpen } from "lucide-react";
-
-const QUICK_LINKS = [
-  { to: "/applications", title: "My courses", description: "See the courses you've registered for and their status" },
-  { to: "/announcements", title: "Announcements", description: "Read updates from your instructors" },
-  { to: "/certificates", title: "Certificate status", description: "Check your eligibility for course certificates" },
-  { to: "/profile", title: "My profile", description: "Update your personal information" },
-];
 
 function formatDate(date) {
   if (!date) return "N/A";
@@ -40,25 +32,24 @@ export default function DashboardPage() {
         ]);
 
         if (profileRes?.data) setProfile(profileRes.data);
-        if (Array.isArray(dashboardRes?.data)) setDashboardData(dashboardRes.data);
+
+        if (Array.isArray(dashboardRes?.data?.content)) {
+          setDashboardData(dashboardRes.data.content);
+        } else if (Array.isArray(dashboardRes?.data)) {
+          setDashboardData(dashboardRes.data);
+        }
 
         if (Array.isArray(announcementsRes?.data)) {
           setAnnouncements(announcementsRes.data.slice(0, 2));
         }
       } finally {
         setLoading(false);
-
-      }
-
-      if (Array.isArray(dashboardRes?.data?.content)) {
-        setDashboardData(dashboardRes.data.content);
       }
     }
-  
 
-  fetchDashboardAndProfile();
-}, []);
-  const firstName = profile?.firstName || profile?.first_name || "";
+    fetchDashboardAndProfile();
+  }, []);
+
   const coursesRegisteredCount = dashboardData.length;
   const outstandingBalance = dashboardData.reduce((sum, item) => sum + (item.balance || 0), 0);
 
@@ -137,7 +128,7 @@ export default function DashboardPage() {
                 <h2 className="text-2xl font-bold text-slate-900">My courses</h2>
               </div>
               <Link
-                to="/courses"
+                to="/student/courses"
                 className="rounded-xl bg-[#f7941d] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
               >
                 Browse courses
@@ -151,7 +142,7 @@ export default function DashboardPage() {
               <h3 className="mt-6 text-[2rem] font-bold tracking-[-0.04em] text-slate-900">No courses registered yet</h3>
               <p className="mt-3 text-base text-slate-500">You haven’t registered for any courses.</p>
               <Link
-                to="/courses"
+                to="/student/courses"
                 className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#0b4d94] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#083b71]"
               >
                 Browse courses

@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { Outlet, Navigate, Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { LayoutDashboard, BookOpen, Users, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, FileText, CheckSquare, LogOut, Menu, X } from "lucide-react";
 
-const INSTRUCTOR_LINKS = [
-  { to: "/instructor/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/instructor/courses", label: "My Courses", icon: BookOpen },
-  { to: "/instructor/students", label: "Students", icon: Users },
+const COORDINATOR_LINKS = [
+  { to: "/coordinator/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/coordinator/applications", label: "Applications", icon: FileText },
+  { to: "/coordinator/approvals", label: "Approvals", icon: CheckSquare },
 ];
 
 function SidebarLinks({ onLinkClick }) {
   return (
     <nav className="flex-1 space-y-1 px-3 py-4">
-      {INSTRUCTOR_LINKS.map((link) => {
+      {COORDINATOR_LINKS.map((link) => {
         const Icon = link.icon;
         return (
           <NavLink
@@ -48,7 +48,7 @@ function LogoutButton({ onClick }) {
   );
 }
 
-export default function InstructorLayout() {
+export default function CoordinatorLayout() {
   const { user, logout } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -56,8 +56,8 @@ export default function InstructorLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  // Only INSTRUCTOR role can access this layout
-  if (user.role !== "INSTRUCTOR") {
+  // Only COORDINATOR role can access this layout
+  if (user.role !== "COORDINATOR") {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -67,7 +67,7 @@ export default function InstructorLayout() {
       <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-slate-200 bg-white sm:flex">
         <Link to="/" className="flex items-center gap-2 border-b border-slate-200 px-6 py-5">
           <img src="/udom-logo.png" alt="University of Dodoma logo" className="h-8 w-8" />
-          <span className="text-sm font-semibold text-slate-900">Instructor Portal</span>
+          <span className="text-sm font-semibold text-slate-900">Coordinator Portal</span>
         </Link>
         <SidebarLinks />
         <div className="border-t border-slate-200 px-3 py-4">
@@ -88,7 +88,7 @@ export default function InstructorLayout() {
           />
           <aside className="absolute left-0 top-0 flex h-full w-64 flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-              <span className="text-sm font-semibold text-slate-900">Instructor Portal</span>
+              <span className="text-sm font-semibold text-slate-900">Coordinator Portal</span>
               <button onClick={() => setIsDrawerOpen(false)} className="text-slate-500" aria-label="Close menu">
                 <X className="h-5 w-5" />
               </button>
@@ -108,7 +108,7 @@ export default function InstructorLayout() {
       <main className="flex flex-1 flex-col">
         {/* Mobile header */}
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:hidden">
-          <span className="text-sm font-semibold text-slate-900">Instructor Portal</span>
+          <span className="text-sm font-semibold text-slate-900">Coordinator Portal</span>
           <button
             onClick={() => setIsDrawerOpen(true)}
             className="text-slate-500 hover:bg-slate-100"

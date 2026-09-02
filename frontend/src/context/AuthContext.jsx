@@ -3,14 +3,26 @@ import { api } from "../api/backendClient.js";
 
 const AuthContext = createContext(null);
 
-function decodeToken(token) {
-  try {
-    const payload = token.split(".")[1];
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(normalized));
-  } catch {
-    return null;
-  }
+function normalizeProfileFields(data) {
+  return {
+    levelOfEducation: data.levelOfEducation ?? data.level_of_education ?? "",
+    nationality: data.nationality ?? "",
+    identificationNumber: data.identificationNumber ?? data.identification_number ?? "",
+  };
+}
+
+function normalizeUserResponse(data) {
+  // Map response fields to normalized user object
+  return {
+    id: data.id || data.userId,
+    firstName: data.firstName || data.first_name || "",
+    lastName: data.lastName || data.last_name || "",
+    email: data.email || "",
+    phone: data.phone || "",
+    role: data.role || "STUDENT",
+    token: data.token || "",
+    ...normalizeProfileFields(data),
+  };
 }
 
 export function AuthProvider({ children }) {
@@ -56,72 +68,43 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  async function login(email, password) {
-    try {
-      const response = await api.post("/api/v1/auth/login", { email, password });
-      
-      const token = typeof response.data === "string" ? response.data : response.data.token;
-      const claims = decodeToken(token);
+  function storeAuthSession(userData) {
+    const nextUser = normalizeUserResponse(userData);
+    setUser(nextUser);
+    localStorage.setItem("scms_user", JSON.stringify(nextUser));
 
-      const extractedRole =
-        response.data.role ||
-        claims?.role ||
-        (Array.isArray(claims?.roles) ? claims.roles[0] : null) ||
-        (Array.isArray(claims?.authorities) ? claims.authorities[0] : null) ||
-        "STUDENT";
-
-      const loggedInUser = {
-        username: claims?.sub || email,
-        firstName: claims?.sub || email,
-        lastName: "",
-        email: claims?.sub || email,
-        role: String(extractedRole).toUpperCase().replace("ROLE_", ""),
-        token,
-      };
-
-      setUser(loggedInUser);
-      localStorage.setItem("scms_token", token);
-      localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
-
-      // Fetch student profile only if logged in user has the STUDENT role
-      if (loggedInUser.role === "STUDENT") {
-        await fetchUserProfile(loggedInUser);
-      }
-
-      return loggedInUser;
-    } catch (err) {
-      throw new Error("Invalid email or password. Please try again.");
+    if (nextUser.token) {
+      localStorage.setItem("scms_token", nextUser.token);
+      localStorage.setItem("token", nextUser.token);
+      localStorage.setItem("jwt", nextUser.token);
     }
+
+    return nextUser;
+  }
+
+  async function login(email, password) {
+    const response = await api.post("/api/v1/auth/login", { email, password });
+    return storeAuthSession(response.data);
   }
 
   async function register({ firstName, lastName, email, phone, password }) {
-    try {
-      const response = await api.post("/api/v1/student/register", {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        phoneNumber: phone.trim(),
-        password,
-      });
+    const response = await api.post("/api/v1/auth/register", {
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      role: "STUDENT",
+    });
 
-      return response.data;
-    } catch (err) {
-      const data = err.response?.data;
-      let errorMessage = "Registration failed. Please try again.";
+    return storeAuthSession(response.data);
+  }
 
-      if (typeof data === "string") {
-        errorMessage = data;
-      } else if (data?.message) {
-        errorMessage = data.message;
-      } else if (data?.error) {
-        errorMessage = data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-
-      throw new Error(errorMessage);
-    }
+  async function updateProfile({ levelOfEducation, nationality, identificationNumber }) {
+    const updatedUser = { ...user, levelOfEducation, nationality, identificationNumber };
+    setUser(updatedUser);
+    localStorage.setItem("scms_user", JSON.stringify(updatedUser));
+    return updatedUser;
   }
 
   async function forgotPassword(identifier) {
@@ -137,6 +120,8 @@ export function AuthProvider({ children }) {
   function logout() {
     setUser(null);
     localStorage.removeItem("scms_token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("jwt");
     localStorage.removeItem("scms_user");
   }
 

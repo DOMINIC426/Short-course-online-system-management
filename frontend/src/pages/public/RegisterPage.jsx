@@ -34,7 +34,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register({
+      const registeredUser = await register({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
@@ -43,8 +43,9 @@ export default function RegisterPage() {
       });
 
       setIsSuccess(true);
+      // Auto-redirect to dashboard after successful registration
       setTimeout(() => {
-        navigate("/login");
+        navigate("/dashboard");
       }, 2000);
     } catch (err) {
       setError(err.message || "Could not create account. Please try again.");
@@ -60,7 +61,7 @@ export default function RegisterPage() {
           <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
           <h2 className="mt-4 text-xl font-bold text-slate-900">Account Created Successfully!</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Redirecting you to the login page...
+            Redirecting you to your dashboard...
           </p>
         </div>
       </section>

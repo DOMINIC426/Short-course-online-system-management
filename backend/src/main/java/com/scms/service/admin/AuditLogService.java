@@ -84,7 +84,7 @@ public class AuditLogService {
      * Logs an action using an explicitly provided user.
      */
     @Transactional(
-            propagation = Propagation.REQUIRES_NEW,
+            propagation = Propagation.REQUIRED,
             readOnly = false
     )
     public void logAction(

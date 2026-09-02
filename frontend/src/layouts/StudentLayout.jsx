@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Outlet, Navigate, Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
@@ -75,6 +75,13 @@ function LogoutButton({ onClick }) {
 
 export default function StudentLayout() {
   const { user, logout } = useAuth();
+
+  const displayName =
+    user?.firstName ||
+    user?.first_name ||
+    user?.name ||
+    user?.email ||
+    "Student";
   const location = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const isInstructor = String(user?.role || "").toUpperCase() === "INSTRUCTOR";
@@ -172,3 +179,4 @@ export default function StudentLayout() {
     </div>
   );
 }
+

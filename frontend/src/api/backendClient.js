@@ -1,4 +1,3 @@
-// src/api/backendClient.js
 import axios from "axios";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
@@ -10,7 +9,12 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("scms_token");
+  // Check localStorage for whichever key your Auth context sets on login
+  const token =
+    localStorage.getItem("scms_token") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("jwt");
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

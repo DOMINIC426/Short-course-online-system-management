@@ -67,7 +67,22 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  function storeAuthSession(userData) {
+    const nextUser = normalizeUserResponse(userData);
+    setUser(nextUser);
+    localStorage.setItem("scms_user", JSON.stringify(nextUser));
+
+    if (nextUser.token) {
+      localStorage.setItem("scms_token", nextUser.token);
+      localStorage.setItem("token", nextUser.token);
+      localStorage.setItem("jwt", nextUser.token);
+    }
+
+    return nextUser;
+  }
+
   async function login(email, password) {
+<<<<<<< HEAD
     try {
       const response = await api.post("/api/v1/auth/login", { email, password });
       const loggedInUser = normalizeUserResponse(response.data);
@@ -85,6 +100,10 @@ export function AuthProvider({ children }) {
       wrapped.response = err.response;
       throw wrapped;
     }
+=======
+    const response = await api.post("/api/v1/auth/login", { email, password });
+    return storeAuthSession(response.data);
+>>>>>>> 683af069581fb3cd778284919d370fa83ac840f5
   }
 
   async function register({ firstName, lastName, email, phone, password }) {
@@ -98,6 +117,7 @@ export function AuthProvider({ children }) {
       role: "STUDENT",
     };
 
+<<<<<<< HEAD
     let response;
     try {
       response = await api.post("/api/v1/auth/register", payload);
@@ -118,6 +138,9 @@ export function AuthProvider({ children }) {
     localStorage.setItem("scms_user", JSON.stringify(registeredUser));
 
     return registeredUser;
+=======
+    return storeAuthSession(response.data);
+>>>>>>> 683af069581fb3cd778284919d370fa83ac840f5
   }
 
   async function updateProfile({ levelOfEducation, nationality, identificationNumber }) {
@@ -140,6 +163,8 @@ export function AuthProvider({ children }) {
   function logout() {
     setUser(null);
     localStorage.removeItem("scms_token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("jwt");
     localStorage.removeItem("scms_user");
   }
 

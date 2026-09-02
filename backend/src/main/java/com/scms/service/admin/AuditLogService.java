@@ -10,6 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class AuditLogService {
@@ -35,6 +37,7 @@ public class AuditLogService {
                 .entityId(entityId)
                 .oldValue(oldValue)
                 .newValue(newValue)
+                .timestamp(LocalDateTime.now())
                 .build();
 
         auditLogRepository.save(auditLog);

@@ -3,22 +3,29 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import PasswordInput from "../../components/shared/PasswordInput.jsx";
 
+
 function redirectPathForRole(role) {
   switch (role) {
+    case "ADMIN":
+      return "/admin/dashboard";
+
+    case "COORDINATOR":
+      return "/coordinator/dashboard";
+
+    case "INSTRUCTOR":
+      return "/instructor/dashboard";
+
+    case "MARKETING_OFFICER":
+      return "/marketing/dashboard";
+
     case "STUDENT":
       return "/dashboard";
-    // Other roles' dashboards will be added here as far as they are complete:
-    // case "ADMIN": return "/admin/dashboard";
-    // case "COORDINATOR": return "/registrar/dashboard";
-    // case "FINANCE_OFFICER": return "/finance/dashboard";
-    // case "INSTRUCTOR": return "/instructor/dashboard";
-    // case "CERTIFICATE_OFFICER": return "/certificate-officer/dashboard";
-    // case "QUALITY_ASSURANCE_OFFICER": return "/qa/dashboard";
-    // case "AUDITOR": return "/auditor/dashboard";
+
     default:
-      return "/dashboard";
+      return "/login";
   }
 }
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");

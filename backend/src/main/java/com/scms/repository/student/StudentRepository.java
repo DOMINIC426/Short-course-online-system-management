@@ -53,4 +53,5 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     Optional<Student> findStudentWithUserById(
             @Param("id") Long id
     );
+    boolean existsByUserId(Long userId);
 }

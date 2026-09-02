@@ -1,4 +1,11 @@
 // src/App.jsx
+import UserManagementPage from "./pages/admin/UserManagementPage";
+import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import RolesPage from "./pages/admin/RolesPage";
+import PermissionsPage from "./pages/admin/PermissionsPage";
+import SystemSettingsPage from "./pages/admin/SystemSettingsPage";
+import AuditLogsPage from "./pages/admin/AuditLogsPage";
 import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import StudentLayout from "./layouts/StudentLayout";
@@ -39,6 +46,15 @@ export default function App() {
         <Route path="/announcements" element={<AnnouncementsPage />} />
         <Route path="/certificates" element={<CertificatesPage />} />
       </Route>
+    <Route element={<AdminLayout />}>
+    <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+    <Route path="/admin/users" element={<UserManagementPage />} />
+    <Route path="/admin/roles" element={<RolesPage />} />
+    <Route path="/admin/permissions" element={<PermissionsPage />} />
+    <Route path="/admin/settings" element={<SystemSettingsPage />} />
+    <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
+    </Route>
     </Routes>
   );
 }
+

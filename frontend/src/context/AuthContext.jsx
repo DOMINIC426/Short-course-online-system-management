@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { api } from "../api/backendClient.js";
+import { api, getApiErrorMessage } from "../api/backendClient.js";
 
 const AuthContext = createContext(null);
 
@@ -27,21 +27,64 @@ function normalizeProfileFields(data) {
 }
 
 function normalizeUserResponse(data) {
+
+  const token = data.token || data.accessToken || data.jwt || "";
   return {
-    id: data.id || data.userId,
-    userId: data.userId || data.id,
+    id: data.id || data.userId || "",
+
     firstName: data.firstName || data.first_name || "",
     lastName: data.lastName || data.last_name || "",
     email: data.email || "",
-    phone: data.phone || "",
+    phone: data.phone || data.phoneNumber || "",
     role: data.role || "STUDENT",
-    token: data.token || "",
+    token,
     ...normalizeProfileFields(data),
   };
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getStoredUser);
+
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("scms_user");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  async function fetchUserProfile(targetUser = user) {
+    if (targetUser?.role && targetUser.role !== "STUDENT") {
+      return;
+    }
+
+    try {
+      const response = await api.get("/api/v1/student/profile");
+      const profileData = response.data;
+
+      if (profileData) {
+        setUser((prev) => {
+          const updatedUser = {
+            ...prev,
+            firstName: profileData.firstName || prev?.firstName || "",
+            lastName: profileData.lastName || prev?.lastName || "",
+            email: profileData.email || prev?.email || "",
+            nationality: profileData.nationality || prev?.nationality || "",
+            levelOfEducation: profileData.levelOfEducation || prev?.levelOfEducation || "",
+            identificationNumber: profileData.identificationNumber || prev?.identificationNumber || "",
+          };
+          localStorage.setItem("scms_user", JSON.stringify(updatedUser));
+          return updatedUser;
+        });
+      }
+    } catch (err) {
+      console.warn("Skipping profile fetch:", err);
+    }
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem("scms_token");
+    if (token && user) {
+      fetchUserProfile(user);
+    }
+  }, []);
+
 
   function storeAuthSession(userData) {
     const normalizedUser = normalizeUserResponse(userData);
@@ -69,21 +112,18 @@ export function AuthProvider({ children }) {
     return storeAuthSession(response.data);
   }
 
-  async function register({
-    firstName,
-    lastName,
-    email,
-    phone,
-    password,
-  }) {
-    const response = await api.post("/api/v1/auth/register", {
-      first_name: firstName,
-      last_name: lastName,
-      email,
-      phone,
+
+  
+  async function register({ firstName, lastName, email, phone, password }) {
+    const payload = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      phoneNumber: phone.trim(),
       password,
       role: "STUDENT",
-    });
+    };
 
     if (response.data?.token) {
       return storeAuthSession(response.data);
@@ -150,19 +190,15 @@ export function AuthProvider({ children }) {
     return updatedUser;
   }
 
-  async function forgotPassword(email) {
-    const response = await api.post("/api/v1/auth/forgot-password", {
-      email,
-    });
+  async function forgotPassword(identifier) {
+    const response = await api.post("/api/v1/auth/forgot-password", { identifier });
 
     return response.data;
   }
 
   async function resetPassword(token, newPassword) {
-    const response = await api.post("/api/v1/auth/reset-password", {
-      token,
-      newPassword,
-    });
+
+    const response = await api.post("/api/v1/auth/reset-password", { token, newPassword });
 
     return response.data;
   }
@@ -191,8 +227,9 @@ export function AuthProvider({ children }) {
         logout,
         forgotPassword,
         resetPassword,
-        updateProfile,
         fetchUserProfile,
+        updateProfile,
+
       }}
     >
       {children}

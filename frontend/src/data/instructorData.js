@@ -1,61 +1,118 @@
-// Mock data for instructor pages. Replace with real API calls once endpoints exist.
-
-export const MY_COURSES = [
+export const initialInstructorCourses = [
   {
-    intakeId: 501,
-    courseName: "Data Analysis for Evidence-Based Decision Making",
-    intakeName: "September 2026 intake",
-    venue: "UDOM Main Campus, Iyumbu",
-    status: "IN_PROGRESS",
-    progressPercent: 40,
-    topicsCompleted: "Introduction, Excel Fundamentals",
-    remarks: "Students engaging well, on schedule.",
-    studentCount: 3,
+    id: "course-101",
+    code: "WD-101",
+    title: "Web Development 101",
+    category: "Software Engineering",
+    venue: "Lab 04, ICT Building",
+    progressPercent: 65,
+    completedTopics: "HTML, CSS, Tailwind CSS, JavaScript Basics, React Fundamentals",
+    remarks: "Students are progressing well. Final project milestone due next week.",
+    status: "ONGOING", // 'ONGOING' | 'COMPLETED'
+    totalEnrolled: 28,
+    paidCount: 22,
+    unpaidCount: 6,
   },
   {
-    intakeId: 502,
-    courseName: "Public Procurement and Contract Management",
-    intakeName: "September 2026 intake",
-    venue: "Room B12",
-    status: "NOT_STARTED",
-    progressPercent: 0,
-    topicsCompleted: "",
-    remarks: "",
-    studentCount: 1,
+    id: "course-102",
+    code: "PM-201",
+    title: "Advanced Project Management",
+    category: "Business & Management",
+    venue: "Block B, Room 202",
+    progressPercent: 90,
+    completedTopics: "Agile Frameworks, Risk Assessment, Budgeting, Sprint Planning",
+    remarks: "Course nearing completion. Final assessment scheduled.",
+    status: "ONGOING",
+    totalEnrolled: 15,
+    paidCount: 12,
+    unpaidCount: 3,
+  },
+  {
+    id: "course-103",
+    code: "DA-301",
+    title: "Data Analysis with Python",
+    category: "Data Science",
+    venue: "Main Auditorium",
+    progressPercent: 100,
+    completedTopics: "Python Basics, Pandas, NumPy, Data Visualization, Capstone Project",
+    remarks: "Course successfully completed.",
+    status: "COMPLETED",
+    totalEnrolled: 35,
+    paidCount: 35,
+    unpaidCount: 0,
   },
 ];
 
-export const STUDENTS_BY_INTAKE = {
-  501: [
-    { id: 1, firstName: "Asha", lastName: "Mwakalinga", email: "asha.m@example.com", phone: "0712345001", registeredOn: "2026-08-01", paymentStatus: "PAID", certificateEligibility: "ELIGIBLE" },
-    { id: 2, firstName: "Baraka", lastName: "Kileo", email: "baraka.k@example.com", phone: "0712345002", registeredOn: "2026-08-03", paymentStatus: "PARTIALLY_PAID", certificateEligibility: "NOT_ELIGIBLE" },
-    { id: 3, firstName: "Catherine", lastName: "Mushi", email: "catherine.m@example.com", phone: "0712345003", registeredOn: "2026-08-05", paymentStatus: "UNPAID", certificateEligibility: "NOT_ELIGIBLE" },
-  ],
-  502: [
-    { id: 4, firstName: "Daniel", lastName: "Ngowi", email: "daniel.n@example.com", phone: "0712345004", registeredOn: "2026-08-02", paymentStatus: "PAID", certificateEligibility: "NOT_ELIGIBLE" },
-  ],
-};
-
-export const STUDENT_PAYMENT_HISTORY = {
-  1: [{ id: 1, date: "2026-08-02", amount: 350000, reference: "TXN-88213" }],
-  2: [{ id: 2, date: "2026-08-04", amount: 100000, reference: "TXN-88240" }],
-  3: [],
-  4: [{ id: 3, date: "2026-08-03", amount: 280000, reference: "TXN-88301" }],
-};
-
-export const ANNOUNCEMENTS_HISTORY = [
+export const initialStudents = [
   {
-    id: 1,
-    intakeId: 501,
-    recipientGroup: "ALL",
-    message: "Welcome to Data Analysis! Please bring a laptop to the first session.",
-    sentAt: "2026-09-10",
+    id: "std-001",
+    courseId: "course-101",
+    fullName: "Aisha Mohamed",
+    email: "aisha@gmail.com",
+    phone: "+255 712 345 678",
+    registrationDate: "2026-07-15",
+    paymentStatus: "FULLY_PAID", // 'FULLY_PAID' | 'PARTIALLY_PAID' | 'UNPAID'
+    amountPaid: 200000,
+    totalFee: 200000,
+    paymentControlNumber: "ControlNum001",
+    certificateEligibility: "ELIGIBLE", // 'ELIGIBLE' | 'NOT_ELIGIBLE' | 'PENDING'
   },
   {
-    id: 2,
-    intakeId: 501,
-    recipientGroup: "UNPAID",
-    message: "Reminder: please clear your outstanding balance before the next session.",
-    sentAt: "2026-09-18",
+    id: "std-002",
+    courseId: "course-101",
+    fullName: "Baraka Juma",
+    email: "baraka@gmail.com",
+    phone: "+255 754 987 654",
+    registrationDate: "2026-07-18",
+    paymentStatus: "PARTIALLY_PAID",
+    amountPaid: 100000,
+    totalFee: 200000,
+    paymentControlNumber: "ControlNum067",
+    certificateEligibility: "NOT_ELIGIBLE",
+  },
+  {
+    id: "std-003",
+    courseId: "course-101",
+    fullName: "Charles Daniel",
+    email: "charles@gmail.com",
+    phone: "+255 789 112 233",
+    registrationDate: "2026-07-20",
+    paymentStatus: "UNPAID",
+    amountPaid: 0,
+    totalFee: 200000,
+    paymentControlNumber: "ControlNum061",
+    certificateEligibility: "NOT_ELIGIBLE",
+  },
+  {
+    id: "std-004",
+    courseId: "course-102",
+    fullName: "Doreen Peter",
+    email: "doreen@gmail.com",
+    phone: "+255 655 443 322",
+    registrationDate: "2026-08-01",
+    paymentStatus: "FULLY_PAID",
+    amountPaid: 350000,
+    totalFee: 350000,
+    paymentControlNumber: "ControlNum088",
+    certificateEligibility: "PENDING",
+  },
+];
+
+export const initialAnnouncements = [
+  {
+    id: "ann-1",
+    courseId: "course-102",
+    title: "Quiz scheduled for Friday",
+    content: "Please review Agile frameworks and sprint planning modules before Friday's quiz.",
+    targetAudience: "ALL", // 'ALL' | 'FULLY_PAID' | 'UNPAID'
+    dateSent: "2026-08-28",
+  },
+  {
+    id: "ann-2",
+    courseId: "course-103",
+    title: "New module on Pandas available",
+    content: "The lecture notes and exercises for Pandas dataframes have been uploaded.",
+    targetAudience: "FULLY_PAID",
+    dateSent: "2026-08-03",
   },
 ];

@@ -1,4 +1,3 @@
-import { Routes, Route } from "react-router-dom";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 // Layouts
@@ -6,6 +5,9 @@ import PublicLayout from "./layouts/PublicLayout";
 import StudentLayout from "./layouts/StudentLayout";
 import InstructorLayout from "./layouts/InstructorLayout";
 import MarketLayout from "./layouts/MarketLayout";
+
+// Shared Components
+import UserProfile from "./components/UserProfile";
 
 // Public Pages
 import HomePage from "./pages/public/HomePage";
@@ -21,18 +23,17 @@ import DashboardPage from "./pages/student/DashboardPage";
 import ApplyPage from "./pages/student/ApplyPage";
 import MyApplicationsPage from "./pages/student/MyApplicationsPage";
 import MyPaymentsPage from "./pages/student/MyPaymentsPage";
-import ProfilePage from "./pages/student/ProfilePage";
 import AnnouncementsPage from "./pages/student/AnnouncementsPage";
 import CertificatesPage from "./pages/student/CertificatesPage";
 
 // Instructor Pages
-import InstructorDashboardPage from "./pages/instructor/DashboardPage";
-import CourseRosterPage from "./pages/instructor/CourseRosterPage";
-import StudentDetailPage from "./pages/instructor/StudentDetailPage";
-import InstructorAnnouncementsPage from "./pages/instructor/AnnouncementsPage";
-import CourseProgressPage from "./pages/instructor/CourseProgressPage";
-import CertificateEligibilityPage from "./pages/instructor/CertificateEligibilityPage";
+import InstructorDashboardPage from "./pages/instructor/InstructorDashboardPage";
+import InstructorCoursesPage from "./pages/instructor/InstructorCoursesPage";
+import InstructorStudentsPage from "./pages/instructor/InstructorStudentsPage";
+import InstructorAnnouncementsPage from "./pages/instructor/InstructorAnnouncementsPage";
+import InstructorCertificatesPage from "./pages/instructor/InstructorCertificatesPage";
 
+// Market Officer Pages
 import MarketDashboardPage from "./pages/market/MarketDashboardPage";
 import ManageInstructorsPage from "./pages/market/ManageInstructorsPage";
 import MarketCategoriesPage from "./pages/market/MarketCategoriesPage";
@@ -56,34 +57,39 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Route>
 
-      {/* Student Routes */}
+      {/* Student Portal Routes */}
       <Route element={<StudentLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/intakes/:intakeId/apply" element={<ApplyPage />} />
         <Route path="/applications" element={<MyApplicationsPage />} />
         <Route path="/payments" element={<MyPaymentsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/student/profile" element={<UserProfile />} />
         <Route path="/announcements" element={<AnnouncementsPage />} />
         <Route path="/certificates" element={<CertificatesPage />} />
       </Route>
 
-      {/* Instructor Routes */}
+      {/* Instructor Portal Routes */}
       <Route path="/instructor" element={<InstructorLayout />}>
+        <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<InstructorDashboardPage />} />
-        <Route path="courses/:intakeId/students" element={<CourseRosterPage />} />
-        <Route path="students/:studentId" element={<StudentDetailPage />} />
+        <Route path="courses" element={<InstructorCoursesPage />} />
+        <Route path="students" element={<InstructorStudentsPage />} />
         <Route path="announcements" element={<InstructorAnnouncementsPage />} />
-        <Route path="courses/:intakeId/progress" element={<CourseProgressPage />} />
-        <Route path="courses/:intakeId/certificates" element={<CertificateEligibilityPage />} />
+        <Route path="certificates" element={<InstructorCertificatesPage />} />
+        <Route path="profile" element={<UserProfile />} />
       </Route>
 
+      {/* Market Officer Portal Routes */}
       <Route path="/market" element={<MarketLayout />}>
+        <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<MarketDashboardPage />} />
         <Route path="courses" element={<MarketCoursesPage />} />
         <Route path="categories" element={<MarketCategoriesPage />} />
         <Route path="instructors" element={<MarketInstructorsPage />} />
         <Route path="manage-instructors" element={<ManageInstructorsPage />} />
         <Route path="settings" element={<MarketSettingsPage />} />
+        <Route path="profile" element={<UserProfile />} />
       </Route>
       {/* Market Routes */}
       <Route path="/market" element={<MarketLayout />}>

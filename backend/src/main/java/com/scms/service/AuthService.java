@@ -5,6 +5,7 @@ import com.scms.dto.LoginResponse;
 import com.scms.dto.RegisterUserRequest;
 import com.scms.dto.RegisterResponse;
 import com.scms.entity.Users;
+import com.scms.service.admin.AuditLogService;
 import com.scms.entity.enums.Role;
 import com.scms.entity.enums.UserStatus;
 import com.scms.exception.UserAlreadyExistException;
@@ -30,6 +31,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public RegisterResponse register(RegisterUserRequest request) {
@@ -38,17 +40,33 @@ public class AuthService {
             throw new UserAlreadyExistException("User with email " + request.getEmail() + " already exists");
         }
 
+        // Set role to STUDENT by default if not provided
+        Role userRole = request.getRole() != null ? request.getRole() : Role.STUDENT;
+
         Users user = Users.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole() != null ? request.getRole() : Role.STUDENT)
+                .role(userRole)
                 .status(UserStatus.ACTIVE)
                 .build();
 
         Users savedUser = userRepository.save(user);
+
+        // Audit log
+        auditLogService.logAction("CREATE", "USER", savedUser.getId(), null, savedUser.getEmail(), savedUser);
+
+        // Generate JWT token for auto-login
+        UserDetails userDetails = User.builder()
+                .username(savedUser.getEmail())
+                .password(savedUser.getPasswordHash())
+                .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + savedUser.getRole().name())))
+                .disabled(savedUser.getStatus() != UserStatus.ACTIVE)
+                .build();
+
+        String token = jwtService.generateToken(userDetails);
 
         RegisterResponse response = new RegisterResponse();
         response.setId(savedUser.getId());
@@ -57,10 +75,11 @@ public class AuthService {
         response.setEmail(savedUser.getEmail());
         response.setPhone(savedUser.getPhone());
         response.setRole(savedUser.getRole());
+        response.setToken(token);
         return response;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponse login(LoginRequest request) {
         Users user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User with email " + request.getEmail() + " not found"));
@@ -82,9 +101,14 @@ public class AuthService {
 
         String token = jwtService.generateToken(userDetails);
 
+        // Audit log
+        auditLogService.logAction("LOGIN", "USER", user.getId(), null, user.getEmail(), user);
+
         return LoginResponse.builder()
                 .token(token)
                 .userId(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .email(user.getEmail())
                 .role(user.getRole())
                 .build();

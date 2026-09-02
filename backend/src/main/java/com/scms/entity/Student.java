@@ -20,4 +20,13 @@ public class Student extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Users user;
+
+    @Column(name = "level_of_education", length = 100)
+    private String levelOfEducation;
+
+    @Column(name = "nationality", length = 100)
+    private String nationality;
+
+    @Column(name = "identification_number", length = 50)
+    private String identificationNumber;
 }

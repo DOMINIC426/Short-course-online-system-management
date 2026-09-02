@@ -1,9 +1,22 @@
-import { useState } from "react";
-import { Outlet, Navigate, Link, NavLink } from "react-router-dom";
+﻿import { useState } from "react";
+import { Outlet, Navigate, Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { LayoutDashboard, FileText, CreditCard, Megaphone, Award, UserCircle, BookOpen, Menu, X, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileText,
+  CreditCard,
+  Award,
+  UserCircle,
+  ClipboardCheck,
+  MessageSquare,
+  Menu,
+  X,
+  LogOut,
+  BookOpen,
+  Megaphone,
+} from "lucide-react";
 
-const PORTAL_LINKS = [
+const STUDENT_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/courses", label: "Browse courses", icon: BookOpen },
   { to: "/applications", label: "My courses", icon: FileText },
@@ -13,10 +26,18 @@ const PORTAL_LINKS = [
   { to: "/profile", label: "My profile", icon: UserCircle },
 ];
 
-function SidebarLinks({ onLinkClick }) {
+const INSTRUCTOR_LINKS = [
+  { to: "/instructor", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/instructor/courses", label: "My courses", icon: FileText },
+  { to: "/instructor/submissions", label: "Submissions", icon: ClipboardCheck },
+  { to: "/instructor/messages", label: "Messages", icon: MessageSquare },
+  { to: "/profile", label: "My profile", icon: UserCircle },
+];
+
+function SidebarLinks({ links, onLinkClick }) {
   return (
     <nav className="flex-1 space-y-1 px-3 py-4">
-      {PORTAL_LINKS.map((link) => {
+      {links.map((link) => {
         const Icon = link.icon;
         return (
           <NavLink
@@ -54,9 +75,36 @@ function LogoutButton({ onClick }) {
 
 export default function StudentLayout() {
   const { user, logout } = useAuth();
+
+  const displayName =
+    user?.firstName ||
+    user?.first_name ||
+    user?.name ||
+    user?.email ||
+    "Student";
+  const location = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const isInstructor = String(user?.role || "").toUpperCase() === "INSTRUCTOR";
+  const isInstructorRoute = location.pathname.startsWith("/instructor");
+  const portalLinks = isInstructor ? INSTRUCTOR_LINKS : STUDENT_LINKS;
 
   if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Only STUDENT role can access this layout
+  if (user.role !== "STUDENT") {
+    // Redirect to appropriate dashboard based on their role
+    const rolePathMap = {
+      ADMIN: "/admin/dashboard",
+      COORDINATOR: "/coordinator/dashboard",
+      INSTRUCTOR: "/instructor/dashboard",
+      MARKETING_OFFICER: "/market/dashboard",
+    };
+    const redirectPath = rolePathMap[user.role];
+    if (redirectPath) {
+      return <Navigate to={redirectPath} replace />;
+    }
     return <Navigate to="/login" replace />;
   }
 
@@ -66,14 +114,14 @@ export default function StudentLayout() {
       <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-slate-200 bg-white sm:flex">
         <Link to="/" className="flex items-center gap-2 border-b border-slate-200 px-6 py-5">
           <img src="/udom-logo.png" alt="University of Dodoma logo" className="h-8 w-8" />
-          <span className="text-sm font-semibold text-slate-900">Student Portal</span>
+          <span className="text-sm font-semibold text-slate-900">
+            {isInstructor ? "Instructor Portal" : "Student Portal"}
+          </span>
         </Link>
-        <SidebarLinks />
+        <SidebarLinks links={portalLinks} />
         <div className="border-t border-slate-200 px-3 py-4">
           <p className="px-3 text-xs text-slate-500">Signed in as</p>
-          <p className="truncate px-3 text-sm font-semibold text-slate-900">
-            {user.fullName || user.username}
-          </p>
+          <p className="truncate px-3 text-sm font-semibold text-slate-900">{displayName}</p>
           <LogoutButton onClick={logout} />
         </div>
       </aside>
@@ -87,16 +135,21 @@ export default function StudentLayout() {
           />
           <aside className="absolute left-0 top-0 flex h-full w-64 flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-              <span className="text-sm font-semibold text-slate-900">Student Portal</span>
-              <button onClick={() => setIsDrawerOpen(false)} className="text-slate-500" aria-label="Close menu">
+              <span className="text-sm font-semibold text-slate-900">
+                {isInstructor ? "Instructor Portal" : "Student Portal"}
+              </span>
+              <button
+                onClick={() => setIsDrawerOpen(false)}
+                className="text-slate-500"
+                aria-label="Close menu"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <SidebarLinks onLinkClick={() => setIsDrawerOpen(false)} />
+            <SidebarLinks links={portalLinks} onLinkClick={() => setIsDrawerOpen(false)} />
             <div className="border-t border-slate-200 px-3 py-4">
-              <p className="truncate px-3 text-sm font-semibold text-slate-900">
-               {user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.username}
-              </p>
+              <p className="px-3 text-xs text-slate-500">Signed in as</p>
+              <p className="truncate px-3 text-sm font-semibold text-slate-900">{displayName}</p>
               <LogoutButton onClick={logout} />
             </div>
           </aside>
@@ -113,7 +166,9 @@ export default function StudentLayout() {
           >
             <Menu className="h-5 w-5 text-slate-700" />
           </button>
-          <span className="text-sm font-semibold text-slate-900">Student Portal</span>
+          <span className="text-sm font-semibold text-slate-900">
+            {isInstructor ? "Instructor Portal" : "Student Portal"}
+          </span>
           <div className="w-9" />
         </header>
 
@@ -124,3 +179,4 @@ export default function StudentLayout() {
     </div>
   );
 }
+

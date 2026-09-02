@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { api } from "../api/backendClient.js";
 
 const AuthContext = createContext(null);
@@ -14,8 +14,51 @@ function getStoredUser() {
   }
 }
 
+function normalizeProfileFields(data) {
+  return {
+    levelOfEducation:
+      data.levelOfEducation ?? data.level_of_education ?? "",
+    nationality: data.nationality ?? "",
+    identificationNumber:
+      data.identificationNumber ??
+      data.identification_number ??
+      "",
+  };
+}
+
+function normalizeUserResponse(data) {
+  return {
+    id: data.id || data.userId,
+    userId: data.userId || data.id,
+    firstName: data.firstName || data.first_name || "",
+    lastName: data.lastName || data.last_name || "",
+    email: data.email || "",
+    phone: data.phone || "",
+    role: data.role || "STUDENT",
+    token: data.token || "",
+    ...normalizeProfileFields(data),
+  };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(getStoredUser);
+
+  function storeAuthSession(userData) {
+    const normalizedUser = normalizeUserResponse(userData);
+
+    if (normalizedUser.token) {
+      localStorage.setItem("scms_token", normalizedUser.token);
+      localStorage.setItem("token", normalizedUser.token);
+      localStorage.setItem("jwt", normalizedUser.token);
+    }
+
+    const { token, ...storedUser } = normalizedUser;
+
+    localStorage.setItem("scms_user", JSON.stringify(storedUser));
+    setUser(storedUser);
+
+    return storedUser;
+  }
 
   async function login(email, password) {
     const response = await api.post("/api/v1/auth/login", {
@@ -23,31 +66,7 @@ export function AuthProvider({ children }) {
       password,
     });
 
-    const loginData = response.data;
-
-    // Backend LoginResponse:
-    // {
-    //   token,
-    //   userId,
-    //   email,
-    //   role
-    // }
-
-    const loggedInUser = {
-      userId: loginData.userId,
-      email: loginData.email,
-      role: loginData.role,
-    };
-
-    // Store JWT for authenticated API requests.
-    localStorage.setItem("scms_token", loginData.token);
-
-    // Store basic logged-in user information.
-    localStorage.setItem("scms_user", JSON.stringify(loggedInUser));
-
-    setUser(loggedInUser);
-
-    return loggedInUser;
+    return storeAuthSession(response.data);
   }
 
   async function register({
@@ -66,13 +85,63 @@ export function AuthProvider({ children }) {
       role: "STUDENT",
     });
 
+    if (response.data?.token) {
+      return storeAuthSession(response.data);
+    }
+
     return response.data;
   }
 
-  async function updateProfile(profileData) {
+  async function fetchUserProfile(targetUser = user) {
+    // Only students have access to the student profile endpoint.
+    if (!targetUser || targetUser.role !== "STUDENT") {
+      return targetUser;
+    }
+
+    try {
+      const response = await api.get("/api/v1/student/profile");
+      const profileData = response.data || {};
+
+      const updatedUser = {
+        ...targetUser,
+        firstName:
+          profileData.firstName ||
+          profileData.first_name ||
+          targetUser.firstName ||
+          "",
+        lastName:
+          profileData.lastName ||
+          profileData.last_name ||
+          targetUser.lastName ||
+          "",
+        email: profileData.email || targetUser.email || "",
+        phone: profileData.phone || targetUser.phone || "",
+        ...normalizeProfileFields(profileData),
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("scms_user", JSON.stringify(updatedUser));
+
+      return updatedUser;
+    } catch (error) {
+      console.warn(
+        "Skipping profile fetch for non-student or missing record:",
+        error
+      );
+      return targetUser;
+    }
+  }
+
+  async function updateProfile({
+    levelOfEducation,
+    nationality,
+    identificationNumber,
+  }) {
     const updatedUser = {
       ...user,
-      ...profileData,
+      levelOfEducation,
+      nationality,
+      identificationNumber,
     };
 
     setUser(updatedUser);
@@ -100,9 +169,18 @@ export function AuthProvider({ children }) {
 
   function logout() {
     setUser(null);
+
     localStorage.removeItem("scms_token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("jwt");
     localStorage.removeItem("scms_user");
   }
+
+  useEffect(() => {
+    if (user?.role === "STUDENT" && localStorage.getItem("scms_token")) {
+      fetchUserProfile(user);
+    }
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -114,6 +192,7 @@ export function AuthProvider({ children }) {
         forgotPassword,
         resetPassword,
         updateProfile,
+        fetchUserProfile,
       }}
     >
       {children}

@@ -5,9 +5,10 @@ import com.scms.dto.admin.AuditLogResponse;
 import com.scms.entity.AuditLog;
 import com.scms.entity.enums.Role;
 import com.scms.entity.enums.UserStatus;
-import com.scms.repository.AuditLogRepository;
-import com.scms.repository.SystemSettingRepository;
 import com.scms.repository.UserRepository;
+import com.scms.repository.admin.AuditLogRepository;
+import com.scms.repository.admin.SystemSettingRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

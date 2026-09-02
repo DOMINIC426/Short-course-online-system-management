@@ -1,4 +1,4 @@
-package com.scms.repository;
+package com.scms.repository.admin;
 
 import com.scms.entity.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;

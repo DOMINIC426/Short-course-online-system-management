@@ -1,37 +1,32 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import PasswordInput from "../../components/shared/PasswordInput.jsx";
 
-
 function redirectPathForRole(role) {
   switch (role) {
-    case "ADMIN":
-      return "/admin/dashboard";
-
-    case "COORDINATOR":
-      return "/coordinator/dashboard";
-
-    case "INSTRUCTOR":
-      return "/instructor/dashboard";
-
-    case "MARKETING_OFFICER":
-      return "/marketing/dashboard";
-
     case "STUDENT":
       return "/dashboard";
-
+    case "ADMIN":
+      return "/admin/dashboard";
+    case "COORDINATOR":
+      return "/coordinator/dashboard";
+    case "INSTRUCTOR":
+      return "/instructor/dashboard";
+    case "MARKETING_OFFICER":
+      return "/market/dashboard";
     default:
       return "/login";
   }
 }
-
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -39,11 +34,17 @@ export default function LoginPage() {
     event.preventDefault();
     setError("");
     setLoading(true);
+
     try {
       const loggedInUser = await login(email, password);
       navigate(redirectPathForRole(loggedInUser.role));
     } catch (err) {
-      setError("Invalid email or password. Please try again.");
+      const backendMessage = err?.response?.data?.message;
+
+      setError(
+        backendMessage ||
+          "Invalid email or password. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -51,13 +52,19 @@ export default function LoginPage() {
 
   return (
     <section className="mx-auto max-w-md px-6 py-16">
-      <h1 className="text-2xl font-bold text-slate-900">Sign in to your account</h1>
+      <h1 className="text-2xl font-bold text-slate-900">
+        Sign in to your account
+      </h1>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-slate-700"
+          >
             Email
           </label>
+
           <input
             id="email"
             type="email"
@@ -75,7 +82,11 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
@@ -87,17 +98,24 @@ export default function LoginPage() {
       </form>
 
       <p className="mt-3 text-center text-sm">
-        <Link to="/forgot-password" className="font-medium text-udom-primary hover:underline">
+        <Link
+          to="/forgot-password"
+          className="font-medium text-udom-primary hover:underline"
+        >
           Forgot password?
         </Link>
       </p>
 
       <p className="mt-4 text-center text-sm text-slate-600">
         Don't have an account?{" "}
-        <Link to="/register" className="font-semibold text-udom-primary hover:underline">
+        <Link
+          to="/register"
+          className="font-semibold text-udom-primary hover:underline"
+        >
           Create one
         </Link>
       </p>
     </section>
   );
 }
+

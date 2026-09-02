@@ -48,7 +48,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
+      # =====================================================
       # PostgreSQL
+      # =====================================================
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB}
@@ -59,23 +61,37 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
 
+      # =====================================================
       # Redis
+      #
+      # IMPORTANT:
+      # Backend is inside Docker, therefore it connects to
+      # Redis using the Docker service name "redis".
+      #
+      # Do NOT use localhost:6380 here.
+      # =====================================================
       REDIS_HOST: redis
       REDIS_PORT: 6379
 
+      # =====================================================
       # MinIO
+      # =====================================================
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
 
+      # =====================================================
       # RabbitMQ
+      # =====================================================
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
 
+      # =====================================================
       # CORS
+      # =====================================================
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5174}
 
     depends_on:
@@ -92,13 +108,10 @@ services:
       - scms-network
 
 
-
-
-
-
   # =========================================================
   # POSTGRESQL
   # Host: localhost:5433
+  # Internal: postgres:5432
   # =========================================================
   postgres:
     image: postgres:15-alpine
@@ -119,13 +132,13 @@ services:
     networks:
       - scms-network
 
-
     restart: unless-stopped
 
 
   # =========================================================
   # PGADMIN
   # Host: http://localhost:5051
+  # Internal PostgreSQL: postgres:5432
   # =========================================================
   pgadmin:
     image: dpage/pgadmin4:9.12
@@ -154,6 +167,7 @@ services:
   # =========================================================
   # REDIS
   # Host: localhost:6380
+  # Internal: redis:6379
   # =========================================================
   redis:
     image: redis:7-alpine
@@ -169,6 +183,41 @@ services:
     networks:
       - scms-network
 
+    restart: unless-stopped
+
+
+  # =========================================================
+  # REDIS INSIGHT
+  #
+  # Web UI:
+  # http://localhost:5540
+  #
+  # Redis Insight connects internally to:
+  # redis:6379
+  #
+  # IMPORTANT:
+  # From Redis Insight container, do NOT use:
+  # localhost:6380
+  #
+  # Use:
+  # redis:6379
+  # =========================================================
+  redis-insight:
+    image: redis/redisinsight:latest
+
+    container_name: scms-redis-insight
+
+    ports:
+      - "${REDIS_INSIGHT_HOST_PORT:-5540}:5540"
+
+    depends_on:
+      - redis
+
+    volumes:
+      - redis_insight_data:/data
+
+    networks:
+      - scms-network
 
     restart: unless-stopped
 
@@ -177,6 +226,8 @@ services:
   # MINIO
   # API:     http://localhost:9002
   # Console: http://localhost:9003
+  # Internal API: minio:9000
+  # Internal Console: minio:9001
   # =========================================================
   minio:
     image: minio/minio:RELEASE.2023-11-20T22-40-07Z
@@ -203,7 +254,6 @@ services:
     networks:
       - scms-network
 
-
     restart: unless-stopped
 
 
@@ -211,6 +261,8 @@ services:
   # RABBITMQ
   # AMQP:       localhost:5673
   # Management: http://localhost:15673
+  # Internal AMQP: rabbitmq:5672
+  # Internal Management: rabbitmq:15672
   # =========================================================
   rabbitmq:
     image: rabbitmq:3-management
@@ -263,5 +315,6 @@ volumes:
   postgres_data:
   pgadmin_data:
   redis_data:
+  redis_insight_data:
   minio_data:
   rabbitmq_data:

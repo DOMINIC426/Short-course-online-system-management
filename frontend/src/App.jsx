@@ -1,14 +1,13 @@
-// src/App.jsx
-import UserManagementPage from "./pages/admin/UserManagementPage";
-import AdminLayout from "./layouts/AdminLayout";
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
-import RolesPage from "./pages/admin/RolesPage";
-import PermissionsPage from "./pages/admin/PermissionsPage";
-import SystemSettingsPage from "./pages/admin/SystemSettingsPage";
-import AuditLogsPage from "./pages/admin/AuditLogsPage";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+
+// Layouts
 import PublicLayout from "./layouts/PublicLayout";
 import StudentLayout from "./layouts/StudentLayout";
+import InstructorLayout from "./layouts/InstructorLayout";
+import MarketLayout from "./layouts/MarketLayout";
+import AdminLayout from "./layouts/AdminLayout";
+
+// Public Pages
 import HomePage from "./pages/public/HomePage";
 import CoursesPage from "./pages/public/CoursesPage";
 import CourseDetailPage from "./pages/public/CourseDetailPage";
@@ -16,17 +15,42 @@ import LoginPage from "./pages/public/LoginPage";
 import RegisterPage from "./pages/public/RegisterPage";
 import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/public/ResetPasswordPage";
+
+// Student Pages
 import DashboardPage from "./pages/student/DashboardPage";
-import ProfilePage from "./pages/student/ProfilePage";
 import ApplyPage from "./pages/student/ApplyPage";
 import MyApplicationsPage from "./pages/student/MyApplicationsPage";
 import MyPaymentsPage from "./pages/student/MyPaymentsPage";
+import ProfilePage from "./pages/student/ProfilePage";
 import AnnouncementsPage from "./pages/student/AnnouncementsPage";
 import CertificatesPage from "./pages/student/CertificatesPage";
+
+// Instructor Pages
+import InstructorDashboardPage from "./pages/instructor/DashboardPage";
+import CourseRosterPage from "./pages/instructor/CourseRosterPage";
+import StudentDetailPage from "./pages/instructor/StudentDetailPage";
+import InstructorAnnouncementsPage from "./pages/instructor/AnnouncementsPage";
+import CourseProgressPage from "./pages/instructor/CourseProgressPage";
+import CertificateEligibilityPage from "./pages/instructor/CertificateEligibilityPage";
+
+// Market Pages
+import MarketDashboardPage from "./pages/market/MarketDashboardPage";
+import MarketCoursesPage from "./pages/market/MarketCoursesPage";
+import MarketInstructorsPage from "./pages/market/MarketInstructorsPage";
+import MarketSettingsPage from "./pages/market/MarketSettingsPage";
+
+// Admin Pages
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import UserManagementPage from "./pages/admin/UserManagementPage";
+import RolesPage from "./pages/admin/RolesPage";
+import PermissionsPage from "./pages/admin/PermissionsPage";
+import SystemSettingsPage from "./pages/admin/SystemSettingsPage";
+import AuditLogsPage from "./pages/admin/AuditLogsPage";
 
 export default function App() {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/courses" element={<CoursesPage />} />
@@ -37,24 +61,51 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Route>
 
+      {/* Student Routes */}
       <Route element={<StudentLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/intakes/:intakeId/apply" element={<ApplyPage />} />
         <Route path="/applications" element={<MyApplicationsPage />} />
         <Route path="/payments" element={<MyPaymentsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/announcements" element={<AnnouncementsPage />} />
         <Route path="/certificates" element={<CertificatesPage />} />
       </Route>
-    <Route element={<AdminLayout />}>
-    <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-    <Route path="/admin/users" element={<UserManagementPage />} />
-    <Route path="/admin/roles" element={<RolesPage />} />
-    <Route path="/admin/permissions" element={<PermissionsPage />} />
-    <Route path="/admin/settings" element={<SystemSettingsPage />} />
-    <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
-    </Route>
+
+      {/* Instructor Routes */}
+      <Route path="/instructor" element={<InstructorLayout />}>
+        <Route path="dashboard" element={<InstructorDashboardPage />} />
+        <Route path="courses/:intakeId/students" element={<CourseRosterPage />} />
+        <Route path="students/:studentId" element={<StudentDetailPage />} />
+        <Route path="announcements" element={<InstructorAnnouncementsPage />} />
+        <Route path="courses/:intakeId/progress" element={<CourseProgressPage />} />
+        <Route
+          path="courses/:intakeId/certificates"
+          element={<CertificateEligibilityPage />}
+        />
+      </Route>
+
+      {/* Market Routes */}
+      <Route path="/market" element={<MarketLayout />}>
+        <Route path="dashboard" element={<MarketDashboardPage />} />
+        <Route path="courses" element={<MarketCoursesPage />} />
+        <Route path="instructors" element={<MarketInstructorsPage />} />
+        <Route path="manage-instructors" element={<MarketInstructorsPage />} />
+        <Route path="settings" element={<MarketSettingsPage />} />
+      </Route>
+
+      {/* Admin Routes */}
+      <Route element={<AdminLayout />}>
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/users" element={<UserManagementPage />} />
+        <Route path="/admin/roles" element={<RolesPage />} />
+        <Route path="/admin/permissions" element={<PermissionsPage />} />
+        <Route path="/admin/settings" element={<SystemSettingsPage />} />
+        <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
+      </Route>
+
+      {/* Catch-all Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
-

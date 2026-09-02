@@ -31,10 +31,7 @@ public class AuditLogService {
      *
      * @Transactional(readOnly = true)
      */
-    @Transactional(
-            propagation = Propagation.REQUIRES_NEW,
-            readOnly = false
-    )
+    @Transactional(readOnly = false)
     public void log(
             String action,
             String entity,
@@ -55,16 +52,15 @@ public class AuditLogService {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        auditLogRepository.save(auditLog);
+        if (currentUser != null && currentUser.getId() != null) {
+            auditLogRepository.save(auditLog);
+        }
     }
 
     /**
      * Logs an action without old/new values.
      */
-    @Transactional(
-            propagation = Propagation.REQUIRES_NEW,
-            readOnly = false
-    )
+    @Transactional(readOnly = false)
     public void log(
             String action,
             String entity,
@@ -83,6 +79,7 @@ public class AuditLogService {
     /**
      * Logs an action using an explicitly provided user.
      */
+
     @Transactional(
             propagation = Propagation.REQUIRED,
             readOnly = false
@@ -95,6 +92,10 @@ public class AuditLogService {
             String newValue,
             Users user
     ) {
+
+        if (user == null || user.getId() == null) {
+            return;
+        }
 
         AuditLog auditLog = AuditLog.builder()
                 .user(user)
@@ -112,10 +113,7 @@ public class AuditLogService {
     /**
      * Convenience method for explicitly provided user.
      */
-    @Transactional(
-            propagation = Propagation.REQUIRES_NEW,
-            readOnly = false
-    )
+    @Transactional(readOnly = false)
     public void logAction(
             String action,
             String entity,

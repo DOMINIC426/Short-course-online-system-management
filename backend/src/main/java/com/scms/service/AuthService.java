@@ -5,8 +5,9 @@ import com.scms.dto.LoginResponse;
 import com.scms.dto.RegisterUserRequest;
 import com.scms.dto.RegisterResponse;
 import com.scms.entity.Users;
+import com.scms.exception.TooManyRequestsException;
 import com.scms.service.admin.AuditLogService;
-import com.scms.entity.enums.Role;
+import com.scms.entity.enums.Role;  
 import com.scms.entity.enums.UserStatus;
 import com.scms.exception.UserAlreadyExistException;
 import com.scms.exception.UserNotFoundException;
@@ -32,12 +33,25 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuditLogService auditLogService;
+    private final AccountLoginRateLimiter accountLoginRateLimiter;
+
 
     @Transactional
     public RegisterResponse register(RegisterUserRequest request) {
         Optional<Users> existingUser = userRepository.findByEmail(request.getEmail());
+
+        if (existingUser.isPresent() && userRepository.existsByPhone(request.getPhone())) {
+            throw new UserAlreadyExistException(
+                    "This email is already taken and this phone number is already in use."
+            );
+        }
+
         if (existingUser.isPresent()) {
-            throw new UserAlreadyExistException("User with email " + request.getEmail() + " already exists");
+            throw new UserAlreadyExistException("This email is already taken.");
+        }
+
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new UserAlreadyExistException("This phone number is already in use.");
         }
 
         // Set role to STUDENT by default if not provided
@@ -53,10 +67,13 @@ public class AuthService {
                 .status(UserStatus.ACTIVE)
                 .build();
 
-        Users savedUser = userRepository.save(user);
+        Users savedUser = userRepository.saveAndFlush(user);
 
-        // Audit log
-        auditLogService.logAction("CREATE", "USER", savedUser.getId(), null, savedUser.getEmail(), savedUser);
+        // Audit log must be written only after the user row is definitely persisted
+        // in the same transaction; otherwise the FK from audit_logs.user_id can fail.
+        if (savedUser.getId() != null) {
+            auditLogService.logAction("CREATE", "USER", savedUser.getId(), null, savedUser.getEmail(), savedUser);
+        }
 
         // Generate JWT token for auto-login
         UserDetails userDetails = User.builder()
@@ -83,6 +100,10 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         Users user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User with email " + request.getEmail() + " not found"));
+
+      if (!accountLoginRateLimiter.isAllowed(request.getEmail())) {
+        throw new TooManyRequestsException("Too many login attempts for this account. Please try again later.");       
+      }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid email or password");

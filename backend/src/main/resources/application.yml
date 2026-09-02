@@ -30,12 +30,12 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      port: ${REDIS_PORT:6380}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
+    port: ${RABBITMQ_PORT:5673}
     username: ${RABBITMQ_USERNAME:scms}
-    password: ${RABBITMQ_PASSWORD:change_me}
+    password: ${RABBITMQ_PASSWORD:scms_rabbitmq_password}
     virtual-host: ${RABBITMQ_VHOST:/}
 
 management:
@@ -49,9 +49,9 @@ management:
 
 scms:
   minio:
-    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9002}
     access-key: ${MINIO_ACCESS_KEY:scms_minio}
-    secret-key: ${MINIO_SECRET_KEY:change_me}
+    secret-key: ${MINIO_SECRET_KEY:scms_minio_password}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174}
   rate-limit:

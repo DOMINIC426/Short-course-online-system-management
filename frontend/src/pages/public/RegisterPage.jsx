@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import PasswordInput from "../../components/shared/PasswordInput.jsx";
+import { getApiErrorMessage } from "../../api/backendClient.js";
 
 export default function RegisterPage() {
   const [firstName, setFirstName] = useState("");
@@ -34,7 +35,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const registeredUser = await register({
+      await register({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
@@ -43,12 +44,15 @@ export default function RegisterPage() {
       });
 
       setIsSuccess(true);
-      // Auto-redirect to dashboard after successful registration
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/login");
       }, 2000);
     } catch (err) {
-      setError(err.message || "Could not create account. Please try again.");
+      const backendMessage = getApiErrorMessage(
+        err,
+        "Could not create account. Please check your details and try again."
+      );
+      setError(backendMessage);
     } finally {
       setLoading(false);
     }
@@ -61,7 +65,7 @@ export default function RegisterPage() {
           <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
           <h2 className="mt-4 text-xl font-bold text-slate-900">Account Created Successfully!</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Redirecting you to your dashboard...
+            Redirecting you to the login page...
           </p>
         </div>
       </section>

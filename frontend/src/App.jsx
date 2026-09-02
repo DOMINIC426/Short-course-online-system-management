@@ -1,6 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-
-// Layouts
+import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import StudentLayout from "./layouts/StudentLayout";
 import InstructorLayout from "./layouts/InstructorLayout";
@@ -32,8 +30,9 @@ import InstructorAnnouncementsPage from "./pages/instructor/AnnouncementsPage";
 import CourseProgressPage from "./pages/instructor/CourseProgressPage";
 import CertificateEligibilityPage from "./pages/instructor/CertificateEligibilityPage";
 
-// Market Pages
 import MarketDashboardPage from "./pages/market/MarketDashboardPage";
+import ManageInstructorsPage from "./pages/market/ManageInstructorsPage";
+import MarketCategoriesPage from "./pages/market/MarketCategoriesPage";
 import MarketCoursesPage from "./pages/market/MarketCoursesPage";
 import MarketInstructorsPage from "./pages/market/MarketInstructorsPage";
 import MarketSettingsPage from "./pages/market/MarketSettingsPage";
@@ -73,17 +72,14 @@ export default function App() {
         <Route path="courses/:intakeId/certificates" element={<CertificateEligibilityPage />} />
       </Route>
 
-      {/* Market Routes */}
       <Route path="/market" element={<MarketLayout />}>
         <Route path="dashboard" element={<MarketDashboardPage />} />
         <Route path="courses" element={<MarketCoursesPage />} />
+        <Route path="categories" element={<MarketCategoriesPage />} />
         <Route path="instructors" element={<MarketInstructorsPage />} />
-        <Route path="manage-instructors" element={<MarketInstructorsPage />} />
+        <Route path="manage-instructors" element={<ManageInstructorsPage />} />
         <Route path="settings" element={<MarketSettingsPage />} />
       </Route>
-
-      {/* Catch-all Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

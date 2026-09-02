@@ -5,9 +5,7 @@ import PublicLayout from "./layouts/PublicLayout";
 import StudentLayout from "./layouts/StudentLayout";
 import InstructorLayout from "./layouts/InstructorLayout";
 import MarketLayout from "./layouts/MarketLayout";
-
-// Shared Components
-import UserProfile from "./components/UserProfile";
+import AdminLayout from "./layouts/AdminLayout";
 
 // Public Pages
 import HomePage from "./pages/public/HomePage";
@@ -27,19 +25,26 @@ import AnnouncementsPage from "./pages/student/AnnouncementsPage";
 import CertificatesPage from "./pages/student/CertificatesPage";
 
 // Instructor Pages
-import InstructorDashboardPage from "./pages/instructor/InstructorDashboardPage";
-import InstructorCoursesPage from "./pages/instructor/InstructorCoursesPage";
-import InstructorStudentsPage from "./pages/instructor/InstructorStudentsPage";
-import InstructorAnnouncementsPage from "./pages/instructor/InstructorAnnouncementsPage";
-import InstructorCertificatesPage from "./pages/instructor/InstructorCertificatesPage";
+import InstructorDashboardPage from "./pages/instructor/DashboardPage";
+import CourseRosterPage from "./pages/instructor/CourseRosterPage";
+import StudentDetailPage from "./pages/instructor/StudentDetailPage";
+import InstructorAnnouncementsPage from "./pages/instructor/AnnouncementsPage";
+import CourseProgressPage from "./pages/instructor/CourseProgressPage";
+import CertificateEligibilityPage from "./pages/instructor/CertificateEligibilityPage";
 
-// Market Officer Pages
+// Market Pages
 import MarketDashboardPage from "./pages/market/MarketDashboardPage";
-import ManageInstructorsPage from "./pages/market/ManageInstructorsPage";
-import MarketCategoriesPage from "./pages/market/MarketCategoriesPage";
 import MarketCoursesPage from "./pages/market/MarketCoursesPage";
 import MarketInstructorsPage from "./pages/market/MarketInstructorsPage";
 import MarketSettingsPage from "./pages/market/MarketSettingsPage";
+
+// Admin Pages
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import UserManagementPage from "./pages/admin/UserManagementPage";
+import RolesPage from "./pages/admin/RolesPage";
+import PermissionsPage from "./pages/admin/PermissionsPage";
+import SystemSettingsPage from "./pages/admin/SystemSettingsPage";
+import AuditLogsPage from "./pages/admin/AuditLogsPage";
 
 export default function App() {
   return (
@@ -55,7 +60,7 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Route>
 
-      {/* Student Portal Routes */}
+      {/* Student Routes */}
       <Route element={<StudentLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/intakes/:intakeId/apply" element={<ApplyPage />} />
@@ -67,28 +72,41 @@ export default function App() {
         <Route path="/certificates" element={<CertificatesPage />} />
       </Route>
 
-      {/* Instructor Portal Routes */}
+      {/* Instructor Routes */}
       <Route path="/instructor" element={<InstructorLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<InstructorDashboardPage />} />
         <Route path="courses" element={<InstructorCoursesPage />} />
         <Route path="students" element={<InstructorStudentsPage />} />
         <Route path="announcements" element={<InstructorAnnouncementsPage />} />
-        <Route path="certificates" element={<InstructorCertificatesPage />} />
-        <Route path="profile" element={<UserProfile />} />
+        <Route path="courses/:intakeId/progress" element={<CourseProgressPage />} />
+        <Route
+          path="courses/:intakeId/certificates"
+          element={<CertificateEligibilityPage />}
+        />
       </Route>
 
-      {/* Market Officer Portal Routes */}
+      {/* Market Routes */}
       <Route path="/market" element={<MarketLayout />}>
-        <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<MarketDashboardPage />} />
         <Route path="courses" element={<MarketCoursesPage />} />
-        <Route path="categories" element={<MarketCategoriesPage />} />
         <Route path="instructors" element={<MarketInstructorsPage />} />
-        <Route path="manage-instructors" element={<ManageInstructorsPage />} />
+        <Route path="manage-instructors" element={<MarketInstructorsPage />} />
         <Route path="settings" element={<MarketSettingsPage />} />
-        <Route path="profile" element={<UserProfile />} />
       </Route>
+
+      {/* Admin Routes */}
+      <Route element={<AdminLayout />}>
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/users" element={<UserManagementPage />} />
+        <Route path="/admin/roles" element={<RolesPage />} />
+        <Route path="/admin/permissions" element={<PermissionsPage />} />
+        <Route path="/admin/settings" element={<SystemSettingsPage />} />
+        <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
+      </Route>
+
+      {/* Catch-all Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

@@ -76,6 +76,13 @@ function LogoutButton({ onClick }) {
 
 export default function StudentLayout() {
   const { user, logout } = useAuth();
+
+  const displayName =
+    user?.firstName ||
+    user?.first_name ||
+    user?.name ||
+    user?.email ||
+    "Student";
   const location = useLocation();
   const userMenuRef = useRef(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -265,3 +272,4 @@ export default function StudentLayout() {
     </div>
   );
 }
+

@@ -50,9 +50,8 @@ export default function DashboardPage() {
       }
     }
 
-    fetchDashboardAndProfile();
-  }, []);
-
+  fetchDashboardAndProfile();
+}, []);
   const firstName = profile?.firstName || profile?.first_name || "";
   const coursesRegisteredCount = dashboardData.length;
   const outstandingBalance = dashboardData.reduce((sum, item) => sum + (item.balance || 0), 0);

@@ -1,5 +1,8 @@
 package com.scms.service.admin;
 
+import com.scms.entity.Student;
+import com.scms.entity.enums.Role;
+import com.scms.repository.student.StudentRepository;
 import com.scms.dto.admin.AssignRoleRequest;
 import com.scms.dto.admin.CreateUserRequest;
 import com.scms.dto.admin.ResetPasswordRequest;
@@ -23,6 +26,7 @@ import java.util.List;
 public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
 
@@ -54,7 +58,7 @@ public class AdminServiceImpl implements AdminService {
                 .build();
 
         Users savedUser = userRepository.save(user);
-
+        ensureStudentProfile(savedUser);
         auditLogService.log(
                 "CREATE",
                 "USER",
@@ -129,6 +133,8 @@ public class AdminServiceImpl implements AdminService {
         user.setRole(request.getRole());
 
         Users updatedUser = userRepository.save(user);
+
+        ensureStudentProfile(updatedUser);
 
         String newValue =
                 "firstName=" + updatedUser.getFirstName() +
@@ -234,6 +240,8 @@ public class AdminServiceImpl implements AdminService {
 
         Users updatedUser = userRepository.save(user);
 
+        ensureStudentProfile(updatedUser);
+
         auditLogService.log(
                 "ASSIGN_ROLE",
                 "USER",
@@ -244,17 +252,33 @@ public class AdminServiceImpl implements AdminService {
 
         return mapToResponse(updatedUser);
     }
+  private void ensureStudentProfile(Users user) {
 
-    private Users findUser(Long id) {
-
-        return userRepository.findById(id)
-                .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "User not found with id: " + id
-                        )
-                );
+    if (user.getRole() != Role.STUDENT) {
+        return;
     }
 
+    if (studentRepository.existsByUserId(user.getId())) {
+        return;
+    }
+
+    Student student = Student.builder()
+            .user(user)
+            .build();
+
+    studentRepository.save(student);
+}
+
+private Users findUser(Long id) {
+
+    return userRepository.findById(id)
+            .orElseThrow(() ->
+                    new UserNotFoundException(
+                            "User not found with id: " + id
+                    )
+            );
+}
+    
     private UserResponse mapToResponse(Users user) {
 
         return UserResponse.builder()

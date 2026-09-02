@@ -5,6 +5,7 @@
   --color-udom-primary: #0066cc;
   --color-udom-primary-dark: #002483;
   --color-udom-accent: #f7941d;
+  --color-udom-accent-light: #fde68a;
   --font-sans: "Manrope", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
@@ -15,10 +16,90 @@ html {
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f5fc 100%);
   color: #0f172a;
+}
+
+body, button, input, textarea, select {
+  font-family: var(--font-sans);
+}
+
+#root {
+  font-family: var(--font-sans);
 }
 
 a {
   text-decoration: none;
+  color: inherit;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+}
+
+h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Buttons */
+button {
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Input fields */
+input, textarea, select {
+  transition: all 0.2s ease;
+  border: 1.5px solid #e2e8f0;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--color-udom-primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+  outline: none;
+}
+
+/* Card styling */
+.card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Links */
+a {
+  color: var(--color-udom-primary);
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-udom-primary-dark);
 }

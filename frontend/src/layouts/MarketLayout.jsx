@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { Link, NavLink, Navigate, Outlet } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Tags, Users, BarChart3, Settings, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, BookOpen, Users, Settings, Menu, X, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const LINKS = [
   ["/market/dashboard", "Dashboard", LayoutDashboard],
   ["/market/courses", "Short Courses", BookOpen],
-  ["/market/categories", "Categories", Tags],
-  ["/market/instructors", "Instructors", Users],
   ["/market/manage-instructors", "Manage instructors", Users],
   ["/market/settings", "Settings", Settings],
 ];

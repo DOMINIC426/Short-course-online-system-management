@@ -8,25 +8,46 @@ export default function InstructorAnnouncementsPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [targetAudience, setTargetAudience] = useState("ALL");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    instructorApi.getAssignedCourses().then((data) => {
-      setCourses(data);
-      if (data.length > 0) setSelectedCourse(data[0].id);
-    });
+    // Calls API Endpoint: GET /api/v1/instructor/courses
+    instructorApi
+      .getAssignedCourses()
+      .then((data) => {
+        const courseList = Array.isArray(data) ? data : [];
+        setCourses(courseList);
+        if (courseList.length > 0) setSelectedCourse(courseList[0].id);
+      })
+      .catch((error) => {
+        console.error("Failed to load courses:", error);
+      });
   }, []);
 
   const handleSendAnnouncement = async (e) => {
     e.preventDefault();
-    await instructorApi.sendAnnouncement({
-      courseId: selectedCourse,
-      title,
-      content,
-      targetAudience,
-    });
-    alert("Announcement successfully broadcasted to students!");
-    setTitle("");
-    setContent("");
+    if (!selectedCourse) {
+      alert("Please select a course first.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Calls API Endpoint: POST /api/v1/instructor/courses/{courseId}/announcements
+      await instructorApi.sendAnnouncement(selectedCourse, {
+        title,
+        message: content,
+        audienceType: targetAudience,
+      });
+      alert("Announcement successfully broadcasted to students!");
+      setTitle("");
+      setContent("");
+    } catch (error) {
+      console.error("Failed to send announcement:", error);
+      alert("Failed to send announcement. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -56,7 +77,7 @@ export default function InstructorAnnouncementsPage() {
             >
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.title} ({c.code})
+                  {c.title} ({c.courseCode || c.code})
                 </option>
               ))}
             </select>
@@ -103,9 +124,10 @@ export default function InstructorAnnouncementsPage() {
 
           <button
             type="submit"
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-2 transition-colors"
+            disabled={submitting}
+            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-2 transition-colors"
           >
-            <Send className="w-4 h-4" /> Send Announcement
+            <Send className="w-4 h-4" /> {submitting ? "Sending..." : "Send Announcement"}
           </button>
         </form>
       </div>

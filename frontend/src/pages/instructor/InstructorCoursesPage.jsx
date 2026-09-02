@@ -5,7 +5,7 @@ import { MapPin, BarChart3, CheckCircle, Save } from "lucide-react";
 export default function InstructorCoursesPage() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  
+
   // Form states for modal / inline editing
   const [venue, setVenue] = useState("");
   const [venueReason, setVenueReason] = useState("");
@@ -14,11 +14,19 @@ export default function InstructorCoursesPage() {
   const [remarks, setRemarks] = useState("");
 
   const loadCourses = async () => {
-    const data = await instructorApi.getAssignedCourses();
-    setCourses(data);
-    if (data.length > 0 && !selectedCourse) {
-      setSelectedCourse(data[0]);
-      populateForm(data[0]);
+    try {
+      // Calls API Endpoint: GET /api/v1/instructor/courses
+      const data = await instructorApi.getAssignedCourses();
+      setCourses(data || []);
+      if (data && data.length > 0) {
+        const currentSelected = selectedCourse
+          ? data.find((c) => c.id === selectedCourse.id) || data[0]
+          : data[0];
+        setSelectedCourse(currentSelected);
+        populateForm(currentSelected);
+      }
+    } catch (error) {
+      console.error("Failed to fetch assigned courses:", error);
     }
   };
 
@@ -27,11 +35,15 @@ export default function InstructorCoursesPage() {
   }, []);
 
   const populateForm = (course) => {
-    setVenue(course.venue);
+    setVenue(course.venue || course.venueId || "");
     setVenueReason("");
-    setProgress(course.progressPercent);
-    setCompletedTopics(course.completedTopics);
-    setRemarks(course.remarks);
+    setProgress(course.progressPercent || course.progressPercentage || 0);
+    setCompletedTopics(
+      Array.isArray(course.completedTopics)
+        ? course.completedTopics.join(", ")
+        : course.completedTopics || ""
+    );
+    setRemarks(course.remarks || "");
   };
 
   const handleSelectCourse = (course) => {
@@ -41,36 +53,57 @@ export default function InstructorCoursesPage() {
 
   const handleUpdateVenue = async (e) => {
     e.preventDefault();
-    await instructorApi.updateVenue(selectedCourse.id, venue, venueReason);
-    alert("Venue successfully updated and notified to students.");
-    loadCourses();
+    try {
+      // Calls API Endpoint: PUT /api/v1/instructor/courses/{courseId}/venue
+      await instructorApi.updateVenue(selectedCourse.id, venue, venueReason);
+      alert("Venue successfully updated and notified to students.");
+      await loadCourses();
+    } catch (error) {
+      console.error("Failed to update venue:", error);
+      alert("Failed to update venue. Please try again.");
+    }
   };
 
   const handleUpdateProgress = async (e) => {
     e.preventDefault();
-    await instructorApi.updateCourseProgress(selectedCourse.id, {
-      progressPercent: Number(progress),
-      completedTopics,
-      remarks,
-    });
-    alert("Course progress updated successfully.");
-    loadCourses();
+    try {
+      // Calls API Endpoint: POST /api/v1/instructor/courses/{courseId}/progress
+      await instructorApi.updateCourseProgress(selectedCourse.id, {
+        progressPercentage: Number(progress),
+        topicsCompleted: completedTopics,
+        remarks,
+      });
+      alert("Course progress updated successfully.");
+      await loadCourses();
+    } catch (error) {
+      console.error("Failed to update progress:", error);
+      alert("Failed to update course progress. Please try again.");
+    }
   };
 
   const handleMarkCompleted = async () => {
     if (confirm("Are you sure you want to mark this course as COMPLETED?")) {
-      await instructorApi.markCourseCompleted(selectedCourse.id);
-      alert("Course marked as COMPLETED.");
-      loadCourses();
+      try {
+        // Calls API Endpoint: PUT /api/v1/instructor/courses/{courseId}/complete
+        await instructorApi.markCourseCompleted(selectedCourse.id);
+        alert("Course marked as COMPLETED.");
+        await loadCourses();
+      } catch (error) {
+        console.error("Failed to mark course as completed:", error);
+        alert("Failed to mark course as completed. Please try again.");
+      }
     }
   };
 
-  if (!selectedCourse) return <div className="p-4 text-slate-500">Loading courses...</div>;
+  if (!selectedCourse)
+    return <div className="p-4 text-slate-500">Loading courses...</div>;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Manage Assigned Courses</h1>
+        <h1 className="text-2xl font-bold text-slate-900">
+          Manage Assigned Courses
+        </h1>
         <p className="text-slate-500 text-sm mt-1">
           Update venues, record topics covered, and submit completion reports.
         </p>
@@ -93,13 +126,17 @@ export default function InstructorCoursesPage() {
               }`}
             >
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-blue-600">{course.code}</span>
+                <span className="text-xs font-bold text-blue-600">
+                  {course.courseCode || course.code}
+                </span>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100">
                   {course.status}
                 </span>
               </div>
               <h3 className="font-bold text-sm mt-1">{course.title}</h3>
-              <p className="text-xs text-slate-500 mt-2">Venue: {course.venue}</p>
+              <p className="text-xs text-slate-500 mt-2">
+                Venue: {course.venue || course.venueId || "Not set"}
+              </p>
             </div>
           ))}
         </div>
@@ -110,11 +147,14 @@ export default function InstructorCoursesPage() {
           <div className="bg-white p-6 rounded-xl border border-slate-200 flex items-center justify-between shadow-xs">
             <div>
               <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md">
-                {selectedCourse.code}
+                {selectedCourse.courseCode || selectedCourse.code}
               </span>
-              <h2 className="text-xl font-bold text-slate-900 mt-2">{selectedCourse.title}</h2>
+              <h2 className="text-xl font-bold text-slate-900 mt-2">
+                {selectedCourse.title}
+              </h2>
               <p className="text-xs text-slate-500 mt-1 font-medium">
-                Category: {selectedCourse.category} | Enrolled: {selectedCourse.totalEnrolled}
+                Category: {selectedCourse.category || "N/A"} | Enrolled:{" "}
+                {selectedCourse.totalEnrolled ?? selectedCourse.enrolledCount ?? 0}
               </p>
             </div>
             {selectedCourse.status !== "COMPLETED" && (
@@ -175,7 +215,9 @@ export default function InstructorCoursesPage() {
           <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-xs">
             <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
               <BarChart3 className="w-5 h-5 text-blue-600" />
-              <h3 className="font-bold text-slate-900 text-base">Submit Course Progress</h3>
+              <h3 className="font-bold text-slate-900 text-base">
+                Submit Course Progress
+              </h3>
             </div>
             <form onSubmit={handleUpdateProgress} className="space-y-4">
               <div>

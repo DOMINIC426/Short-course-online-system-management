@@ -62,9 +62,8 @@ public class MarketService {
         validateUniqueCourseFields(request.getTitle(), request.getCourseCode(), null);
 
         ShortCourse shortCourse = modelMapper.map(request, ShortCourse.class);
-        shortCourse.setId(null); // Explicitly reset ID to prevent ModelMapper ambiguity
+        shortCourse.setId(null);
 
-        // Automatically resolve authenticated user from SecurityContext
         String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         Users creator = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found: " + currentUserEmail));
@@ -98,42 +97,19 @@ public class MarketService {
 
         validateUniqueCourseFields(request.getTitle(), request.getCourseCode(), id);
 
-        if (request.getCourseCode() != null) {
-            shortCourse.setCourseCode(request.getCourseCode());
-        }
-        if (request.getTitle() != null) {
-            shortCourse.setTitle(request.getTitle());
-        }
-        if (request.getDescription() != null) {
-            shortCourse.setDescription(request.getDescription());
-        }
-        if (request.getDuration() != null) {
-            shortCourse.setDuration(request.getDuration());
-        }
-        if (request.getStartDate() != null) {
-            shortCourse.setStartDate(request.getStartDate());
-        }
-        if (request.getEndDate() != null) {
-            shortCourse.setEndDate(request.getEndDate());
-        }
-        if (request.getRegOpenDate() != null) {
-            shortCourse.setRegOpenDate(request.getRegOpenDate());
-        }
-        if (request.getRegCloseDate() != null) {
-            shortCourse.setRegCloseDate(request.getRegCloseDate());
-        }
-        if (request.getCourseFee() != null) {
-            shortCourse.setCourseFee(request.getCourseFee());
-        }
-        if (request.getMaxStudents() != null) {
-            shortCourse.setMaxStudents(request.getMaxStudents());
-        }
-        if (request.getMinStudents() != null) {
-            shortCourse.setMinStudents(request.getMinStudents());
-        }
-        if (request.getStatus() != null) {
-            shortCourse.setStatus(request.getStatus());
-        }
+        if (request.getCourseCode() != null) shortCourse.setCourseCode(request.getCourseCode());
+        if (request.getTitle() != null) shortCourse.setTitle(request.getTitle());
+        if (request.getDescription() != null) shortCourse.setDescription(request.getDescription());
+        if (request.getDuration() != null) shortCourse.setDuration(request.getDuration());
+        if (request.getStartDate() != null) shortCourse.setStartDate(request.getStartDate());
+        if (request.getEndDate() != null) shortCourse.setEndDate(request.getEndDate());
+        if (request.getRegOpenDate() != null) shortCourse.setRegOpenDate(request.getRegOpenDate());
+        if (request.getRegCloseDate() != null) shortCourse.setRegCloseDate(request.getRegCloseDate());
+        if (request.getCourseFee() != null) shortCourse.setCourseFee(request.getCourseFee());
+        if (request.getMaxStudents() != null) shortCourse.setMaxStudents(request.getMaxStudents());
+        if (request.getMinStudents() != null) shortCourse.setMinStudents(request.getMinStudents());
+        if (request.getStatus() != null) shortCourse.setStatus(request.getStatus());
+
         if (request.getCategoryId() != null) {
             CourseCategory category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category with ID " + request.getCategoryId() + " not found"));
@@ -145,11 +121,11 @@ public class MarketService {
             shortCourse.setVenue(venue);
         }
 
-            validateCourseDates(shortCourse.getStartDate(), shortCourse.getEndDate(),
+        validateCourseDates(shortCourse.getStartDate(), shortCourse.getEndDate(),
                 shortCourse.getRegOpenDate(), shortCourse.getRegCloseDate());
-            validateStudentLimits(shortCourse.getMinStudents(), shortCourse.getMaxStudents());
+        validateStudentLimits(shortCourse.getMinStudents(), shortCourse.getMaxStudents());
 
-            return toResponse(shortCourseRepository.save(shortCourse));
+        return toResponse(shortCourseRepository.save(shortCourse));
     }
 
     // ******************************************************** DELETE THE COURSE
@@ -163,12 +139,13 @@ public class MarketService {
         return "Course " + shortCourse.getTitle() + " has been deleted";
     }
 
-    @PreAuthorize("hasRole('MARKETING_OFFICER','STUDENT')")
+    // FIXED: Updated PreAuthorize to valid SpEL and added INSTRUCTOR role
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'STUDENT', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     public List<ShortCourseResponse> getAllCourses() {
         List<ShortCourse> courses = shortCourseRepository.findAll();
         return courses.stream()
-            .map(this::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -178,7 +155,7 @@ public class MarketService {
         ShortCourse shortCourse = shortCourseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course with ID " + id + " not found"));
 
-        shortCourse.setStatus(CourseStatus.PUBLISHED);
+        shortCourse.setStatus(CourseStatus.REGISTRATION_OPEN);
         shortCourseRepository.save(shortCourse);
 
         return "Course '" + shortCourse.getTitle() + "' is now available";
@@ -196,17 +173,18 @@ public class MarketService {
         return "Course '" + shortCourse.getTitle() + "' is now unavailable";
     }
 
-    @PreAuthorize("hasRole('MARKETING_OFFICER','STUDENT')")
+    // FIXED: Updated PreAuthorize to valid SpEL and added INSTRUCTOR role
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'STUDENT', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     public List<ShortCourseResponse> getVisibleCourse(CourseStatus status) {
         List<ShortCourse> courses = shortCourseRepository.findAllByStatus(status);
         return courses.stream()
-            .map(this::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
     // **************************************** ASSIGN INSTRUCTOR
-    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'ADMIN')")
     @Transactional
     public ShortCourseResponse assignInstructor(Long courseId, Long instructorId) {
         ShortCourse shortCourse = shortCourseRepository.findById(courseId)
@@ -220,19 +198,20 @@ public class MarketService {
         }
 
         Instructor instructor = instructorRepository.findByUserId(instructorId)
-            .orElseThrow(() -> new ResourceNotFoundException("Instructor profile not found for user ID: " + instructorId));
+                .orElseThrow(() -> new ResourceNotFoundException("Instructor profile not found for user ID: " + instructorId));
+        
         if (!courseInstructorRepository.existsByCourseIdAndInstructorUserId(courseId, instructorId)) {
             courseInstructorRepository.save(CourseInstructor.builder()
-                .course(shortCourse)
-                .instructor(instructor)
-                .assignedDate(LocalDate.now())
-                .build());
+                    .course(shortCourse)
+                    .instructor(instructor)
+                    .assignedDate(LocalDate.now())
+                    .build());
         }
 
         return toResponse(shortCourse);
     }
 
-    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'ADMIN')")
     @Transactional
     public InstructorResponse createInstructor(CreateInstructorDto request) {
         ShortCourse course = shortCourseRepository.findById(request.getCourseId())
@@ -271,7 +250,7 @@ public class MarketService {
                 List.of(new AssignedCourseResponse(course.getId(), course.getCourseCode(), course.getTitle())));
     }
 
-    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'ADMIN')")
     @Transactional
     public String removeInstructorFromCourse(Long courseId, Long instructorId) {
         CourseInstructor assignment = courseInstructorRepository.findByCourseIdAndInstructorId(courseId, instructorId)
@@ -281,48 +260,48 @@ public class MarketService {
         return "Instructor removed from course successfully";
     }
 
-        @PreAuthorize("hasRole('MARKETING_OFFICER')")
-        @Transactional(readOnly = true)
-        public List<CategoryResponse> getCategories() {
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public List<CategoryResponse> getCategories() {
         return categoryRepository.findAll().stream()
-            .map(category -> new CategoryResponse(category.getId(), category.getCategoryName(), category.getDescription()))
-            .toList();
-        }
+                .map(category -> new CategoryResponse(category.getId(), category.getCategoryName(), category.getDescription()))
+                .toList();
+    }
 
-        @PreAuthorize("hasRole('MARKETING_OFFICER')")
-        @Transactional
-        public CategoryResponse createCategory(CreateCategoryDto request) {
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'ADMIN')")
+    @Transactional
+    public CategoryResponse createCategory(CreateCategoryDto request) {
         CourseCategory category = CourseCategory.builder()
-            .categoryName(request.getName())
-            .description(request.getDescription())
-            .build();
+                .categoryName(request.getName())
+                .description(request.getDescription())
+                .build();
         CourseCategory saved = categoryRepository.save(category);
         return new CategoryResponse(saved.getId(), saved.getCategoryName(), saved.getDescription());
-        }
+    }
 
-        @PreAuthorize("hasRole('MARKETING_OFFICER','ADMIN')")
-        @Transactional(readOnly = true)
-        public List<InstructorResponse> getInstructors() {
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public List<InstructorResponse> getInstructors() {
         return instructorRepository.findAll().stream()
-            .map(instructor -> {
-                List<AssignedCourseResponse> assignedCourses = courseInstructorRepository.findAllByInstructorId(instructor.getId()).stream()
-                    .map(assignment -> new AssignedCourseResponse(
-                        assignment.getCourse().getId(),
-                        assignment.getCourse().getCourseCode(),
-                        assignment.getCourse().getTitle()))
-                    .toList();
-                return new InstructorResponse(
-                    instructor.getId(),
-                    instructor.getUser().getId(),
-                    instructor.getUser().getFirstName() + " " + instructor.getUser().getLastName(),
-                    instructor.getUser().getEmail(),
-                    instructor.getUser().getStatus().name(),
-                    assignedCourses);
-            })
-            .toList();
-        }
+                .map(instructor -> {
+                    List<AssignedCourseResponse> assignedCourses = courseInstructorRepository.findAllByInstructorId(instructor.getId()).stream()
+                            .map(assignment -> new AssignedCourseResponse(
+                                    assignment.getCourse().getId(),
+                                    assignment.getCourse().getCourseCode(),
+                                    assignment.getCourse().getTitle()))
+                            .toList();
+                    return new InstructorResponse(
+                            instructor.getId(),
+                            instructor.getUser().getId(),
+                            instructor.getUser().getFirstName() + " " + instructor.getUser().getLastName(),
+                            instructor.getUser().getEmail(),
+                            instructor.getUser().getStatus().name(),
+                            assignedCourses);
+                })
+                .toList();
+    }
 
-    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'ADMIN')")
     @Transactional
     public String deleteInstructor(Long instructorId) {
         Instructor instructor = instructorRepository.findById(instructorId)
@@ -332,8 +311,7 @@ public class MarketService {
         return "Instructor deleted successfully";
     }
 
-    // **************************************** VIEW REGISTRATION STATISTICS
-    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'ADMIN')")
     @Transactional(readOnly = true)
     public CourseStatsResponse getCourseRegistrationStats(Long courseId) {
         ShortCourse shortCourse = shortCourseRepository.findById(courseId)
@@ -379,25 +357,22 @@ public class MarketService {
 
     private void validateCourseDates(LocalDate startDate, LocalDate endDate,
                                      LocalDate registrationOpenDate, LocalDate registrationCloseDate) {
-        if (startDate.isAfter(endDate)) {
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Course end date cannot be before its start date");
         }
-        if (registrationOpenDate.isAfter(startDate)) {
+        if (registrationOpenDate != null && startDate != null && registrationOpenDate.isAfter(startDate)) {
             throw new IllegalArgumentException("Registration open date cannot be after the course start date");
         }
-        if (!registrationCloseDate.isBefore(endDate)) {
+        if (registrationCloseDate != null && endDate != null && !registrationCloseDate.isBefore(endDate)) {
             throw new IllegalArgumentException("Registration close date must be before the course end date");
         }
-        if (!registrationOpenDate.isBefore(registrationCloseDate)) {
+        if (registrationOpenDate != null && registrationCloseDate != null && !registrationOpenDate.isBefore(registrationCloseDate)) {
             throw new IllegalArgumentException("Registration close date must be after the registration open date");
-        }
-        if (registrationCloseDate.equals(startDate)) {
-            throw new IllegalArgumentException("Registration close date cannot be the same as the course start date");
         }
     }
 
     private void validateStudentLimits(Integer minStudents, Integer maxStudents) {
-        if (minStudents > maxStudents) {
+        if (minStudents != null && maxStudents != null && minStudents > maxStudents) {
             throw new IllegalArgumentException("Minimum students cannot exceed maximum students");
         }
     }

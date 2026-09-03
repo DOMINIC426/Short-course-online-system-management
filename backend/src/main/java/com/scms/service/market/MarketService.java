@@ -163,7 +163,7 @@ public class MarketService {
         return "Course " + shortCourse.getTitle() + " has been deleted";
     }
 
-    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER','STUDENT')")
     @Transactional(readOnly = true)
     public List<ShortCourseResponse> getAllCourses() {
         List<ShortCourse> courses = shortCourseRepository.findAll();
@@ -196,7 +196,7 @@ public class MarketService {
         return "Course '" + shortCourse.getTitle() + "' is now unavailable";
     }
 
-    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER','STUDENT')")
     @Transactional(readOnly = true)
     public List<ShortCourseResponse> getVisibleCourse(CourseStatus status) {
         List<ShortCourse> courses = shortCourseRepository.findAllByStatus(status);
@@ -300,7 +300,7 @@ public class MarketService {
         return new CategoryResponse(saved.getId(), saved.getCategoryName(), saved.getDescription());
         }
 
-        @PreAuthorize("hasRole('MARKETING_OFFICER')")
+        @PreAuthorize("hasRole('MARKETING_OFFICER','ADMIN')")
         @Transactional(readOnly = true)
         public List<InstructorResponse> getInstructors() {
         return instructorRepository.findAll().stream()

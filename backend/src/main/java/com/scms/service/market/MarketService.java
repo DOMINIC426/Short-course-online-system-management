@@ -31,6 +31,7 @@ import com.scms.exception.UserAlreadyExistException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -89,6 +90,7 @@ public class MarketService {
     }
 
     // **************************************** EDIT COURSE
+    @CacheEvict(value = {"publicCourses", "courseDetail"}, allEntries = true)
     @PreAuthorize("hasRole('MARKETING_OFFICER')")
     @Transactional
     public ShortCourseResponse editCourse(Long id, UpdateShortCourseDto request) {
@@ -149,6 +151,7 @@ public class MarketService {
                 .toList();
     }
 
+    @CacheEvict(value = "publicCourses", allEntries = true)
     @PreAuthorize("hasRole('MARKETING_OFFICER')")
     @Transactional
     public String setCourseAvailable(Long id) {

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,11 +57,10 @@ public class AdminDashboardController {
                     responseCode = "403",
                     description = "Access denied"
             )
-    )
+    })
     @PreAuthorize("hasRole('ADMIN') AND hasAuthority('DASHBOARD_READ')")
     @GetMapping
     public ResponseEntity<AdminDashboardResponse> getDashboard() {
-
         return ResponseEntity.ok(
                 adminDashboardService.getDashboard()
         );

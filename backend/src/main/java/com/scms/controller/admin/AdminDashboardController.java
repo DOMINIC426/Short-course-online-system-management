@@ -56,7 +56,8 @@ public class AdminDashboardController {
                     responseCode = "403",
                     description = "Access denied"
             )
-    })
+    )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('DASHBOARD_READ')")
     @GetMapping
     public ResponseEntity<AdminDashboardResponse> getDashboard() {
 

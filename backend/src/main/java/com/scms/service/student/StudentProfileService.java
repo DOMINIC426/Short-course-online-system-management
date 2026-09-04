@@ -53,7 +53,7 @@ public class StudentProfileService {
 
         student.setLevelOfEducation(request.getLevelOfEducation());
         student.setNationality(request.getNationality());
-        student.setIdentificationNumber(request.getIdentificationNumber());
+
 
         studentRepository.save(student);
     }

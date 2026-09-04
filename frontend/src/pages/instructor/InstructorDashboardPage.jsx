@@ -15,37 +15,80 @@ import {
 
 export default function InstructorDashboardPage() {
   const [courses, setCourses] = useState([]);
+  const [enrolledCounts, setEnrolledCounts] = useState({});
   const [loading, setLoading] = useState(true);
 
+  // Safe array extraction helper
+  const extractArray = (res) => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res.data)) return res.data;
+    if (Array.isArray(res.courses)) return res.courses;
+    if (Array.isArray(res.students)) return res.students;
+    return [];
+  };
+
+  // Safe course ID extraction helper
+  const getCourseId = (course) => {
+    return course?.id ?? course?.courseId ?? course?._id ?? "";
+  };
+
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchInstructorDashboardData() {
       try {
+        setLoading(true);
+
+        // 1. Fetch assigned courses
         const coursesData = await instructorApi
           .getAssignedCourses()
           .catch(() => []);
-        const courseList = Array.isArray(coursesData)
-          ? coursesData
-          : coursesData?.data || [];
+        const courseList = extractArray(coursesData);
+
+        if (!isMounted) return;
         setCourses(courseList);
+
+        // 2. Fetch enrolled student list for each assigned course to compute accurate totals
+        const countsMap = {};
+        if (courseList.length > 0) {
+          const studentPromises = courseList.map(async (course) => {
+            const courseId = getCourseId(course);
+            if (!courseId) return { courseId: null, count: 0 };
+
+            // Call endpoint: /api/v1/instructor/courses/{courseId}/students
+            const studentsRes = await instructorApi
+              .getRegisteredStudents(courseId)
+              .catch(() => []);
+
+            const studentsList = extractArray(studentsRes);
+            return { courseId, count: studentsList.length };
+          });
+
+          const results = await Promise.all(studentPromises);
+          results.forEach(({ courseId, count }) => {
+            if (courseId) {
+              countsMap[courseId] = count;
+            }
+          });
+        }
+
+        if (isMounted) {
+          setEnrolledCounts(countsMap);
+        }
+      } catch (err) {
+        console.error("Error fetching instructor dashboard data:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
     fetchInstructorDashboardData();
-  }, []);
 
-  // Helper to extract course unique ID
-  const getCourseId = (course) => {
-    return (
-      course?.id ||
-      course?.courseId ||
-      course?._id ||
-      course?.code ||
-      course?.courseCode ||
-      ""
-    );
-  };
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Helper to render clean status badges with icons
   const renderStatusBadge = (status) => {
@@ -89,21 +132,25 @@ export default function InstructorDashboardPage() {
 
   const totalCourses = courses.length;
 
-  const activeCoursesCount = courses.filter(
-    (c) =>
-      c.status === "PUBLISHED" ||
-      c.status === "ACTIVE" ||
-      c.status === "REGISTRATION_OPEN"
-  ).length;
+  const activeCoursesCount = courses.filter((c) => {
+    const status = String(c?.status || "").toUpperCase();
+    return (
+      status === "PUBLISHED" ||
+      status === "ACTIVE" ||
+      status === "REGISTRATION_OPEN"
+    );
+  }).length;
 
-  // Calculate cumulative enrolled students across all assigned courses
+  // Calculate total across all assigned courses using fetched map counts
   const totalEnrolledStudents = courses.reduce((acc, course) => {
-    const studentCount =
-      course.enrolledStudentsCount ||
-      course.enrolledCount ||
-      course.totalEnrolled ||
+    const cId = getCourseId(course);
+    const count =
+      enrolledCounts[cId] ??
+      course.enrolledStudentsCount ??
+      course.enrolledCount ??
+      course.totalEnrolled ??
       (Array.isArray(course.students) ? course.students.length : 0);
-    return acc + Number(studentCount || 0);
+    return acc + Number(count || 0);
   }, 0);
 
   const statCards = [
@@ -223,9 +270,10 @@ export default function InstructorDashboardPage() {
                   const courseCode =
                     course.courseCode || course.code || "SCMS-COURSE";
                   const studentCount =
-                    course.enrolledStudentsCount ||
-                    course.enrolledCount ||
-                    course.totalEnrolled ||
+                    enrolledCounts[courseId] ??
+                    course.enrolledStudentsCount ??
+                    course.enrolledCount ??
+                    course.totalEnrolled ??
                     (Array.isArray(course.students)
                       ? course.students.length
                       : 0);

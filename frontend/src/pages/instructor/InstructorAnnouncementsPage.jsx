@@ -14,11 +14,13 @@ export default function InstructorAnnouncementsPage() {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [targetAudience, setTargetAudience] = useState("ALL");
+  const [audienceType, setAudienceType] = useState("ALL");
+  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+  const [expiryDate, setExpiryDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Toast Notification State
-  const [toast, setToast] = useState(null); // { message: string, type: 'success' | 'error' }
+  const [toast, setToast] = useState(null);
 
   // Confirmation Modal State
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -71,7 +73,6 @@ export default function InstructorAnnouncementsPage() {
       return;
     }
 
-    // Open confirmation modal
     setShowConfirmModal(true);
   };
 
@@ -80,21 +81,24 @@ export default function InstructorAnnouncementsPage() {
     setSubmitting(true);
 
     try {
-      // Normalized payload matching common backend DTO variations
+      // Formatted payload exact match for POST /api/v1/instructor/courses/{courseId}/announcements
       const payload = {
         title: title.trim(),
-        subject: title.trim(),
         message: content.trim(),
-        content: content.trim(),
-        audienceType: targetAudience,
-        targetAudience: targetAudience,
-        courseId: selectedCourse,
+        audienceType: audienceType,
+        selectedStudentIds: selectedStudentIds,
+        expiryDate: expiryDate ? new Date(expiryDate).toISOString() : null,
       };
 
       await instructorApi.sendAnnouncement(selectedCourse, payload);
       showToast("Announcement successfully broadcasted to students!", "success");
+      
+      // Reset form
       setTitle("");
       setContent("");
+      setExpiryDate("");
+      setSelectedStudentIds([]);
+      setAudienceType("ALL");
     } catch (error) {
       console.error("Failed to send announcement:", error);
       showToast(
@@ -156,11 +160,9 @@ export default function InstructorAnnouncementsPage() {
             <p className="mt-3 text-sm text-slate-500">
               Are you sure you want to send this announcement to{" "}
               <span className="font-semibold text-slate-900">
-                {targetAudience === "ALL"
+                {audienceType === "ALL"
                   ? "All Enrolled Students"
-                  : targetAudience === "FULLY_PAID"
-                  ? "Fully Paid Students"
-                  : "Unpaid Students"}
+                  : "Selected Students"}
               </span>{" "}
               for{" "}
               <span className="font-semibold text-slate-900">
@@ -235,15 +237,11 @@ export default function InstructorAnnouncementsPage() {
               Target Audience
             </label>
             <select
-              value={targetAudience}
-              onChange={(e) => setTargetAudience(e.target.value)}
+              value={audienceType}
+              onChange={(e) => setAudienceType(e.target.value)}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0b4d94] focus:ring-2 focus:ring-[#0b4d94]/20"
             >
               <option value="ALL">All Enrolled Students</option>
-              <option value="FULLY_PAID">Fully Paid Students Only</option>
-              <option value="UNPAID">
-                Unpaid / Outstanding Students Only
-              </option>
             </select>
           </div>
 
@@ -253,7 +251,7 @@ export default function InstructorAnnouncementsPage() {
             </label>
             <input
               type="text"
-              placeholder="e.g. Schedule Change for Lab Session"
+              placeholder="e.g. Class Reminder"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0b4d94] focus:ring-2 focus:ring-[#0b4d94]/20"
@@ -267,11 +265,23 @@ export default function InstructorAnnouncementsPage() {
             </label>
             <textarea
               rows={4}
-              placeholder="Type your message here..."
+              placeholder="Type your announcement message here..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0b4d94] focus:ring-2 focus:ring-[#0b4d94]/20"
               required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-700">
+              Expiry Date (Optional)
+            </label>
+            <input
+              type="date"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0b4d94] focus:ring-2 focus:ring-[#0b4d94]/20"
             />
           </div>
 

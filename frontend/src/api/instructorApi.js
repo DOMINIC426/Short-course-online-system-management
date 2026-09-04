@@ -31,6 +31,7 @@ export const instructorApi = {
   // 3 & 4. Get / Search / Filter Registered Students
   // Endpoint: GET /api/v1/instructor/courses/{courseId}/students
   getRegisteredStudents: async (courseId, filters = {}) => {
+    if (!courseId) return [];
     const response = await axios.get(
       `${BASE_URL}/courses/${courseId}/students`,
       {
@@ -41,9 +42,15 @@ export const instructorApi = {
     return response.data;
   },
 
+  // Alias for getRegisteredStudents for frontend component compatibility
+  getEnrolledStudents: async (courseId, filters = {}) => {
+    return instructorApi.getRegisteredStudents(courseId, filters);
+  },
+
   // 5. Get Student Details
   // Endpoint: GET /api/v1/instructor/courses/{courseId}/students/{enrollmentId}
   getStudentDetails: async (courseId, enrollmentId) => {
+    if (!courseId || !enrollmentId) return null;
     const response = await axios.get(
       `${BASE_URL}/courses/${courseId}/students/${enrollmentId}`,
       getAuthHeaders()
@@ -54,6 +61,7 @@ export const instructorApi = {
   // 6. Create Announcement
   // Endpoint: POST /api/v1/instructor/courses/{courseId}/announcements
   sendAnnouncement: async (courseId, announcementData) => {
+    if (!courseId) throw new Error("Course ID is required.");
     // Expected body: { title, message, audienceType, selectedStudentIds, expiryDate }
     const response = await axios.post(
       `${BASE_URL}/courses/${courseId}/announcements`,
@@ -66,6 +74,7 @@ export const instructorApi = {
   // 7. Change Course Venue
   // Endpoint: PUT /api/v1/instructor/courses/{courseId}/venue
   updateVenue: async (courseId, venueId, reason) => {
+    if (!courseId) throw new Error("Course ID is required.");
     // Expected body: { venueId, reason }
     const response = await axios.put(
       `${BASE_URL}/courses/${courseId}/venue`,
@@ -78,6 +87,7 @@ export const instructorApi = {
   // 8. Update Course Progress
   // Endpoint: POST /api/v1/instructor/courses/{courseId}/progress
   updateCourseProgress: async (courseId, progressData) => {
+    if (!courseId) throw new Error("Course ID is required.");
     // Expected body: { progressPercentage, topicsCompleted, topicsRemaining, challenges, remarks, expectedCompletionDate }
     const response = await axios.post(
       `${BASE_URL}/courses/${courseId}/progress`,
@@ -90,6 +100,7 @@ export const instructorApi = {
   // 9. Mark Course as Completed
   // Endpoint: PUT /api/v1/instructor/courses/{courseId}/complete
   markCourseCompleted: async (courseId) => {
+    if (!courseId) throw new Error("Course ID is required.");
     const response = await axios.put(
       `${BASE_URL}/courses/${courseId}/complete`,
       {},
@@ -101,6 +112,7 @@ export const instructorApi = {
   // 10. Update Certificate Eligibility
   // Endpoint: PUT /api/v1/instructor/courses/{courseId}/students/{enrollmentId}/certificate-eligibility
   updateCertificateEligibility: async (courseId, enrollmentId, status, reason) => {
+    if (!courseId || !enrollmentId) throw new Error("Course ID and Enrollment ID are required.");
     // Expected body: { status: "ELIGIBLE" | "NOT_ELIGIBLE", reason }
     const response = await axios.put(
       `${BASE_URL}/courses/${courseId}/students/${enrollmentId}/certificate-eligibility`,

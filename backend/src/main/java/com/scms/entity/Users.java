@@ -55,6 +55,10 @@ public class Users extends BaseEntity implements UserDetails {
     @Column(name = "role", nullable = false, length = 50)
     private Role role;
 
+    @Builder.Default
+    @Column(name = "token_version", nullable = false)
+    private Integer tokenVersion = 0;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (role == null) {

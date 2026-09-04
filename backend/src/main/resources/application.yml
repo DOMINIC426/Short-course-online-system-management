@@ -37,6 +37,17 @@ spring:
     username: ${RABBITMQ_USERNAME:scms}
     password: ${RABBITMQ_PASSWORD:scms_rabbitmq_password}
     virtual-host: ${RABBITMQ_VHOST:/}
+  mail:
+    host: mailpit
+    port: 1025
+    username: udom@scms.ac.tz
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
 
 management:
   endpoints:
@@ -60,3 +71,11 @@ scms:
     general-per-minute: 60
     fail-closed: false
     trust-proxy: false
+
+security:
+  password-reset:
+    otp-validity-minutes: 10
+    otp-length: 6
+    max-otp-attempts: 5
+    resend-cooldown-minutes: 2
+    reset-token-validity-minutes: 15

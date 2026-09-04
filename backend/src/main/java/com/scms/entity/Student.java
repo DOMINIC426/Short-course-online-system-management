@@ -26,7 +26,4 @@ public class Student extends BaseEntity {
 
     @Column(name = "nationality", length = 100)
     private String nationality;
-
-    @Column(name = "identification_number", length = 50)
-    private String identificationNumber;
 }

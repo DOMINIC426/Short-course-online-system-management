@@ -75,15 +75,7 @@ public class AuthService {
             auditLogService.logAction("CREATE", "USER", savedUser.getId(), null, savedUser.getEmail(), savedUser);
         }
 
-        // Generate JWT token for auto-login
-        UserDetails userDetails = User.builder()
-                .username(savedUser.getEmail())
-                .password(savedUser.getPasswordHash())
-                .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + savedUser.getRole().name())))
-                .disabled(savedUser.getStatus() != UserStatus.ACTIVE)
-                .build();
-
-        String token = jwtService.generateToken(userDetails);
+        String token = jwtService.generateToken(savedUser);
 
         RegisterResponse response = new RegisterResponse();
         response.setId(savedUser.getId());
@@ -113,14 +105,7 @@ public class AuthService {
             throw new BadCredentialsException("User account is not active");
         }
 
-        UserDetails userDetails = User.builder()
-                .username(user.getEmail())
-                .password(user.getPasswordHash())
-                .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
-                .disabled(user.getStatus() != UserStatus.ACTIVE)
-                .build();
-
-        String token = jwtService.generateToken(userDetails);
+        String token = jwtService.generateToken(user);
 
         // Audit log
         auditLogService.logAction("LOGIN", "USER", user.getId(), null, user.getEmail(), user);

@@ -21,11 +21,13 @@ import ResetPasswordPage from "./pages/public/ResetPasswordPage";
 
 // Student Pages
 import DashboardPage from "./pages/student/DashboardPage";
+import BrowseCoursesPage from "./pages/student/BrowseCoursesPage";
 import ApplyPage from "./pages/student/ApplyPage";
 import MyApplicationsPage from "./pages/student/MyApplicationsPage";
 import MyPaymentsPage from "./pages/student/MyPaymentsPage";
 import AnnouncementsPage from "./pages/student/AnnouncementsPage";
 import CertificatesPage from "./pages/student/CertificatesPage";
+import ProfilePage from "./pages/student/ProfilePage";
 
 // Instructor Pages
 import InstructorDashboardPage from "./pages/instructor/InstructorDashboardPage";
@@ -67,11 +69,12 @@ export default function App() {
       {/* Student Portal Routes */}
       <Route element={<StudentLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/student/courses" element={<BrowseCoursesPage />} />
         <Route path="/intakes/:intakeId/apply" element={<ApplyPage />} />
         <Route path="/applications" element={<MyApplicationsPage />} />
         <Route path="/payments" element={<MyPaymentsPage />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/student/profile" element={<UserProfile />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/student/profile" element={<ProfilePage />} />
         <Route path="/announcements" element={<AnnouncementsPage />} />
         <Route path="/certificates" element={<CertificatesPage />} />
       </Route>
@@ -85,7 +88,6 @@ export default function App() {
         <Route path="announcements" element={<InstructorAnnouncementsPage />} />
         <Route path="certificates" element={<InstructorCertificatesPage />} />
         <Route path="profile" element={<UserProfile />} />
-
       </Route>
 
       {/* Market Officer Portal Routes */}

@@ -17,16 +17,27 @@ import java.util.Optional;
 @Repository
 public interface StudentCourseRepository extends JpaRepository<ShortCourse, Long> {
 
-    @Query("""
-            SELECT c FROM ShortCourse c
+    @Query(value = """
+            SELECT DISTINCT c FROM ShortCourse c
+            LEFT JOIN FETCH c.category cat
+            LEFT JOIN FETCH c.venue v
             WHERE c.status IN :statuses
-              AND (:categoryId IS NULL OR c.category.id = :categoryId)
-              AND (:keyword IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(c.courseCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
+              AND (:categoryId IS NULL OR :categoryId <= 0 OR cat.id = :categoryId)
+              AND (:keywordPattern IS NULL OR c.title ILIKE :keywordPattern
+                   OR c.courseCode ILIKE :keywordPattern)
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT c.id) FROM ShortCourse c
+            LEFT JOIN c.category cat
+            LEFT JOIN c.venue v
+            WHERE c.status IN :statuses
+              AND (:categoryId IS NULL OR :categoryId <= 0 OR cat.id = :categoryId)
+              AND (:keywordPattern IS NULL OR c.title ILIKE :keywordPattern
+                   OR c.courseCode ILIKE :keywordPattern)
             """)
     Page<ShortCourse> findPublicCourses(@Param("statuses") List<CourseStatus> statuses,
                                         @Param("categoryId") Long categoryId,
-                                        @Param("keyword") String keyword,
+                                        @Param("keywordPattern") String keywordPattern,
                                         Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

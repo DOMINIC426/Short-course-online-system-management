@@ -1,7 +1,9 @@
 
+
 package com.scms.exception;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -271,11 +274,7 @@ public class GlobalExceptionHandler {
             Exception ex,
             WebRequest request) {
 
-        // Log the real exception internally.
-        // Use your project's logger here.
-        //
-        // Example:
-        // log.error("Unexpected error occurred", ex);
+        log.error("Unexpected error occurred", ex);
 
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,

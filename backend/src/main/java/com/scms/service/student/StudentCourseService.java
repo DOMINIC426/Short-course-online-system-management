@@ -26,17 +26,18 @@ public class StudentCourseService {
     private final StudentCourseRepository courseRepository;
 
     @Transactional(readOnly = true)
-    @Cacheable(cacheNames = "publicCourses", key = "#page + '-' + #size + '-' + #sortBy + '-' + #categoryId + '-' + #keyword")
+    @Cacheable(cacheNames = "publicCourses", key = "#page + '-' + #size + '-' + #sortBy + '-' + (#categoryId != null && #categoryId > 0 ? #categoryId : 'all') + '-' + (#keyword != null ? #keyword.trim().toLowerCase() : '')")
     public PaginatedResponse<CourseResponse> getPublicCourses(
             int page, int size, String sortBy, Long categoryId, String keyword) {
 
         List<CourseStatus> publicStatuses = List.of(CourseStatus.PUBLISHED, CourseStatus.REGISTRATION_OPEN);
+        Pageable pageable = PageRequest.of(page, size, getSafeSort(sortBy));
 
-        Sort sort = getSafeSort(sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Long effectiveCategoryId = (categoryId != null && categoryId > 0) ? categoryId : null;
+        String keywordPattern = (keyword != null && !keyword.isBlank()) ? "%" + keyword.trim() + "%" : null;
 
         Page<ShortCourse> coursePage =
-                courseRepository.findPublicCourses(publicStatuses, categoryId, keyword, pageable);
+                courseRepository.findPublicCourses(publicStatuses, effectiveCategoryId, keywordPattern, pageable);
 
         List<CourseResponse> content = coursePage.getContent().stream()
                 .map(this::mapToCourseResponse)
@@ -86,9 +87,7 @@ public class StudentCourseService {
     }
 
     private CourseDetailResponse mapToDetailResponse(ShortCourse course) {
-        // Instructor names will be added when a proper relationship or repository is available.
-        // For now, we set an empty string to avoid relying on an undefined method.
-        String instructorNames = "";
+        String instructorNames = ""; // placeholder until relationship is available
 
         return CourseDetailResponse.builder()
                 .id(course.getId())

@@ -31,6 +31,7 @@ import com.scms.exception.UserAlreadyExistException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -90,6 +91,7 @@ public class MarketService {
     }
 
     // **************************************** EDIT COURSE
+    @CacheEvict(value = {"publicCourses", "courseDetail"}, allEntries = true)
     @PreAuthorize("hasRole('MARKETING_OFFICER')")
     @Transactional
     public ShortCourseResponse editCourse(Long id, UpdateShortCourseDto request) {
@@ -163,7 +165,7 @@ public class MarketService {
         return "Course " + shortCourse.getTitle() + " has been deleted";
     }
 
-    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER','STUDENT')")
     @Transactional(readOnly = true)
     public List<ShortCourseResponse> getAllCourses() {
         List<ShortCourse> courses = shortCourseRepository.findAll();
@@ -172,6 +174,7 @@ public class MarketService {
                 .toList();
     }
 
+    @CacheEvict(value = "publicCourses", allEntries = true)
     @PreAuthorize("hasRole('MARKETING_OFFICER')")
     @Transactional
     public String setCourseAvailable(Long id) {
@@ -196,7 +199,7 @@ public class MarketService {
         return "Course '" + shortCourse.getTitle() + "' is now unavailable";
     }
 
-    @PreAuthorize("hasRole('MARKETING_OFFICER')")
+    @PreAuthorize("hasRole('MARKETING_OFFICER','STUDENT')")
     @Transactional(readOnly = true)
     public List<ShortCourseResponse> getVisibleCourse(CourseStatus status) {
         List<ShortCourse> courses = shortCourseRepository.findAllByStatus(status);
@@ -300,7 +303,7 @@ public class MarketService {
         return new CategoryResponse(saved.getId(), saved.getCategoryName(), saved.getDescription());
         }
 
-        @PreAuthorize("hasRole('MARKETING_OFFICER')")
+        @PreAuthorize("hasRole('MARKETING_OFFICER','ADMIN')")
         @Transactional(readOnly = true)
         public List<InstructorResponse> getInstructors() {
         return instructorRepository.findAll().stream()

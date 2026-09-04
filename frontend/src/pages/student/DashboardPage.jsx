@@ -86,7 +86,7 @@ export default function DashboardPage() {
       label: "Courses registered",
       value: loading ? "…" : String(coursesRegisteredCount),
       detail: "View my courses",
-      to: "/student/my-courses",
+      to: "/applications",
       icon: FileText,
       accent: "bg-[#eaf3ff] text-[#0b4d94]",
     },
@@ -122,7 +122,7 @@ export default function DashboardPage() {
     {
       title: "My Courses",
       description: "Access your enrolled course catalog, view control numbers, and course progress.",
-      to: "/student/my-courses",
+      to: "/applications",
       icon: BookOpen,
       accent: "bg-purple-50 text-purple-700",
     },

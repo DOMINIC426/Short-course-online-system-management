@@ -27,6 +27,7 @@ import MyApplicationsPage from "./pages/student/MyApplicationsPage";
 import MyPaymentsPage from "./pages/student/MyPaymentsPage";
 import AnnouncementsPage from "./pages/student/AnnouncementsPage";
 import CertificatesPage from "./pages/student/CertificatesPage";
+import ProfilePage from "./pages/student/ProfilePage";
 
 // Instructor Pages
 import InstructorDashboardPage from "./pages/instructor/InstructorDashboardPage";
@@ -72,8 +73,8 @@ export default function App() {
         <Route path="/intakes/:intakeId/apply" element={<ApplyPage />} />
         <Route path="/applications" element={<MyApplicationsPage />} />
         <Route path="/payments" element={<MyPaymentsPage />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/student/profile" element={<UserProfile />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/student/profile" element={<ProfilePage />} />
         <Route path="/announcements" element={<AnnouncementsPage />} />
         <Route path="/certificates" element={<CertificatesPage />} />
       </Route>

@@ -58,24 +58,6 @@ export default function RegisterPage() {
     }
   }
 
-  if (isSuccess) {
-    return (
-      <section className="mx-auto max-w-md px-6 py-20">
-        <div className="rounded-2xl border border-emerald-100 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-            <CheckCircle2 className="h-8 w-8" />
-          </div>
-          <h2 className="mt-4 text-xl font-bold text-slate-900">
-            Account Created Successfully!
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Redirecting you to the login page...
-          </p>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className="mx-auto max-w-md px-6 py-16">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -86,8 +68,23 @@ export default function RegisterPage() {
           Fill in your details below to get started.
         </p>
 
-        {/* Professional Inline Alert Banner */}
-        {error && (
+        {/* Inline Success Popup Alert Banner */}
+        {isSuccess && (
+          <div className="mt-5 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-800 transition-all animate-in fade-in">
+            <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600 mt-0.5" />
+            <div>
+              <p className="font-bold text-emerald-900 text-sm">
+                Account created successfully!
+              </p>
+              <p className="mt-0.5 text-emerald-700">
+                We are redirecting you to the login page...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Inline Error Alert Banner */}
+        {error && !isSuccess && (
           <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs font-medium text-rose-800 transition-all">
             <div className="flex items-center gap-2.5">
               <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-600" />
@@ -117,8 +114,9 @@ export default function RegisterPage() {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                disabled={isSuccess}
                 required
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 transition focus:border-[#0b4d94] focus:outline-none focus:ring-1 focus:ring-[#0b4d94]"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 transition focus:border-[#0b4d94] focus:outline-none focus:ring-1 focus:ring-[#0b4d94] disabled:bg-slate-100 disabled:opacity-70"
               />
             </div>
             <div>
@@ -133,8 +131,9 @@ export default function RegisterPage() {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+                disabled={isSuccess}
                 required
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 transition focus:border-[#0b4d94] focus:outline-none focus:ring-1 focus:ring-[#0b4d94]"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 transition focus:border-[#0b4d94] focus:outline-none focus:ring-1 focus:ring-[#0b4d94] disabled:bg-slate-100 disabled:opacity-70"
               />
             </div>
           </div>
@@ -151,8 +150,9 @@ export default function RegisterPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isSuccess}
               required
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 transition focus:border-[#0b4d94] focus:outline-none focus:ring-1 focus:ring-[#0b4d94]"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 transition focus:border-[#0b4d94] focus:outline-none focus:ring-1 focus:ring-[#0b4d94] disabled:bg-slate-100 disabled:opacity-70"
             />
           </div>
 
@@ -168,9 +168,10 @@ export default function RegisterPage() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              disabled={isSuccess}
               required
               placeholder="e.g. 0712345678"
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 transition focus:border-[#0b4d94] focus:outline-none focus:ring-1 focus:ring-[#0b4d94]"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 transition focus:border-[#0b4d94] focus:outline-none focus:ring-1 focus:ring-[#0b4d94] disabled:bg-slate-100 disabled:opacity-70"
             />
           </div>
 
@@ -180,6 +181,7 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             showStrength={true}
+            disabled={isSuccess}
           />
 
           <PasswordInput
@@ -187,17 +189,23 @@ export default function RegisterPage() {
             label="Confirm password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={isSuccess}
           />
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || isSuccess}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0b4d94] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#083b72] disabled:opacity-60"
           >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span>Creating account...</span>
+              </>
+            ) : isSuccess ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Redirecting...</span>
               </>
             ) : (
               "Create account"

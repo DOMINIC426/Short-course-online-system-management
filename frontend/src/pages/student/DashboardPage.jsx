@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../api/backendClient.js";
+import { useAuth } from "../../context/AuthContext.jsx";
 import { 
   FileText, 
   Wallet, 
@@ -9,27 +10,42 @@ import {
   Compass, 
   Megaphone, 
   User, 
-  ArrowRight 
+  ArrowRight,
+  AlertTriangle,
+  ShieldAlert
 } from "lucide-react";
 
 /**
  * DashboardPage Component
  * - Serves as the main landing overview page for logged-in students.
- * - Displays top summary KPI cards (Registered Courses count, Outstanding Balance, Certificate Status).
- * - Renders a responsive grid of Quick Action cards linking to primary portal sections.
+ * - Checks profile completeness and displays a high-visibility warning banner if missing.
+ * - Displays top summary KPI cards and Quick Navigation features.
  */
 export default function DashboardPage() {
+  const { user, fetchUserProfile } = useAuth();
+
   // State for student dashboard metrics (enrollments & financial summaries)
   const [dashboardData, setDashboardData] = useState([]);
   
   // Loading state to manage skeleton/fallback values during API requests
   const [loading, setLoading] = useState(true);
 
-  // Fetch dashboard data on component mount
+  // Check if essential student details are incomplete
+  const isProfileIncomplete = 
+    !user?.levelOfEducation || !user?.nationality || !user?.identificationNumber;
+
+  // Fetch dashboard data and sync profile on component mount
   useEffect(() => {
     async function fetchDashboardAndProfile() {
       try {
         setLoading(true);
+
+        // Fetch user profile in background to ensure fresh state alongside dashboard metrics
+        if (fetchUserProfile && user?.role === "STUDENT") {
+          fetchUserProfile().catch((err) =>
+            console.warn("Background profile sync failed:", err)
+          );
+        }
 
         // API call to retrieve aggregated student dashboard metrics
         const [dashboardRes] = await Promise.all([
@@ -64,8 +80,6 @@ export default function DashboardPage() {
 
   /**
    * Top KPI Summary Stat Cards Configuration
-   * - Used in the top grid to display key student stats.
-   * - Dynamically computes values based on API response.
    */
   const statCards = [
     {
@@ -74,7 +88,7 @@ export default function DashboardPage() {
       detail: "View my courses",
       to: "/student/my-courses",
       icon: FileText,
-      accent: "bg-[#eaf3ff] text-[#0b4d94]", // Brand Blue Accent
+      accent: "bg-[#eaf3ff] text-[#0b4d94]",
     },
     {
       label: "Outstanding balance",
@@ -82,22 +96,20 @@ export default function DashboardPage() {
       detail: "View payments",
       to: "/payments",
       icon: Wallet,
-      accent: "bg-[#eafaf3] text-[#1d7c4d]", // Emerald Green Accent
+      accent: "bg-[#eafaf3] text-[#1d7c4d]",
     },
     {
       label: "Certificate status",
-      value: "Not eligible", // Default fallback status until requirements are met
+      value: "Not eligible",
       detail: "View status",
       to: "/certificates",
       icon: Award,
-      accent: "bg-[#fff2e8] text-[#dc7a00]", // Amber/Orange Accent
+      accent: "bg-[#fff2e8] text-[#dc7a00]",
     },
   ];
 
   /**
    * Quick Action Navigation Cards Configuration
-   * - Provides quick portal navigation with descriptive summaries of sidebar links.
-   * - Responsive: Stacks vertically on mobile (`grid-cols-1`), 2-column on tablets (`sm:grid-cols-2`), and 3-column on desktops (`lg:grid-cols-3`).
    */
   const quickActionCards = [
     {
@@ -138,7 +150,7 @@ export default function DashboardPage() {
     {
       title: "My Profile",
       description: "Manage personal details, update contact details, and change your password to improve security on your account.",
-      to: "/profile",
+      to: "/student/profile",
       icon: User, 
       accent: "bg-slate-100 text-slate-700",
     },
@@ -157,9 +169,11 @@ export default function DashboardPage() {
 
         <div className="mt-1 flex flex-col gap-1">
           <p className="text-sm sm:text-base text-slate-500">
-            Here is an overview of your courses and account.
+            Student account overview.
           </p>
         </div>
+
+        
 
         {/* ----------------------------------------------------------------- */}
         {/* Top Summary Stat Cards Grid                                       */}

@@ -420,7 +420,7 @@ export default function BrowseCoursesPage() {
                         ) : (
                           <>
                             Enroll Now
-                            <ArrowRight className="h-3.5 w-3.5" />
+                           
                           </>
                         )}
                       </button>

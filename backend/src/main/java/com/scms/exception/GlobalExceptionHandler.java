@@ -206,6 +206,52 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
     }
 
+    @ExceptionHandler({
+            InvalidOtpException.class,
+            ExpiredOtpException.class,
+            InvalidResetTokenException.class,
+            ExpiredResetTokenException.class,
+            PasswordValidationException.class
+    })
+    public ResponseEntity<Object> handlePasswordResetBadRequest(
+            RuntimeException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage() != null ? ex.getMessage() : "Invalid password reset request",
+                request
+        );
+    }
+
+    @ExceptionHandler({
+            TooManyRequestsException.class,
+            TooManyOtpAttemptsException.class,
+            ResendCooldownException.class
+    })
+    public ResponseEntity<Object> handleTooManyRequests(
+            RuntimeException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.TOO_MANY_REQUESTS,
+                ex.getMessage() != null ? ex.getMessage() : "Too many requests. Please try again later.",
+                request
+        );
+    }
+
+    @ExceptionHandler(EmailSendingException.class)
+    public ResponseEntity<Object> handleEmailSendingException(
+            EmailSendingException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                ex.getMessage() != null ? ex.getMessage() : "Failed to send email. Please try again later.",
+                request
+        );
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Object> handleBadCredentials(
             BadCredentialsException ex,

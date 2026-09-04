@@ -36,7 +36,6 @@ public class StudentProfileService {
                 .phone(user.getPhone())
                 .levelOfEducation(student.getLevelOfEducation())
                 .nationality(student.getNationality())
-                .identificationNumber(student.getIdentificationNumber())
                 .role(user.getRole())
                 .build();
     }

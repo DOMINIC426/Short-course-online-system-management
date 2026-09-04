@@ -1,5 +1,6 @@
 package com.scms.jwt;
 
+import com.scms.entity.Users;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -20,25 +21,54 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        return Jwts.builder()
-            .claim("role", userDetails.getAuthorities().stream()
-                .findFirst()
-                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
-                .orElse("STUDENT"))
+        Integer tokenVersion = null;
+        if (userDetails instanceof Users u) {
+            tokenVersion = u.getTokenVersion();
+        }
+        return generateToken(userDetails, tokenVersion);
+    }
+
+    public String generateToken(UserDetails userDetails, Integer tokenVersion) {
+        var builder = Jwts.builder()
+                .claim("role", userDetails.getAuthorities().stream()
+                        .findFirst()
+                        .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                        .orElse("STUDENT"))
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // 30 Minutes
-                .signWith(getSecretKey())
-                .compact();
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)); // 30 Minutes
+
+        if (tokenVersion != null) {
+            builder.claim("tokenVersion", tokenVersion);
+        }
+
+        return builder.signWith(getSecretKey()).compact();
     }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public Integer extractTokenVersion(String token) {
+        return extractClaim(token, claims -> claims.get("tokenVersion", Integer.class));
+    }
+
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        if (!username.equals(userDetails.getUsername()) || isTokenExpired(token)) {
+            return false;
+        }
+
+        if (userDetails instanceof Users users && users.getTokenVersion() != null) {
+            Integer tokenVersionInClaim = extractTokenVersion(token);
+            if (tokenVersionInClaim != null && !tokenVersionInClaim.equals(users.getTokenVersion())) {
+                return false;
+            }
+            if (tokenVersionInClaim == null && users.getTokenVersion() > 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean isTokenExpired(String token) {

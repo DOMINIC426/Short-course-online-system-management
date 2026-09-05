@@ -107,7 +107,23 @@ services:
     networks:
       - scms-network
 
-
+  # =========================================================
+  # MAILPIT
+  # Host: http://localhost:8025
+  # SMTP: localhost:1025
+  # Internal SMTP: mailpit:1025
+  # Internal Web UI: mailpit:8025
+  # =========================================================
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: scms-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - scms-network
+      
   # =========================================================
   # POSTGRESQL
   # Host: localhost:5433

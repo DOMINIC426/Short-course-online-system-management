@@ -1,7 +1,9 @@
 
+
 package com.scms.exception;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -203,6 +206,52 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
     }
 
+    @ExceptionHandler({
+            InvalidOtpException.class,
+            ExpiredOtpException.class,
+            InvalidResetTokenException.class,
+            ExpiredResetTokenException.class,
+            PasswordValidationException.class
+    })
+    public ResponseEntity<Object> handlePasswordResetBadRequest(
+            RuntimeException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage() != null ? ex.getMessage() : "Invalid password reset request",
+                request
+        );
+    }
+
+    @ExceptionHandler({
+            TooManyRequestsException.class,
+            TooManyOtpAttemptsException.class,
+            ResendCooldownException.class
+    })
+    public ResponseEntity<Object> handleTooManyRequests(
+            RuntimeException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.TOO_MANY_REQUESTS,
+                ex.getMessage() != null ? ex.getMessage() : "Too many requests. Please try again later.",
+                request
+        );
+    }
+
+    @ExceptionHandler(EmailSendingException.class)
+    public ResponseEntity<Object> handleEmailSendingException(
+            EmailSendingException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                ex.getMessage() != null ? ex.getMessage() : "Failed to send email. Please try again later.",
+                request
+        );
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Object> handleBadCredentials(
             BadCredentialsException ex,
@@ -271,11 +320,7 @@ public class GlobalExceptionHandler {
             Exception ex,
             WebRequest request) {
 
-        // Log the real exception internally.
-        // Use your project's logger here.
-        //
-        // Example:
-        // log.error("Unexpected error occurred", ex);
+        log.error("Unexpected error occurred", ex);
 
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,

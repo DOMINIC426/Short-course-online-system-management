@@ -21,6 +21,5 @@ public class StudentProfileResponse {
     private String phone;
     private String levelOfEducation;
     private String nationality;
-    private String identificationNumber;
     private Role role;
 }

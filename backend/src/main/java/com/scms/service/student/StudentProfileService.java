@@ -1,6 +1,7 @@
 package com.scms.service.student;
 
 import com.scms.dto.student.StudentProfileResponse;
+import com.scms.dto.student.UpdateStudentProfileRequest;
 import com.scms.entity.Student;
 import com.scms.entity.Users;
 import com.scms.exception.ResourceNotFoundException;
@@ -36,8 +37,24 @@ public class StudentProfileService {
                 .phone(user.getPhone())
                 .levelOfEducation(student.getLevelOfEducation())
                 .nationality(student.getNationality())
-                .identificationNumber(student.getIdentificationNumber())
                 .role(user.getRole())
                 .build();
+    }
+
+    @Transactional
+    public void updateMyProfile(UpdateStudentProfileRequest request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Student student = studentRepository.findByUser(user)
+                .orElseGet(() -> Student.builder().user(user).build());
+
+        student.setLevelOfEducation(request.getLevelOfEducation());
+        student.setNationality(request.getNationality());
+
+
+        studentRepository.save(student);
     }
 }

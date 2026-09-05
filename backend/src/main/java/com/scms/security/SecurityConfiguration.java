@@ -168,9 +168,18 @@ public class SecurityConfiguration {
                  * have a JWT before authentication.
                  *
                  * RateLimitFilter still protects these endpoints.
+                /*
+                 * Change password endpoint MUST be authenticated.
+                 * Must be declared before the /api/v1/auth/** permitAll matcher.
                  */
                 .requestMatchers(
-                    "/api/v1/auth/**"
+                    "/api/v1/auth/change-password"
+                ).authenticated()
+
+                .requestMatchers(
+                    "/api/v1/auth/**",
+                    "/api/v1/password-reset/**",
+                    "/password-reset/**"
                 ).permitAll()
 
                 /*

@@ -49,6 +49,13 @@ public class StudentController {
         return ResponseEntity.ok(profileService.getMyProfile());
     }
 
+    @PutMapping("/profile")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<Void> updateMyProfile(@Valid @RequestBody UpdateStudentProfileRequest request) {
+        profileService.updateMyProfile(request);
+        return ResponseEntity.ok().build();
+    }
+
     // --- Student registration ---
     @PostMapping("/register")
     public ResponseEntity<StudentRegisterResponse> registerStudent(

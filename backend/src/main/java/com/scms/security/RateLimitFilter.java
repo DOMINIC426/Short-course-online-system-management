@@ -135,6 +135,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
             if (path.equals("/api/v1/auth/register") || path.equals("/api/v1/student/register")) {
                 return new RateLimitPolicy("scms:rate-limit:register:", registerLimit, "REGISTER");
             }
+            if (path.contains("/password-reset/") || path.endsWith("/password-reset")) {
+                return new RateLimitPolicy("scms:rate-limit:pw-reset:", 10, "PASSWORD_RESET");
+            }
+            if (path.equals("/api/v1/auth/change-password")) {
+                return new RateLimitPolicy("scms:rate-limit:change-pw:", 5, "CHANGE_PASSWORD");
+            }
         }
 
         return new RateLimitPolicy("scms:rate-limit:general:", generalLimit, "GENERAL");

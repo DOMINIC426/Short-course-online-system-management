@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,7 @@ public class InstructorController {
 
 
     @GetMapping("/me")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<InstructorProfileResponse> getMyProfile(
             Authentication authentication) {
 
@@ -32,6 +34,7 @@ public class InstructorController {
 
 
     @GetMapping("/courses")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<InstructorCourseResponse>> getMyCourses(
             Authentication authentication) {
 
@@ -44,6 +47,7 @@ public class InstructorController {
 
 
     @GetMapping("/courses/{courseId}/students")
+    @PreAuthorize("hasRole('INSTRUCTOR') AND hasAuthority('STUDENT_READ')")
     public ResponseEntity<List<InstructorStudentResponse>> getStudents(
             @PathVariable Long courseId,
             @RequestParam(required = false) String search,
@@ -62,6 +66,7 @@ public class InstructorController {
 
 
     @GetMapping("/courses/{courseId}/students/{enrollmentId}")
+    @PreAuthorize("hasRole('INSTRUCTOR') AND hasAuthority('STUDENT_READ')")
     public ResponseEntity<InstructorStudentDetailsResponse>
     getStudentDetails(
             @PathVariable Long courseId,
@@ -79,6 +84,7 @@ public class InstructorController {
 
 
     @PostMapping("/courses/{courseId}/announcements")
+    @PreAuthorize("hasRole('INSTRUCTOR') AND hasAuthority('INSTRUCTOR_ANNOUNCEMENT_SEND')")
     public ResponseEntity<InstructorAnnouncementResponse>
     sendAnnouncement(
             @PathVariable Long courseId,
@@ -98,6 +104,7 @@ public class InstructorController {
 
 
     @PutMapping("/courses/{courseId}/venue")
+    @PreAuthorize("hasRole('INSTRUCTOR') AND hasAuthority('INSTRUCTOR_COURSE_VENUE_UPDATE')")
     public ResponseEntity<InstructorVenueUpdateResponse> updateVenue(
             @PathVariable Long courseId,
             @Valid @RequestBody InstructorVenueUpdateRequest request,
@@ -114,6 +121,7 @@ public class InstructorController {
 
 
     @PostMapping("/courses/{courseId}/progress")
+    @PreAuthorize("hasRole('INSTRUCTOR') AND hasAuthority('INSTRUCTOR_COURSE_PROGRESS_SUBMIT')")
     public ResponseEntity<InstructorCourseProgressResponse>
     submitCourseProgress(
             @PathVariable Long courseId,
@@ -137,6 +145,7 @@ public class InstructorController {
     @PutMapping(
             "/courses/{courseId}/students/{enrollmentId}/certificate-eligibility"
     )
+    @PreAuthorize("hasRole('INSTRUCTOR') AND hasAuthority('INSTRUCTOR_CERTIFICATE_ELIGIBILITY')")
     public ResponseEntity<InstructorCertificateEligibilityResponse>
     updateCertificateEligibility(
             @PathVariable Long courseId,

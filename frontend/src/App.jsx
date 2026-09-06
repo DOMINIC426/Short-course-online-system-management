@@ -17,7 +17,6 @@ import CourseDetailPage from "./pages/public/CourseDetailPage";
 import LoginPage from "./pages/public/LoginPage";
 import RegisterPage from "./pages/public/RegisterPage";
 import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/public/ResetPasswordPage";
 
 // Student Pages
 import DashboardPage from "./pages/student/DashboardPage";
@@ -52,6 +51,10 @@ import PermissionsPage from "./pages/admin/PermissionsPage";
 import SystemSettingsPage from "./pages/admin/SystemSettingsPage";
 import AuditLogsPage from "./pages/admin/AuditLogsPage";
 
+/**
+ * Main Application Router
+ * Defines public, student, instructor, market officer, and admin navigation.
+ */
 export default function App() {
   return (
     <Routes>
@@ -62,8 +65,12 @@ export default function App() {
         <Route path="/courses/:id" element={<CourseDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        
+        {/* Single route handling the full 4-step password reset workflow */}
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        
+        {/* Redirect legacy /reset-password attempts directly to /forgot-password */}
+        <Route path="/reset-password" element={<Navigate to="/forgot-password" replace />} />
       </Route>
 
       {/* Student Portal Routes */}

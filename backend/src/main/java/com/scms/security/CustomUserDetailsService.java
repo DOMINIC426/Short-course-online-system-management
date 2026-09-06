@@ -4,7 +4,6 @@ import com.scms.entity.Users;
 import com.scms.entity.enums.Role;
 import com.scms.entity.enums.UserStatus;
 import com.scms.repository.UserRepository;
-import com.scms.repository.admin.PermissionRepository;
 import com.scms.repository.admin.RolePermissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,12 +22,12 @@ import java.util.stream.Stream;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
 
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Users user = userRepository.findByEmail(username)
         Users user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
 

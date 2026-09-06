@@ -34,6 +34,8 @@ import InstructorCoursesPage from "./pages/instructor/InstructorCoursesPage";
 import InstructorStudentsPage from "./pages/instructor/InstructorStudentsPage";
 import InstructorAnnouncementsPage from "./pages/instructor/InstructorAnnouncementsPage";
 import InstructorCertificatesPage from "./pages/instructor/InstructorCertificatesPage";
+import CourseProgressPage from "./pages/instructor/CourseProgressPage";
+import ChangeVenuePage from "./pages/instructor/ChangeVenuePage";
 
 // Market Officer Pages
 import MarketDashboardPage from "./pages/market/MarketDashboardPage";
@@ -91,6 +93,8 @@ export default function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<InstructorDashboardPage />} />
         <Route path="courses" element={<InstructorCoursesPage />} />
+        <Route path="/instructor/progress" element={<CourseProgressPage />} />
+        <Route path="/instructor/venue" element={<ChangeVenuePage />} />
         <Route path="students" element={<InstructorStudentsPage />} />
         <Route path="announcements" element={<InstructorAnnouncementsPage />} />
         <Route path="certificates" element={<InstructorCertificatesPage />} />

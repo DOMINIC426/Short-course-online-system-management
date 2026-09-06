@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,6 +63,7 @@ public class AdminController {
             summary = "Create a new user",
             description = "Allows an administrator to create a new system user with a specified role."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('USER_CREATE')")
     @PostMapping("/users")
     public ResponseEntity<UserResponse> createUser(
             @Valid @RequestBody CreateUserRequest request
@@ -76,6 +78,7 @@ public class AdminController {
             summary = "View all users",
             description = "Retrieves a list of all users registered in the system."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('USER_READ')")
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
 
@@ -89,6 +92,7 @@ public class AdminController {
             summary = "View a specific user",
             description = "Retrieves detailed information about a specific user using the user's ID."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('USER_READ')")
     @GetMapping("/users/{id}")
     public ResponseEntity<UserResponse> getUserById(
             @Parameter(
@@ -107,6 +111,7 @@ public class AdminController {
             summary = "Update user information",
             description = "Allows an administrator to update a user's personal information and assigned role."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('USER_UPDATE')")
     @PutMapping("/users/{id}")
     public ResponseEntity<UserResponse> updateUser(
             @Parameter(
@@ -127,6 +132,7 @@ public class AdminController {
             summary = "Activate a user",
             description = "Changes the user's status to ACTIVE, allowing the user to access the system."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('USER_ACTIVATE')")
     @PatchMapping("/users/{id}/activate")
     public ResponseEntity<UserResponse> activateUser(
             @Parameter(
@@ -145,6 +151,7 @@ public class AdminController {
             summary = "Deactivate a user",
             description = "Changes the user's status to INACTIVE, preventing the user from accessing the system."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('USER_DEACTIVATE')")
     @PatchMapping("/users/{id}/deactivate")
     public ResponseEntity<UserResponse> deactivateUser(
             @Parameter(
@@ -163,6 +170,7 @@ public class AdminController {
             summary = "Reset user password",
             description = "Allows an administrator to reset the password of an existing user."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('USER_RESET_PASSWORD')")
     @PatchMapping("/users/{id}/reset-password")
     public ResponseEntity<Void> resetPassword(
             @Parameter(
@@ -187,6 +195,7 @@ public class AdminController {
             summary = "View all students",
             description = "Retrieves all students registered in the Short Course Management System. Optional search and status filters can be used."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('STUDENT_READ')")
     @GetMapping("/students")
     public ResponseEntity<List<StudentResponse>> getAllStudents(
             @RequestParam(required = false) String search,
@@ -215,6 +224,7 @@ public class AdminController {
             summary = "View a specific student",
             description = "Retrieves detailed information about a specific student using the student's ID."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('STUDENT_READ')")
     @GetMapping("/students/{id}")
     public ResponseEntity<StudentResponse> getStudentById(
             @Parameter(
@@ -233,6 +243,7 @@ public class AdminController {
             summary = "Activate a student",
             description = "Changes the linked user's status to ACTIVE, allowing the student to access the system."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('STUDENT_ACTIVATE')")
     @PatchMapping("/students/{id}/activate")
     public ResponseEntity<StudentResponse> activateStudent(
             @Parameter(
@@ -251,6 +262,7 @@ public class AdminController {
             summary = "Deactivate a student",
             description = "Changes the linked user's status to INACTIVE, preventing the student from accessing the system."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('STUDENT_DEACTIVATE')")
     @PatchMapping("/students/{id}/deactivate")
     public ResponseEntity<StudentResponse> deactivateStudent(
             @Parameter(
@@ -273,6 +285,7 @@ public class AdminController {
             summary = "View all system roles",
             description = "Retrieves all roles currently available in the system. Roles are defined by the system Role enum."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('ROLE_READ')")
     @GetMapping("/roles")
     public ResponseEntity<List<RoleResponse>> getAllRoles() {
 
@@ -286,6 +299,7 @@ public class AdminController {
             summary = "View a specific system role",
             description = "Retrieves information about a specific role, including its name and description."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('ROLE_READ')")
     @GetMapping("/roles/{role}")
     public ResponseEntity<RoleResponse> getRole(
             @Parameter(
@@ -304,6 +318,7 @@ public class AdminController {
             summary = "Assign a role to a user",
             description = "Allows an administrator to assign or change the role of an existing user."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('USER_ASSIGN_ROLE')")
     @PutMapping("/users/{id}/role")
     public ResponseEntity<UserResponse> assignRole(
             @Parameter(
@@ -328,6 +343,7 @@ public class AdminController {
             summary = "Create a new permission",
             description = "Allows an administrator to create a new system permission that can later be assigned to roles."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('PERMISSION_CREATE')")
     @PostMapping("/permissions")
     public ResponseEntity<PermissionResponse> createPermission(
             @Valid @RequestBody PermissionRequest request
@@ -342,6 +358,7 @@ public class AdminController {
             summary = "View all permissions",
             description = "Retrieves all permissions currently defined in the system."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('PERMISSION_READ')")
     @GetMapping("/permissions")
     public ResponseEntity<List<PermissionResponse>> getAllPermissions() {
 
@@ -355,6 +372,7 @@ public class AdminController {
             summary = "View a specific permission",
             description = "Retrieves detailed information about a specific permission using its ID."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('PERMISSION_READ')")
     @GetMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponse> getPermissionById(
             @Parameter(
@@ -373,6 +391,7 @@ public class AdminController {
             summary = "Update a permission",
             description = "Allows an administrator to update the name and description of an existing permission."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('PERMISSION_UPDATE')")
     @PutMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponse> updatePermission(
             @Parameter(
@@ -393,6 +412,7 @@ public class AdminController {
             summary = "Delete a permission",
             description = "Deletes an existing permission from the system."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('PERMISSION_DELETE')")
     @DeleteMapping("/permissions/{id}")
     public ResponseEntity<Void> deletePermission(
             @Parameter(
@@ -415,6 +435,7 @@ public class AdminController {
             summary = "View permissions assigned to a role",
             description = "Retrieves all permissions currently assigned to the specified system role."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('ROLE_PERMISSION_READ')")
     @GetMapping("/roles/{role}/permissions")
     public ResponseEntity<List<RolePermissionResponse>> getPermissionsByRole(
             @Parameter(
@@ -433,6 +454,7 @@ public class AdminController {
             summary = "Assign a permission to a role",
             description = "Allows an administrator to assign an existing permission to a system role."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('ROLE_PERMISSION_ASSIGN')")
     @PostMapping("/roles/permissions")
     public ResponseEntity<RolePermissionResponse> assignPermissionToRole(
             @Valid @RequestBody RolePermissionRequest request
@@ -447,6 +469,7 @@ public class AdminController {
             summary = "Remove a permission from a role",
             description = "Removes a specific permission assignment from the specified system role."
     )
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('ROLE_PERMISSION_REMOVE')")
     @DeleteMapping("/roles/{role}/permissions/{permissionId}")
     public ResponseEntity<Void> removePermissionFromRole(
             @Parameter(
@@ -476,8 +499,9 @@ public class AdminController {
         summary = "Create a system setting",
         description = "Allows an administrator to create a new system setting using a unique setting key, value, and description."
 )
-@PostMapping("/settings")
-public ResponseEntity<SystemSettingResponse> createSetting(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('SYSTEM_SETTING_CREATE')")
+    @PostMapping("/settings")
+    public ResponseEntity<SystemSettingResponse> createSetting(
         @Valid @RequestBody SystemSettingRequest request
 ) {
     return ResponseEntity
@@ -490,8 +514,9 @@ public ResponseEntity<SystemSettingResponse> createSetting(
         summary = "View all system settings",
         description = "Retrieves all system settings configured in the Short Course Management System."
 )
-@GetMapping("/settings")
-public ResponseEntity<List<SystemSettingResponse>> getAllSettings() {
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('SYSTEM_SETTING_READ')")
+    @GetMapping("/settings")
+    public ResponseEntity<List<SystemSettingResponse>> getAllSettings() {
 
     return ResponseEntity.ok(
             adminSystemSettingService.getAllSettings()
@@ -503,8 +528,9 @@ public ResponseEntity<List<SystemSettingResponse>> getAllSettings() {
         summary = "View a specific system setting",
         description = "Retrieves a system setting using its unique ID."
 )
-@GetMapping("/settings/{id}")
-public ResponseEntity<SystemSettingResponse> getSettingById(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('SYSTEM_SETTING_READ')")
+    @GetMapping("/settings/{id}")
+    public ResponseEntity<SystemSettingResponse> getSettingById(
         @Parameter(
                 description = "Unique ID of the system setting",
                 example = "1"
@@ -521,8 +547,9 @@ public ResponseEntity<SystemSettingResponse> getSettingById(
         summary = "View a system setting by key",
         description = "Retrieves a system setting using its unique setting key."
 )
-@GetMapping("/settings/key/{settingKey}")
-public ResponseEntity<SystemSettingResponse> getSettingByKey(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('SYSTEM_SETTING_READ')")
+    @GetMapping("/settings/key/{settingKey}")
+    public ResponseEntity<SystemSettingResponse> getSettingByKey(
         @Parameter(
                 description = "Unique key of the system setting",
                 example = "SYSTEM_NAME"
@@ -539,8 +566,9 @@ public ResponseEntity<SystemSettingResponse> getSettingByKey(
         summary = "Update a system setting",
         description = "Allows an administrator to update the value and description of an existing system setting. The setting key cannot be changed."
 )
-@PutMapping("/settings/{id}")
-public ResponseEntity<SystemSettingResponse> updateSetting(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('SYSTEM_SETTING_UPDATE')")
+    @PutMapping("/settings/{id}")
+    public ResponseEntity<SystemSettingResponse> updateSetting(
         @Parameter(
                 description = "Unique ID of the system setting to update",
                 example = "1"
@@ -559,8 +587,9 @@ public ResponseEntity<SystemSettingResponse> updateSetting(
         summary = "Delete a system setting",
         description = "Deletes an existing system setting from the system using its unique ID."
 )
-@DeleteMapping("/settings/{id}")
-public ResponseEntity<Void> deleteSetting(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('SYSTEM_SETTING_DELETE')")
+    @DeleteMapping("/settings/{id}")
+    public ResponseEntity<Void> deleteSetting(
         @Parameter(
                 description = "Unique ID of the system setting to delete",
                 example = "1"
@@ -579,8 +608,9 @@ public ResponseEntity<Void> deleteSetting(
         summary = "View all audit logs",
         description = "Retrieves all system audit logs ordered from the most recent activity to the oldest activity."
 )
-@GetMapping("/audit-logs")
-public ResponseEntity<List<AuditLogResponse>> getAllAuditLogs() {
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('AUDIT_LOG_READ')")
+    @GetMapping("/audit-logs")
+    public ResponseEntity<List<AuditLogResponse>> getAllAuditLogs() {
 
     return ResponseEntity.ok(
             adminAuditLogService.getAllAuditLogs()
@@ -592,8 +622,9 @@ public ResponseEntity<List<AuditLogResponse>> getAllAuditLogs() {
         summary = "View a specific audit log",
         description = "Retrieves a specific audit log using its unique ID."
 )
-@GetMapping("/audit-logs/{id}")
-public ResponseEntity<AuditLogResponse> getAuditLogById(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('AUDIT_LOG_READ')")
+    @GetMapping("/audit-logs/{id}")
+    public ResponseEntity<AuditLogResponse> getAuditLogById(
         @Parameter(
                 description = "Unique ID of the audit log",
                 example = "1"
@@ -611,8 +642,9 @@ public ResponseEntity<AuditLogResponse> getAuditLogById(
         summary = "View audit logs by user",
         description = "Retrieves all audit activities performed by a specific user."
 )
-@GetMapping("/audit-logs/user/{userId}")
-public ResponseEntity<List<AuditLogResponse>> getAuditLogsByUser(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('AUDIT_LOG_READ')")
+    @GetMapping("/audit-logs/user/{userId}")
+    public ResponseEntity<List<AuditLogResponse>> getAuditLogsByUser(
         @Parameter(
                 description = "ID of the user whose activities should be retrieved",
                 example = "5"
@@ -630,8 +662,9 @@ public ResponseEntity<List<AuditLogResponse>> getAuditLogsByUser(
         summary = "View audit logs by entity",
         description = "Retrieves audit logs associated with a specific entity, such as USER, STUDENT, or SYSTEM_SETTING."
 )
-@GetMapping("/audit-logs/entity/{entity}")
-public ResponseEntity<List<AuditLogResponse>> getAuditLogsByEntity(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('AUDIT_LOG_READ')")
+    @GetMapping("/audit-logs/entity/{entity}")
+    public ResponseEntity<List<AuditLogResponse>> getAuditLogsByEntity(
         @Parameter(
                 description = "Name of the entity",
                 example = "USER"
@@ -649,8 +682,9 @@ public ResponseEntity<List<AuditLogResponse>> getAuditLogsByEntity(
         summary = "View audit logs by action",
         description = "Retrieves audit logs associated with a specific action, such as CREATE, UPDATE, DELETE, ACTIVATE, or DEACTIVATE."
 )
-@GetMapping("/audit-logs/action/{action}")
-public ResponseEntity<List<AuditLogResponse>> getAuditLogsByAction(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('AUDIT_LOG_READ')")
+    @GetMapping("/audit-logs/action/{action}")
+    public ResponseEntity<List<AuditLogResponse>> getAuditLogsByAction(
         @Parameter(
                 description = "Action performed in the system",
                 example = "UPDATE"
@@ -668,8 +702,9 @@ public ResponseEntity<List<AuditLogResponse>> getAuditLogsByAction(
         summary = "View entity history",
         description = "Retrieves the complete audit history of a specific entity record."
 )
-@GetMapping("/audit-logs/entity/{entity}/{entityId}")
-public ResponseEntity<List<AuditLogResponse>> getEntityHistory(
+    @PreAuthorize("hasRole('ADMIN') AND hasAuthority('AUDIT_LOG_READ')")
+    @GetMapping("/audit-logs/entity/{entity}/{entityId}")
+    public ResponseEntity<List<AuditLogResponse>> getEntityHistory(
         @Parameter(
                 description = "Name of the entity",
                 example = "USER"

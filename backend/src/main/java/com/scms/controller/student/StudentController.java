@@ -44,7 +44,7 @@ public class StudentController {
 
     // --- Student profile ---
     @GetMapping("/profile")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') AND hasAuthority('DASHBOARD_READ')")
     public ResponseEntity<StudentProfileResponse> getMyProfile() {
         return ResponseEntity.ok(profileService.getMyProfile());
     }
@@ -66,7 +66,7 @@ public class StudentController {
 
     // --- Course enrollment ---
     @PostMapping("/enroll")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') AND hasAuthority('ENROLLMENT_CREATE')")
     public ResponseEntity<EnrollmentResponse> enrollInCourse(
             @Valid @RequestBody EnrollmentRequest request) {
         EnrollmentResponse response = enrollmentService.enroll(request);
@@ -75,7 +75,7 @@ public class StudentController {
 
     // --- Student dashboard ---
     @GetMapping("/dashboard")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') AND hasAuthority('DASHBOARD_READ')")
     public ResponseEntity<PaginatedResponse<EnrollmentResponse>> getDashboard(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -84,7 +84,7 @@ public class StudentController {
 
     // --- Payment history ---
     @GetMapping("/payments")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') AND hasAuthority('PAYMENT_HISTORY_READ')")
     public ResponseEntity<PaginatedResponse<PaymentHistoryResponse>> getPaymentHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -93,7 +93,7 @@ public class StudentController {
 
     // --- Announcements ---
     @GetMapping("/announcements")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') AND hasAuthority('ANNOUNCEMENT_READ')")
     public ResponseEntity<PaginatedResponse<StudentAnnouncementResponse>> getMyAnnouncements(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -102,14 +102,14 @@ public class StudentController {
 
     // --- Certificate eligibility ---
     @GetMapping("/certificates")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') AND hasAuthority('CERTIFICATE_STATUS_READ')")
     public ResponseEntity<List<StudentCertificateResponse>> getMyCertificates() {
         return ResponseEntity.ok(certificateService.getMyCertificates());
     }
 
     // --- Notifications ---
     @GetMapping("/notifications")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') AND hasAuthority('ANNOUNCEMENT_READ')")
     public ResponseEntity<PaginatedResponse<StudentNotificationResponse>> getMyNotifications(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {

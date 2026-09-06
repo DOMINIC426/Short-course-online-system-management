@@ -1,24 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { instructorApi } from "../../api/instructorApi.js";
-import {
-  FileText,
-  Users,
-  BookOpen,
-  CheckCircle2,
-  Lock,
-  DoorOpen,
-  Clock,
-  ArrowRight,
-  ChevronRight,
-} from "lucide-react";
+import { FileText, Users, BookOpen, ArrowRight, Megaphone, Award } from "lucide-react";
 
 export default function InstructorDashboardPage() {
   const [courses, setCourses] = useState([]);
   const [enrolledCounts, setEnrolledCounts] = useState({});
   const [loading, setLoading] = useState(true);
 
-  // Safe array extraction helper
+  // Backend responses aren't always shaped the same way (sometimes a bare
+  // array, sometimes wrapped in { data: [...] }, { courses: [...] }, etc.).
+  // This normalizes any of those shapes so the rest of the page never has
+  // to worry about which one it got back.
   const extractArray = (res) => {
     if (!res) return [];
     if (Array.isArray(res)) return res;
@@ -28,12 +21,17 @@ export default function InstructorDashboardPage() {
     return [];
   };
 
-  // Safe course ID extraction helper
+  // Different endpoints have used different id field names over time
+  // (id, courseId, _id...). Trying them in order keeps this working even
+  // if the backend renames a field later.
   const getCourseId = (course) => {
     return course?.id ?? course?.courseId ?? course?._id ?? "";
   };
 
   useEffect(() => {
+    // Guards against setting state after the component has unmounted,
+    // which would otherwise trigger a React warning if the instructor
+    // navigates away before these requests finish.
     let isMounted = true;
 
     async function fetchInstructorDashboardData() {
@@ -41,15 +39,18 @@ export default function InstructorDashboardPage() {
         setLoading(true);
 
         // 1. Fetch assigned courses
-        const coursesData = await instructorApi
-          .getAssignedCourses()
-          .catch(() => []);
+        const coursesData = await instructorApi.getAssignedCourses().catch(() => []);
         const courseList = extractArray(coursesData);
 
         if (!isMounted) return;
         setCourses(courseList);
 
-        // 2. Fetch enrolled student list for each assigned course to compute accurate totals
+        // 2. Fetch enrolled student list for each assigned course to
+        // compute accurate totals. The assigned-courses endpoint doesn't
+        // reliably include a correct enrolled-count field, so we ask each
+        // course's real roster and count it ourselves. Promise.all runs
+        // these requests in parallel rather than one at a time, so this
+        // stays fast even when an instructor has several courses.
         const countsMap = {};
         if (courseList.length > 0) {
           const studentPromises = courseList.map(async (course) => {
@@ -57,9 +58,7 @@ export default function InstructorDashboardPage() {
             if (!courseId) return { courseId: null, count: 0 };
 
             // Call endpoint: /api/v1/instructor/courses/{courseId}/students
-            const studentsRes = await instructorApi
-              .getRegisteredStudents(courseId)
-              .catch(() => []);
+            const studentsRes = await instructorApi.getRegisteredStudents(courseId).catch(() => []);
 
             const studentsList = extractArray(studentsRes);
             return { courseId, count: studentsList.length };
@@ -90,58 +89,16 @@ export default function InstructorDashboardPage() {
     };
   }, []);
 
-  // Helper to render clean status badges with icons
-  const renderStatusBadge = (status) => {
-    const s = String(status || "").toUpperCase();
-
-    switch (s) {
-      case "REGISTRATION_OPEN":
-      case "OPEN":
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-2xs">
-            <DoorOpen className="h-3.5 w-3.5 text-emerald-600" />
-            Registration Open
-          </span>
-        );
-      case "PUBLISHED":
-      case "ACTIVE":
-      case "IN_PROGRESS":
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-[#0b4d94] shadow-2xs">
-            <CheckCircle2 className="h-3.5 w-3.5 text-[#0b4d94]" />
-            Active Intake
-          </span>
-        );
-      case "COMPLETED":
-      case "CLOSED":
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 shadow-2xs">
-            <Lock className="h-3.5 w-3.5 text-slate-500" />
-            Completed
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 shadow-2xs">
-            <Clock className="h-3.5 w-3.5 text-amber-600" />
-            {s ? s.replace(/_/g, " ") : "Upcoming"}
-          </span>
-        );
-    }
-  };
-
   const totalCourses = courses.length;
 
   const activeCoursesCount = courses.filter((c) => {
     const status = String(c?.status || "").toUpperCase();
-    return (
-      status === "PUBLISHED" ||
-      status === "ACTIVE" ||
-      status === "REGISTRATION_OPEN"
-    );
+    return status === "PUBLISHED" || status === "ACTIVE" || status === "REGISTRATION_OPEN";
   }).length;
 
-  // Calculate total across all assigned courses using fetched map counts
+  // Sums the real per-course counts fetched above, falling back to
+  // whatever count field the course object itself might already carry
+  // if the roster fetch for that particular course failed.
   const totalEnrolledStudents = courses.reduce((acc, course) => {
     const cId = getCourseId(course);
     const count =
@@ -153,166 +110,128 @@ export default function InstructorDashboardPage() {
     return acc + Number(count || 0);
   }, 0);
 
+  // Centralizing tone-to-color mapping here means adjusting a shade later
+  // only needs one edit, rather than hunting through every card.
+  const toneStyles = {
+    blue: "bg-blue-50 text-udom-primary",
+    teal: "bg-teal-50 text-teal-600",
+    orange: "bg-orange-50 text-udom-accent",
+    purple: "bg-purple-50 text-purple-600",
+  };
+
   const statCards = [
     {
-      label: "Assigned Courses",
+      label: "Assigned courses",
       value: loading ? "…" : String(totalCourses),
       detail: "View my courses",
       to: "/instructor/courses",
       icon: BookOpen,
-      accent: "bg-[#eaf3ff] text-[#0b4d94]",
+      tone: "blue",
     },
     {
-      label: "Active Intakes",
+      label: "Active intakes",
       value: loading ? "…" : String(activeCoursesCount),
       detail: "Manage active courses",
       to: "/instructor/courses",
       icon: FileText,
-      accent: "bg-[#eafaf3] text-[#1d7c4d]",
+      tone: "teal",
     },
     {
-      label: "Total Enrolled Students",
+      label: "Total enrolled students",
       value: loading ? "…" : String(totalEnrolledStudents),
       detail: "View student lists",
       to: "/instructor/students",
       icon: Users,
-      accent: "bg-[#fff2e8] text-[#dc7a00]",
+      tone: "orange",
+    },
+  ];
+
+  // Each card here mirrors one item in the instructor sidebar, giving a
+  // quick "what can I do from here" overview. This replaces the old
+  // course-by-course list, since that list already lives on its own
+  // dedicated page at /instructor/courses — showing it twice just meant
+  // two places to keep in sync.
+  const featureCards = [
+    {
+      label: "My courses",
+      description: "View the short courses assigned to you and track their progress.",
+      to: "/instructor/courses",
+      icon: BookOpen,
+      tone: "blue",
+    },
+    {
+      label: "Registered students",
+      description: "See who's enrolled in each of your courses and their payment status.",
+      to: "/instructor/students",
+      icon: Users,
+      tone: "teal",
+    },
+    {
+      label: "Announcements",
+      description: "Send messages to all, paid, unpaid, or selected students.",
+      to: "/instructor/announcements",
+      icon: Megaphone,
+      tone: "orange",
+    },
+    {
+      label: "Certificate eligibility",
+      description: "Mark students as eligible or not eligible once a course completes.",
+      to: "/instructor/certificates",
+      icon: Award,
+      tone: "purple",
     },
   ];
 
   return (
-    <div className="mx-auto max-w-[1360px] p-4 sm:p-6">
-      <div className="rounded-[18px] bg-[#f1f5f9] p-6">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b4d94]">
-            Instructor Dashboard
-          </p>
-        </div>
+    // max-w-6xl plus responsive padding (px-5 on phones, sm:px-8 once
+    // there's more room) keeps the page comfortable to read on a wide
+    // monitor without wasting space on a narrow screen.
+    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
+      <p className="text-sm font-semibold uppercase tracking-wide text-udom-primary">Instructor dashboard</p>
+      <p className="mt-1 text-sm text-slate-600">
+        Overview of your assigned short courses and student management.
+      </p>
 
-        <div className="mt-2 flex flex-col gap-1">
-          <p className="text-base text-slate-500">
-            Overview of your assigned short courses and student management.
-          </p>
-        </div>
+      {/* grid-cols-1 stacks stat cards in one column on a phone; sm:
+          switches to 2 and xl: to 3 as the viewport widens, so all three
+          cards sit in a single tidy row only once there's genuinely room. */}
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {statCards.map(({ label, value, detail, to, icon: Icon, tone }) => (
+          <Link
+            key={label}
+            to={to}
+            className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-udom-primary/40 hover:shadow-md"
+          >
+            <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${toneStyles[tone]}`}>
+              <Icon className="h-6 w-6" strokeWidth={1.8} />
+            </div>
+            <p className="mt-4 text-sm text-slate-500">{label}</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-udom-primary">
+              {detail}
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
+            </span>
+          </Link>
+        ))}
+      </div>
 
-        {/* Stats Grid */}
-        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {statCards.map(({ label, value, detail, to, icon: Icon, accent }) => (
+      {/* Quick access to every instructor feature, mirroring the sidebar. */}
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-slate-900">Quick actions</h2>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {featureCards.map(({ label, description, to, icon: Icon, tone }) => (
             <Link
-              key={label}
+              key={to}
               to={to}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md"
+              className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-udom-primary/40 hover:shadow-md"
             >
-              <div
-                className={`flex h-12 w-12 items-center justify-center rounded-xl ${accent}`}
-              >
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${toneStyles[tone]}`}>
                 <Icon className="h-6 w-6" strokeWidth={1.8} />
               </div>
-
-              <p className="mt-5 text-sm font-medium text-slate-500">{label}</p>
-              <p className="mt-2 text-[2rem] font-extrabold tracking-[-0.04em] text-slate-900">
-                {value}
-              </p>
-              <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#0b4d94] transition hover:text-[#083b71]">
-                {detail}
-                <ArrowRight className="h-4 w-4" />
-              </span>
+              <p className="mt-4 text-base font-semibold text-slate-900">{label}</p>
+              <p className="mt-1 text-sm text-slate-600">{description}</p>
             </Link>
           ))}
-        </div>
-
-        {/* Course List Overview */}
-        <div className="mt-8 grid grid-cols-1 gap-5">
-          <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-xs">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eaf3ff] text-[#0b4d94]">
-                  <BookOpen className="h-5 w-5" strokeWidth={2} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    Assigned Courses
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Courses currently managed under your instructor profile
-                  </p>
-                </div>
-              </div>
-              <Link
-                to="/instructor/courses"
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0b4d94] px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:bg-[#083b71]"
-              >
-                View all courses
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-
-            {loading ? (
-              <div className="mt-8 flex h-40 items-center justify-center text-sm font-medium text-slate-400">
-                Loading assigned courses...
-              </div>
-            ) : courses.length === 0 ? (
-              <div className="mt-8 flex min-h-[220px] flex-col items-center justify-center text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#eaf3ff] text-[#0b4d94]">
-                  <BookOpen className="h-8 w-8" strokeWidth={1.8} />
-                </div>
-                <h3 className="mt-4 text-xl font-bold text-slate-900">
-                  No courses assigned yet
-                </h3>
-                <p className="mt-2 text-sm text-slate-500">
-                  Courses assigned to you by administrators will appear here.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-6 space-y-3">
-                {courses.map((course, idx) => {
-                  const courseId = getCourseId(course);
-                  const courseCode =
-                    course.courseCode || course.code || "SCMS-COURSE";
-                  const studentCount =
-                    enrolledCounts[courseId] ??
-                    course.enrolledStudentsCount ??
-                    course.enrolledCount ??
-                    course.totalEnrolled ??
-                    (Array.isArray(course.students)
-                      ? course.students.length
-                      : 0);
-
-                  return (
-                    <div
-                      key={courseId || `course-card-${idx}`}
-                      className="group flex flex-col justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:border-slate-300 hover:bg-white hover:shadow-xs sm:flex-row sm:items-center"
-                    >
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-block rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-[#0b4d94]">
-                            {courseCode}
-                          </span>
-                          <span className="text-xs font-medium text-slate-500">
-                            • {studentCount} Enrolled
-                          </span>
-                        </div>
-                        <h3 className="text-base font-bold text-slate-900 transition group-hover:text-[#0b4d94]">
-                          {course.title}
-                        </h3>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        {renderStatusBadge(course.status)}
-                        <Link
-                          to="/instructor/courses"
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-[#0b4d94] hover:bg-blue-50 hover:text-[#0b4d94]"
-                          title="Manage Course"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>

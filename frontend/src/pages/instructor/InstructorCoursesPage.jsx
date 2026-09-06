@@ -1,511 +1,264 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { instructorApi } from "../../api/instructorApi";
-import {
-  MapPin,
-  BarChart3,
-  CheckCircle,
-  Save,
-  AlertTriangle,
-  X,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { MapPin, X, CheckCircle2, XCircle, BookOpen, Users, Clock, RefreshCw, Check, Tag } from "lucide-react";
+
+// Backend responses aren't always shaped the same way (sometimes a bare array,
+// sometimes wrapped in { data: [...] }, { courses: [...] }, etc.). This normalizes
+// any of those shapes into a plain array so the rest of the page never has to
+// worry about which one it got.
+function extractArray(res) {
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res.data)) return res.data;
+  if (Array.isArray(res.courses)) return res.courses;
+  if (Array.isArray(res.students)) return res.students;
+  return [];
+}
+
+// Different endpoints/entities have used different id field names over time
+// (id, courseId, _id, code...). This tries them in order so the page keeps
+// working even if the backend team renames a field later.
+function getCourseId(course) {
+  return course?.id ?? course?.courseId ?? course?._id ?? course?.code ?? course?.courseCode ?? "";
+}
+
+// Progress can arrive under a few different field names depending on which
+// endpoint populated the course object. Clamping to 0-100 protects the
+// progress bar from ever rendering wider than the card or going negative.
+function getCourseProgress(course) {
+  if (!course) return 0;
+  const rawVal =
+    course.progressPercent ?? course.progressPercentage ?? course.progress ?? course.completionPercentage ?? 0;
+  return Math.min(100, Math.max(0, Number(rawVal) || 0));
+}
+
+// Completed topics might come back as a real array, or as a single
+// comma-separated string (older/simpler API responses do this). Either way,
+// this always hands back a clean array of individual topic strings.
+function getTopicsList(course) {
+  if (!course) return [];
+  if (Array.isArray(course.completedTopics)) return course.completedTopics;
+  if (Array.isArray(course.topicsCompleted)) return course.topicsCompleted;
+  const str = course.completedTopics || course.topicsCompleted;
+  if (typeof str === "string" && str.trim()) {
+    return str.split(",").map((t) => t.trim()).filter(Boolean);
+  }
+  return [];
+}
 
 export default function InstructorCoursesPage() {
   const [courses, setCourses] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [enrolledCounts, setEnrolledCounts] = useState({});
+  const [fetchingCourses, setFetchingCourses] = useState(true);
+  const [toast, setToast] = useState(null);
 
-  // Form states
-  const [venue, setVenue] = useState("");
-  const [venueReason, setVenueReason] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [completedTopics, setCompletedTopics] = useState("");
-  const [remarks, setRemarks] = useState("");
-
-  // Loading states
-  const [updatingVenue, setUpdatingVenue] = useState(false);
-  const [updatingProgress, setUpdatingProgress] = useState(false);
-
-  // Toast Notification state
-  const [toast, setToast] = useState(null); // { message: string, type: 'success' | 'error' }
-
-  // Confirmation Modal state
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-  const showToast = (message, type = "success") => {
+  function showToast(message, type = "success") {
     setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 4000);
-  };
-
-  // Helper to extract course identifier safely
-  const getCourseId = (course) => {
-    return (
-      course?.id ||
-      course?.courseId ||
-      course?._id ||
-      course?.code ||
-      course?.courseCode
-    );
-  };
-
-  // Helper to extract course progress percentage safely
-  const getCourseProgress = (course) => {
-    if (!course) return 0;
-    const rawVal =
-      course.progressPercent ??
-      course.progressPercentage ??
-      course.progress ??
-      course.completionPercentage ??
-      0;
-    return Math.min(100, Math.max(0, Number(rawVal) || 0));
-  };
-
-  const populateForm = (course) => {
-    if (!course) return;
-    setVenue(course.venue || course.venueId || course.location || "");
-    setVenueReason("");
-    setProgress(getCourseProgress(course));
-    setCompletedTopics(
-      Array.isArray(course.completedTopics)
-        ? course.completedTopics.join(", ")
-        : Array.isArray(course.topicsCompleted)
-        ? course.topicsCompleted.join(", ")
-        : course.completedTopics || course.topicsCompleted || ""
-    );
-    setRemarks(course.remarks || course.notes || "");
-  };
-
-  const loadCourses = async (preferredCourseId = null) => {
-    try {
-      const data = await instructorApi.getAssignedCourses();
-      const courseList = Array.isArray(data) ? data : data?.data || [];
-      setCourses(courseList);
-
-      if (courseList.length > 0) {
-        const targetId =
-          preferredCourseId || getCourseId(selectedCourse) || getCourseId(courseList[0]);
-
-        const updatedSelected =
-          courseList.find((c) => getCourseId(c) === targetId) || courseList[0];
-
-        setSelectedCourse(updatedSelected);
-        populateForm(updatedSelected);
-      }
-    } catch (error) {
-      console.error("Failed to fetch assigned courses:", error);
-      showToast("Failed to load assigned courses.", "error");
-    }
-  };
-
-  useEffect(() => {
-    loadCourses();
-  }, []);
-
-  const handleSelectCourse = (course) => {
-    setSelectedCourse(course);
-    populateForm(course);
-  };
-
-  const handleUpdateVenue = async (e) => {
-    e.preventDefault();
-    const courseId = getCourseId(selectedCourse);
-    if (!courseId) {
-      showToast("Invalid course selected.", "error");
-      return;
-    }
-
-    setUpdatingVenue(true);
-    try {
-      const payload = {
-        venue: venue,
-        venueId: venue,
-        reason: venueReason,
-        venueReason: venueReason,
-      };
-
-      await instructorApi.updateVenue(courseId, payload);
-      showToast("Venue updated successfully and students notified.", "success");
-      setVenueReason("");
-      await loadCourses(courseId);
-    } catch (error) {
-      console.error("Failed to update venue:", error);
-      showToast(
-        error?.response?.data?.message ||
-          "Failed to update venue. Please check server constraints.",
-        "error"
-      );
-    } finally {
-      setUpdatingVenue(false);
-    }
-  };
-
-  const handleUpdateProgress = async (e) => {
-    e.preventDefault();
-    const courseId = getCourseId(selectedCourse);
-    if (!courseId) {
-      showToast("Invalid course selected.", "error");
-      return;
-    }
-
-    const numericProgress = Math.min(100, Math.max(0, Number(progress) || 0));
-
-    // Support both comma-separated string and array payloads if required by backend
-    const topicsArray = completedTopics
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    setUpdatingProgress(true);
-    try {
-      const payload = {
-        progressPercentage: numericProgress,
-        progressPercent: numericProgress,
-        progress: numericProgress,
-        topicsCompleted: completedTopics,
-        completedTopics: completedTopics,
-        topicsCompletedList: topicsArray,
-        remarks: remarks,
-        notes: remarks,
-      };
-
-      const res = await instructorApi.updateCourseProgress(courseId, payload);
-      
-      // Update selected course state directly from API response if returned
-      const updatedData = res?.data || res;
-      if (updatedData && typeof updatedData === "object" && getCourseId(updatedData)) {
-        setSelectedCourse(updatedData);
-        populateForm(updatedData);
-      }
-
-      showToast("Course progress updated successfully.", "success");
-      await loadCourses(courseId);
-    } catch (error) {
-      console.error("Failed to update progress:", error);
-      showToast(
-        error?.response?.data?.message || "Failed to update course progress.",
-        "error"
-      );
-    } finally {
-      setUpdatingProgress(false);
-    }
-  };
-
-  const handleConfirmCompletion = async () => {
-    setShowConfirmModal(false);
-    const courseId = getCourseId(selectedCourse);
-    if (!courseId) {
-      showToast("Invalid course selected.", "error");
-      return;
-    }
-
-    try {
-      await instructorApi.markCourseCompleted(courseId);
-      showToast("Course marked as COMPLETED successfully.", "success");
-      await loadCourses(courseId);
-    } catch (error) {
-      console.error("Failed to mark course as completed:", error);
-      showToast(
-        error?.response?.data?.message || "Failed to mark course as completed.",
-        "error"
-      );
-    }
-  };
-
-  if (!selectedCourse) {
-    return (
-      <div className="flex h-64 items-center justify-center font-medium text-slate-500">
-        Loading courses...
-      </div>
-    );
+    setTimeout(() => setToast(null), 4000);
   }
 
-  const selectedCourseId = getCourseId(selectedCourse);
-  const currentProgressPercent = getCourseProgress(selectedCourse);
+  useEffect(() => {
+    // Guards against setting state after the component has unmounted, which
+    // would otherwise trigger a React warning if the user navigates away
+    // before these requests finish.
+    let isMounted = true;
+
+    async function loadCourses() {
+      setFetchingCourses(true);
+      try {
+        const coursesData = await instructorApi.getAssignedCourses().catch(() => []);
+        const courseList = extractArray(coursesData);
+        if (!isMounted) return;
+        setCourses(courseList);
+
+        // The assigned-courses endpoint doesn't reliably include an accurate
+        // enrolled-student count, so we fetch each course's real roster in
+        // parallel and count it ourselves. Promise.all keeps this fast even
+        // when an instructor has many courses, instead of fetching one by one.
+        const countsMap = {};
+        if (courseList.length > 0) {
+          const studentPromises = courseList.map(async (course) => {
+            const courseId = getCourseId(course);
+            if (!courseId) return { courseId: null, count: 0 };
+
+            const studentsRes = await instructorApi.getRegisteredStudents(courseId).catch(() => []);
+            return { courseId, count: extractArray(studentsRes).length };
+          });
+
+          const results = await Promise.all(studentPromises);
+          results.forEach(({ courseId, count }) => {
+            if (courseId) countsMap[courseId] = count;
+          });
+        }
+
+        if (isMounted) setEnrolledCounts(countsMap);
+      } catch (error) {
+        console.error("Failed to fetch assigned courses:", error);
+        if (isMounted) showToast("Couldn't load your assigned courses.", "error");
+      } finally {
+        if (isMounted) setFetchingCourses(false);
+      }
+    }
+
+    loadCourses();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
-    <div className="relative mx-auto max-w-6xl space-y-6">
-      {/* Refined Toast Notification */}
+    <div className="relative mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
       {toast && (
         <div
-          className={`fixed top-5 right-5 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 shadow-lg transition-all animate-in fade-in slide-in-from-top-3 ${
-            toast.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-              : "border-red-200 bg-red-50 text-red-900"
+          className={`fixed right-5 top-5 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 shadow-lg ${
+            toast.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"
           }`}
         >
           {toast.type === "success" ? (
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+            <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600" strokeWidth={2} />
           ) : (
-            <XCircle className="h-5 w-5 shrink-0 text-red-600" />
+            <XCircle className="h-5 w-5 flex-shrink-0 text-red-600" strokeWidth={2} />
           )}
           <p className="text-xs font-semibold">{toast.message}</p>
-          <button
-            onClick={() => setToast(null)}
-            className={`ml-2 rounded-lg p-1 transition ${
-              toast.type === "success"
-                ? "hover:bg-emerald-100 text-emerald-700"
-                : "hover:bg-red-100 text-red-700"
-            }`}
-          >
-            <X className="h-4 w-4" />
+          <button onClick={() => setToast(null)} className="ml-2 rounded-lg p-1 hover:bg-black/5" aria-label="Dismiss">
+            <X className="h-4 w-4" strokeWidth={2} />
           </button>
         </div>
       )}
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95">
-            <div className="flex items-center gap-3 text-amber-600">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">
-                Mark Course as Completed?
-              </h3>
-            </div>
-            <p className="mt-3 text-sm text-slate-500">
-              Are you sure you want to mark{" "}
-              <span className="font-semibold text-slate-900">
-                "{selectedCourse.title}"
-              </span>{" "}
-              as completed? This action will finalize the intake status.
-            </p>
-
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmCompletion}
-                className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-700"
-              >
-                Confirm Completion
-              </button>
-            </div>
-          </div>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-udom-primary">Instructor</p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">My courses</h1>
+          <p className="mt-1 text-sm text-slate-600">Courses currently assigned to you.</p>
         </div>
-      )}
-
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">
-          Manage Assigned Courses
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Update venues, record topics covered, and submit completion reports.
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left Column: Course Selector List */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
-            Your Courses
-          </h2>
-          {courses.map((course, idx) => {
-            const currentId = getCourseId(course);
-            const uniqueKey = currentId || `course-idx-${idx}`;
+      {fetchingCourses && courses.length === 0 ? (
+        <div className="mt-8 flex h-56 flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white">
+          <RefreshCw className="h-8 w-8 animate-spin text-udom-primary" strokeWidth={2} />
+          <p className="text-sm text-slate-500">Loading assigned courses...</p>
+        </div>
+      ) : courses.length === 0 ? (
+        <div className="mt-8 flex h-56 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white text-center">
+          <BookOpen className="h-10 w-10 text-slate-300" strokeWidth={1.5} />
+          <h3 className="text-base font-semibold text-slate-800">No assigned courses yet</h3>
+          <p className="max-w-sm text-xs text-slate-500">
+            Courses assigned to your instructor profile will appear here.
+          </p>
+        </div>
+      ) : (
+        // items-stretch (grid's default) already equalizes card HEIGHT within
+        // a row, but a short card with no topics/remarks would otherwise just
+        // leave empty space at the bottom while a full card looks "busier".
+        // Rendering every section below with a placeholder fallback keeps the
+        // internal layout identical across all cards, so they feel uniform
+        // rather than just being the same height by accident.
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {courses.map((course) => {
+            const courseId = getCourseId(course);
+            const progressVal = getCourseProgress(course);
+            const isCompleted = course.status === "COMPLETED";
+            const topics = getTopicsList(course);
+            const studentCount =
+              enrolledCounts[courseId] ??
+              course.enrolledStudentsCount ??
+              course.enrolledCount ??
+              course.totalEnrolled ??
+              (Array.isArray(course.students) ? course.students.length : 0);
+
             return (
+              // h-full + flex flex-col lets this card fill whatever height
+              // the grid row settles on, and pushes the bottom sections
+              // (topics, remarks) to line up consistently card to card.
               <div
-                key={uniqueKey}
-                onClick={() => handleSelectCourse(course)}
-                className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                  selectedCourseId === currentId
-                    ? "border-[#0b4d94] bg-blue-50/50 shadow-xs ring-1 ring-[#0b4d94]"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                }`}
+                key={courseId}
+                className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#0b4d94]">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-udom-primary">
+                    <Tag className="h-3 w-3" strokeWidth={2} />
                     {course.courseCode || course.code || "COURSE"}
                   </span>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                      isCompleted ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                    }`}
+                  >
                     {course.status || "ACTIVE"}
                   </span>
                 </div>
-                <h3 className="mt-1 text-sm font-bold text-slate-900">
+
+                {/* line-clamp-2 keeps long titles from pushing this card
+                    taller than its neighbors; overflow just gets truncated
+                    with an ellipsis instead. */}
+                <h3 className="mt-3 line-clamp-2 text-base font-bold leading-snug text-slate-900">
                   {course.title}
                 </h3>
-                <p className="mt-2 text-xs text-slate-500">
-                  Venue: {course.venue || course.venueId || course.location || "Not set"}
+                <p className="mt-1 text-xs text-slate-500">{course.category || "General"}</p>
+
+                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 text-udom-primary">
+                      <MapPin className="h-4 w-4" strokeWidth={1.8} />
+                    </span>
+                    <span className="truncate text-xs text-slate-600">{course.venue || course.location || "Unset"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
+                      <Users className="h-4 w-4" strokeWidth={1.8} />
+                    </span>
+                    <span className="text-xs text-slate-600">
+                      {fetchingCourses ? "…" : studentCount} enrolled
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" strokeWidth={2} /> Progress
+                    </span>
+                    <span className="text-slate-800">{progressVal}%</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className={`h-full transition-all duration-300 ${isCompleted ? "bg-emerald-500" : "bg-udom-primary"}`}
+                      style={{ width: `${progressVal}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Always rendered, even with zero topics, so every card has
+                    an identical block here instead of some cards being
+                    shorter than others. */}
+                <div className="mt-4 border-t border-slate-100 pt-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Topics completed</p>
+                  {topics.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5">
+                      {topics.slice(0, 3).map((topic, i) => (
+                        <li key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
+                          <Check className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" strokeWidth={2} />
+                          <span className="truncate">{topic}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-xs italic text-slate-400">No topics recorded yet.</p>
+                  )}
+                </div>
+
+                {/* mt-auto pins this to the bottom of the card regardless of
+                    how much content sits above it, so the remarks line (or
+                    its placeholder) always lands in the same spot. */}
+                <p className="mt-auto line-clamp-2 pt-3 text-xs italic text-slate-500">
+                  {course.remarks || course.notes || "No remarks added yet."}
                 </p>
               </div>
             );
           })}
         </div>
-
-        {/* Right Column: Course Action Forms */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* Top Header & Progress Overview Card */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-[#0b4d94]">
-                  {selectedCourse.courseCode || selectedCourse.code}
-                </span>
-                <h2 className="mt-2 text-xl font-bold text-slate-900">
-                  {selectedCourse.title}
-                </h2>
-                <p className="mt-1 text-xs font-medium text-slate-500">
-                  Category: {selectedCourse.category || "N/A"} | Enrolled:{" "}
-                  {selectedCourse.totalEnrolled ??
-                    selectedCourse.enrolledCount ??
-                    0}
-                </p>
-              </div>
-              {selectedCourse.status !== "COMPLETED" && (
-                <button
-                  onClick={() => setShowConfirmModal(true)}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-700"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  Mark Completed
-                </button>
-              )}
-            </div>
-
-            {/* Live Progress Bar Indicator */}
-            <div className="pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1.5">
-                <span>Overall Course Progress</span>
-                <span className="text-[#0b4d94]">{currentProgressPercent}%</span>
-              </div>
-              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full bg-[#0b4d94] transition-all duration-500 ease-out"
-                  style={{ width: `${currentProgressPercent}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Form 1: Update Venue */}
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <MapPin className="h-5 w-5 text-[#0b4d94]" />
-              <h3 className="text-base font-bold text-slate-900">Update Venue</h3>
-            </div>
-            <form onSubmit={handleUpdateVenue} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-700">
-                    New Venue Location
-                  </label>
-                  <input
-                    type="text"
-                    value={venue}
-                    onChange={(e) => setVenue(e.target.value)}
-                    placeholder="e.g. Lab 3B, Main Block"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0b4d94] focus:ring-2 focus:ring-[#0b4d94]/20"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-700">
-                    Reason for Change
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Maintenance work"
-                    value={venueReason}
-                    onChange={(e) => setVenueReason(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0b4d94] focus:ring-2 focus:ring-[#0b4d94]/20"
-                    required
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={updatingVenue}
-                className="flex items-center gap-1.5 rounded-lg bg-[#0b4d94] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#083b71] disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                {updatingVenue ? "Saving..." : "Save Venue Change"}
-              </button>
-            </form>
-          </div>
-
-          {/* Form 2: Submit Progress */}
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <BarChart3 className="h-5 w-5 text-[#0b4d94]" />
-              <h3 className="text-base font-bold text-slate-900">
-                Submit Course Progress
-              </h3>
-            </div>
-            <form onSubmit={handleUpdateProgress} className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-700">
-                  Completion Percentage (%)
-                </label>
-                <div className="relative max-w-xs">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={progress}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "") {
-                        setProgress("");
-                      } else {
-                        const num = Math.min(100, Math.max(0, Number(val)));
-                        setProgress(num);
-                      }
-                    }}
-                    placeholder="0 - 100"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0b4d94] focus:ring-2 focus:ring-[#0b4d94]/20"
-                    required
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs font-semibold text-slate-400">
-                    %
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-700">
-                  Completed Topics (Comma separated)
-                </label>
-                <textarea
-                  rows={2}
-                  value={completedTopics}
-                  onChange={(e) => setCompletedTopics(e.target.value)}
-                  placeholder="e.g. Module 1, React Hooks, Context API"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0b4d94] focus:ring-2 focus:ring-[#0b4d94]/20"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-700">
-                  Progress Remarks / Notes
-                </label>
-                <textarea
-                  rows={2}
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  placeholder="Additional notes for admins or students..."
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0b4d94] focus:ring-2 focus:ring-[#0b4d94]/20"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={updatingProgress}
-                className="flex items-center gap-1.5 rounded-lg bg-[#0b4d94] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#083b71] disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                {updatingProgress ? "Updating..." : "Update Progress"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 package com.scms.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.scms.service.LoginSecurityService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,8 +44,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Value("${scms.rate-limit.fail-closed:false}")
     private boolean failClosed;
 
-    @Value("${scms.rate-limit.trust-proxy:false}")
-    private boolean trustProxy;
+    private final ClientIpResolver clientIpResolver;
+    private final LoginSecurityService loginSecurityService;
 
     private static final String LUA_SCRIPT = """
             local current = redis.call('INCR', KEYS[1])
@@ -75,7 +76,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
-        String clientIp = resolveClientIp(request);
+        String clientIp = clientIpResolver.resolve(request);
         String key = policy.getKeyPrefix() + clientIp;
         long limit = policy.getLimit();
 
@@ -107,6 +108,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
             if (currentCount > limit) {
                 log.warn("Rate limit exceeded for policy {}, IP {}, endpoint {}, method {}",
                         policy.name(), clientIp, request.getRequestURI(), request.getMethod());
+                if ("LOGIN".equals(policy.name())) {
+                    loginSecurityService.recordRateLimitedLogin(
+                            LoginSecurityService.LoginRequestMetadata.of(
+                                    clientIp,
+                                    request.getHeader(HttpHeaders.USER_AGENT)
+                            ),
+                            LocalDateTime.now()
+                    );
+                }
                 rejectTooManyRequests(response, ttlSeconds);
                 return;
             }
@@ -144,16 +154,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         return new RateLimitPolicy("scms:rate-limit:general:", generalLimit, "GENERAL");
-    }
-
-    private String resolveClientIp(HttpServletRequest request) {
-        if (trustProxy) {
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-                return xForwardedFor.split(",")[0].trim();
-            }
-        }
-        return request.getRemoteAddr();
     }
 
     private void rejectTooManyRequests(HttpServletResponse response, long retryAfterSeconds) throws IOException {

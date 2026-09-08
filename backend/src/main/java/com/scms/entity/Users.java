@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users",
@@ -59,6 +60,15 @@ public class Users extends BaseEntity implements UserDetails {
     @Column(name = "token_version", nullable = false)
     private Integer tokenVersion = 0;
 
+    @Builder.Default
+    @Column(name = "failed_login_attempts", nullable = false)
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
+
+    @Column(name = "profile_picture_key", length = 500)
+    private String profilePictureKey;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (role == null) {

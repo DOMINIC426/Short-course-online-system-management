@@ -1,4 +1,4 @@
-package com.scms.config;
+package com.scms.config.minio;
 
 import io.minio.MinioClient;
 import org.springframework.context.annotation.Bean;

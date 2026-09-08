@@ -29,6 +29,10 @@ spring:
     baseline-on-migrate: true
     validate-on-migrate: true
     out-of-order: ${FLYWAY_OUT_OF_ORDER:true}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -75,6 +79,9 @@ scms:
     trust-proxy: false
 
 security:
+  login:
+    max-failed-attempts: ${MAX_FAILED_LOGIN_ATTEMPTS:5}
+    lock-duration-minutes: ${LOGIN_LOCK_DURATION_MINUTES:5}
   password-reset:
     otp-validity-minutes: 10
     otp-length: 6

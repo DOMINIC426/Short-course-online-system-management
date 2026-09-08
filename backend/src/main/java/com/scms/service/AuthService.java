@@ -5,24 +5,23 @@ import com.scms.dto.LoginResponse;
 import com.scms.dto.RegisterUserRequest;
 import com.scms.dto.RegisterResponse;
 import com.scms.entity.Users;
+import com.scms.exception.LoginAccountLockedException;
 import com.scms.exception.TooManyRequestsException;
 import com.scms.service.admin.AuditLogService;
 import com.scms.entity.enums.Role;  
 import com.scms.entity.enums.UserStatus;
 import com.scms.exception.UserAlreadyExistException;
-import com.scms.exception.UserNotFoundException;
 import com.scms.jwt.JwtService;
 import com.scms.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -34,6 +33,11 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuditLogService auditLogService;
     private final AccountLoginRateLimiter accountLoginRateLimiter;
+    private final LoginSecurityService loginSecurityService;
+    private final AuthenticationManager authenticationManager;
+
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
 
     @Transactional
@@ -88,22 +92,56 @@ public class AuthService {
         return response;
     }
 
-    @Transactional
-    public LoginResponse login(LoginRequest request) {
-        Users user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("User with email " + request.getEmail() + " not found"));
+    @Transactional(noRollbackFor = {
+            BadCredentialsException.class,
+            LoginAccountLockedException.class,
+            TooManyRequestsException.class
+    })
+    public LoginResponse login(
+            LoginRequest request,
+            LoginSecurityService.LoginRequestMetadata metadata
+    ) {
+        String email = request.getEmail().trim();
+        LocalDateTime now = LocalDateTime.now();
+        Optional<Users> userCandidate = loginSecurityService.findUserForLogin(email);
 
-      if (!accountLoginRateLimiter.isAllowed(request.getEmail())) {
-        throw new TooManyRequestsException("Too many login attempts for this account. Please try again later.");       
-      }
+        if (!accountLoginRateLimiter.isAllowed(email)) {
+            userCandidate.ifPresentOrElse(
+                    user -> loginSecurityService.recordRejectedLogin(user, metadata, now),
+                    () -> loginSecurityService.recordUnknownUserLogin(metadata, now)
+            );
+            throw new TooManyRequestsException("Too many login attempts. Please try again later.");
+        }
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new BadCredentialsException("Invalid email or password");
+        if (userCandidate.isEmpty()) {
+            passwordEncoder.matches(request.getPassword(), DUMMY_PASSWORD_HASH);
+            loginSecurityService.recordUnknownUserLogin(metadata, now);
+            throw invalidCredentials();
+        }
+
+        Users user = userCandidate.get();
+        loginSecurityService.expireLockIfNeeded(user, now);
+
+        if (loginSecurityService.isLocked(user, now)) {
+            loginSecurityService.recordRejectedLogin(user, metadata, now);
+            throw new LoginAccountLockedException();
         }
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new BadCredentialsException("User account is not active");
+            loginSecurityService.recordRejectedLogin(user, metadata, now);
+            throw invalidCredentials();
         }
+
+        try {
+            authenticationManager.authenticate(
+                    UsernamePasswordAuthenticationToken.unauthenticated(email, request.getPassword())
+            );
+        } catch (BadCredentialsException exception) {
+            loginSecurityService.recordFailedLogin(user, metadata, now);
+            throw invalidCredentials();
+        }
+
+        loginSecurityService.recordSuccessfulLogin(user, metadata, now);
 
         String token = jwtService.generateToken(user);
 
@@ -118,5 +156,9 @@ public class AuthService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .build();
+    }
+
+    private BadCredentialsException invalidCredentials() {
+        return new BadCredentialsException("Invalid email or password");
     }
 }

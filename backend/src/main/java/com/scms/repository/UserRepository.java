@@ -2,9 +2,12 @@ package com.scms.repository;
 
 import com.scms.entity.Users;
 import com.scms.entity.enums.Role;
+import com.scms.entity.enums.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,11 +20,41 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     Optional<Users> findByEmail(String email);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM Users u WHERE u.email = :email")
+    Optional<Users> findByEmailForUpdate(@Param("email") String email);
+
     List<Users> findAllByRole(Role role);
 
-
-    @Query("SELECT u FROM Users u WHERE u.role = :role AND u.email LIKE %:domain%")
-    List<Users> findUsersByRoleAndEmailDomain(@Param("role") Role role, @Param("domain") String domain);
+    List<Users> findAllByOrderByCreatedAtDesc();
 
     long countByRole(Role role);
+
+    long countByStatus(UserStatus status);
+
+    boolean existsByEmailAndIdNot(String email, Long id);
+
+    boolean existsByPhoneAndIdNot(String phone, Long id);
+
+    @Query("""
+            SELECT u
+            FROM Users u
+            WHERE u.role = :role
+            AND u.email LIKE %:domain%
+            """)
+    List<Users> findUsersByRoleAndEmailDomain(
+            @Param("role") Role role,
+            @Param("domain") String domain
+    );
+
+    @Query("""
+            SELECT CASE
+                WHEN COUNT(u) > 0
+                THEN true
+                ELSE false
+            END
+            FROM Users u
+            WHERE u.phone = :phone
+            """)
+    boolean existsByPhone(@Param("phone") String phone);
 }

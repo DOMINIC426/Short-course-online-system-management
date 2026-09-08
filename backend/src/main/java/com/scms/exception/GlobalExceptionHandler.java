@@ -1,21 +1,419 @@
+
+
 package com.scms.exception;
 
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * Handles UserAlreadyExistException
+     * HTTP 409 - Conflict
+     */
     @ExceptionHandler(UserAlreadyExistException.class)
-    public ResponseEntity<Map<String,String>> userAlreadyExist(){
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
-                "message","User Already exist ",
-                "time", LocalDateTime.now().toString()
-        ));
+    public ResponseEntity<Object> handleUserAlreadyExists(
+            UserAlreadyExistException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage() != null
+                        ? ex.getMessage()
+                        : "User already exists",
+                request
+        );
+    }
+
+    /**
+     * Handles UserNotFoundException
+     * HTTP 404 - Not Found
+     */
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Object> handleUserNotFound(
+            UserNotFoundException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage() != null
+                        ? ex.getMessage()
+                        : "User not found",
+                request
+        );
+    }
+
+    /**
+     * Handles CourseAlreadyExistException
+     * HTTP 409 - Conflict
+     */
+    @ExceptionHandler(CourseAlreadyExistException.class)
+    public ResponseEntity<Object> handleCourseAlreadyExists(
+            CourseAlreadyExistException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage() != null
+                        ? ex.getMessage()
+                        : "Course already exists",
+                request
+        );
+    }
+
+    /**
+     * Handles ResourceNotFoundException
+     * HTTP 404 - Not Found
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Object> handleResourceNotFound(
+            ResourceNotFoundException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage() != null
+                        ? ex.getMessage()
+                        : "Resource not found",
+                request
+        );
+    }
+
+    /**
+     * Handles BusinessRuleViolationException
+     * HTTP 409 - Conflict
+     */
+    @ExceptionHandler(BusinessRuleViolationException.class)
+    public ResponseEntity<Object> handleBusinessRuleViolation(
+            BusinessRuleViolationException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage() != null
+                        ? ex.getMessage()
+                        : "Business rule violation",
+                request
+        );
+    }
+
+    /**
+     * Handles DuplicateResourceException
+     * HTTP 409 - Conflict
+     */
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<Object> handleDuplicateResource(
+            DuplicateResourceException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage() != null
+                        ? ex.getMessage()
+                        : "Resource already exists",
+                request
+        );
+    }
+
+    /**
+     * Handles @Valid / @Validated request body validation errors.
+     *
+     * Example:
+     * {
+     *   "timestamp": "...",
+     *   "status": 400,
+     *   "error": "Bad Request",
+     *   "message": "Validation failed",
+     *   "details": {
+     *      "username": "Username is required",
+     *      "email": "Invalid email address"
+     *   },
+     *   "path": "/api/users"
+     * }
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Object> handleValidation(
+            MethodArgumentNotValidException ex,
+            WebRequest request) {
+
+        Map<String, String> errors = new LinkedHashMap<>();
+
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errors.put(
+                    error.getField(),
+                    error.getDefaultMessage() != null
+                            ? error.getDefaultMessage()
+                            : "Invalid value"
+            );
+        }
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Validation failed",
+                errors,
+                request
+        );
+    }
+
+    /**
+     * Handles validation errors caused by
+     * @RequestParam, @PathVariable, etc.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Object> handleConstraintViolation(
+            ConstraintViolationException ex,
+            WebRequest request) {
+
+        Map<String, String> errors = new LinkedHashMap<>();
+
+        ex.getConstraintViolations().forEach(violation -> {
+
+            String propertyPath = violation.getPropertyPath().toString();
+
+            String message = violation.getMessage() != null
+                    ? violation.getMessage()
+                    : "Invalid value";
+
+            errors.put(propertyPath, message);
+        });
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Validation failed",
+                errors,
+                request
+        );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String,String>> invalidArgument(IllegalArgumentException ex){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler({
+            InvalidOtpException.class,
+            ExpiredOtpException.class,
+            InvalidResetTokenException.class,
+            ExpiredResetTokenException.class,
+            PasswordValidationException.class
+    })
+    public ResponseEntity<Object> handlePasswordResetBadRequest(
+            RuntimeException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage() != null ? ex.getMessage() : "Invalid password reset request",
+                request
+        );
+    }
+
+    @ExceptionHandler({
+            TooManyRequestsException.class,
+            TooManyOtpAttemptsException.class,
+            ResendCooldownException.class
+    })
+    public ResponseEntity<Object> handleTooManyRequests(
+            RuntimeException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.TOO_MANY_REQUESTS,
+                ex.getMessage() != null ? ex.getMessage() : "Too many requests. Please try again later.",
+                request
+        );
+    }
+
+    @ExceptionHandler(EmailSendingException.class)
+    public ResponseEntity<Object> handleEmailSendingException(
+            EmailSendingException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                ex.getMessage() != null ? ex.getMessage() : "Failed to send email. Please try again later.",
+                request
+        );
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentials(
+            BadCredentialsException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage() != null ? ex.getMessage() : "Invalid email or password",
+                request
+        );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDenied(
+            AccessDeniedException ex,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "You do not have permission to access this resource.",
+                request
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex,
+            WebRequest request) {
+
+        String message = ex.getMostSpecificCause() != null
+                ? ex.getMostSpecificCause().getMessage()
+                : ex.getMessage();
+
+        String userMessage = "A user with the same email or phone number already exists.";
+
+        if (message != null) {
+            String lower = message.toLowerCase();
+            if (lower.contains("email") || lower.contains("uk_users_email")) {
+                userMessage = "This email is already taken.";
+            } else if (lower.contains("phone") || lower.contains("uk_users_phone")) {
+                userMessage = "This phone number is already in use.";
+            }
+        }
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                userMessage,
+                request
+        );
+    }
+
+    /**
+     * Handles all unexpected exceptions.
+     *
+     * IMPORTANT:
+     * Do not expose ex.getMessage() to the client here.
+     * Internal exception messages may reveal:
+     * - database information
+     * - SQL queries
+     * - file paths
+     * - framework details
+     * - internal implementation information
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleGenericException(
+            Exception ex,
+            WebRequest request) {
+
+        log.error("Unexpected error occurred", ex);
+
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred",
+                request
+        );
+    }
+
+    /**
+     * Builds a standardized error response.
+     */
+    private ResponseEntity<Object> buildErrorResponse(
+            HttpStatus status,
+            String message,
+            WebRequest request) {
+
+        return buildErrorResponse(
+                status,
+                message,
+                null,
+                request
+        );
+    }
+
+    /**
+     * Builds a standardized error response
+     * with validation or additional details.
+     */
+    private ResponseEntity<Object> buildErrorResponse(
+            HttpStatus status,
+            String message,
+            Map<String, String> details,
+            WebRequest request) {
+
+        Map<String, Object> body = new LinkedHashMap<>();
+
+        body.put(
+                "timestamp",
+                LocalDateTime.now().toString()
+        );
+
+        body.put(
+                "status",
+                status.value()
+        );
+
+        body.put(
+                "error",
+                status.getReasonPhrase()
+        );
+
+        body.put(
+                "message",
+                message
+        );
+
+        if (details != null && !details.isEmpty()) {
+            body.put(
+                    "details",
+                    details
+            );
+        }
+
+        body.put(
+                "path",
+                extractPath(request)
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(body);
+    }
+
+    /**
+     * Extracts the request URI from WebRequest.
+     */
+    private String extractPath(WebRequest request) {
+
+        if (request == null) {
+            return null;
+        }
+
+        String description = request.getDescription(false);
+
+        if (description == null || description.isBlank()) {
+            return null;
+        }
+
+        if (description.startsWith("uri=")) {
+            return description.substring(4);
+        }
+
+        return description;
     }
 }
+

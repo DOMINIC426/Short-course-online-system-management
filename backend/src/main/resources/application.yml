@@ -4,31 +4,63 @@ server:
 spring:
   application:
     name: scms-backend
+
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:scms}
     username: ${DB_USERNAME:scms_user}
     password: ${DB_PASSWORD:change_me}
-    driver-class-name:
-      org.postgresql.Driver  jpa:
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
+    show-sql: true
     open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  devtools:
+    restart:
+      enabled: true
+      poll-interval: 1000ms
+      quiet-period: 400ms
+      trigger-file: .reload-trigger
+    livereload:
+      enabled: false
+
   flyway:
     enabled: true
     baseline-on-migrate: true
+    validate-on-migrate: true
+    out-of-order: ${FLYWAY_OUT_OF_ORDER:true}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      port: ${REDIS_PORT:6380}
+
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
+    port: ${RABBITMQ_PORT:5673}
     username: ${RABBITMQ_USERNAME:scms}
-    password: ${RABBITMQ_PASSWORD:change_me}
+    password: ${RABBITMQ_PASSWORD:scms_rabbitmq_password}
     virtual-host: ${RABBITMQ_VHOST:/}
+
+  mail:
+    host: mailpit
+    port: 1025
+    username: udom@scms.ac.tz
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
 
 management:
   endpoints:
@@ -41,8 +73,25 @@ management:
 
 scms:
   minio:
-    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9002}
     access-key: ${MINIO_ACCESS_KEY:scms_minio}
-    secret-key: ${MINIO_SECRET_KEY:change_me}
+    secret-key: ${MINIO_SECRET_KEY:scms_minio_password}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174}
+  rate-limit:
+    login-per-minute: 5
+    register-per-minute: 10
+    general-per-minute: 60
+    fail-closed: false
+    trust-proxy: false
+
+security:
+  login:
+    max-failed-attempts: ${MAX_FAILED_LOGIN_ATTEMPTS:5}
+    lock-duration-minutes: ${LOGIN_LOCK_DURATION_MINUTES:5}
+  password-reset:
+    otp-validity-minutes: 10
+    otp-length: 6
+    max-otp-attempts: 5
+    resend-cooldown-minutes: 2
+    reset-token-validity-minutes: 15

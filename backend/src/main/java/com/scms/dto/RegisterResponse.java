@@ -1,27 +1,23 @@
 package com.scms.dto;
-
-import com.scms.entity.Users;
 import com.scms.entity.enums.Role;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.time.LocalDate;
+@Builder
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+public class RegisterResponse{
+   private Long id;
+   private String firstName;
+   private String lastName;
+   private String email;
+   private Role role;
+   private String phone;
+   private String token;
 
-public record RegisterResponse(
-        Long id,
-        String firstName,
-        String lastName,
-        String email,
-        Role role,
-        LocalDate createdAt
-) {
-
-    public static RegisterResponse fromUser(Users user) {
-        return new RegisterResponse(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getRole(),
-                user.getCreatedAt()
-        );
-    }
 }

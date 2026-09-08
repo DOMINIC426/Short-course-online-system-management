@@ -1,28 +1,36 @@
 package com.scms.entity;
 
 import com.scms.entity.enums.Role;
+import com.scms.entity.enums.UserStatus;
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_users_email", columnNames = "email"),
+                @UniqueConstraint(name = "uk_users_phone", columnNames = "phone")
+        },
+        indexes = {
+                @Index(name = "idx_users_email", columnList = "email"),
+                @Index(name = "idx_users_phone", columnList = "phone")
+        })
 @Getter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(onlyExplicitlyIncluded = true)
-public class Users {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
-    @ToString.Include
-    private Long id;
+@Setter
+@NoArgsConstructor
+@SuperBuilder
+public class Users extends BaseEntity implements UserDetails {
 
     @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
@@ -31,38 +39,71 @@ public class Users {
     private String lastName;
 
     @Column(name = "email", nullable = false, unique = true, length = 150)
-    @EqualsAndHashCode.Include
     private String email;
 
-    @Column(name = "role", nullable = false)
+    @Column(name = "phone", nullable = false, unique = true, length = 20)
+    private String phone;
+
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
+
+    @Builder.Default
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 50)
     private Role role;
 
-    @Column(name = "password", nullable = false, length = 255)
-    private String password;
+    @Builder.Default
+    @Column(name = "token_version", nullable = false)
+    private Integer tokenVersion = 0;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDate createdAt;
+    @Builder.Default
+    @Column(name = "failed_login_attempts", nullable = false)
+    private Integer failedLoginAttempts = 0;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDate updatedAt;
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
 
-
-    // BUSINESS METHODS (Professional approach - no public setters)
-    // ============================================================
-
-    public void updateProfile(String firstName, String lastName) {
-        this.firstName = firstName;
-        this.lastName = lastName;
+    @Column(name = "profile_picture_key", length = 500)
+    private String profilePictureKey;
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (role == null) {
+            return List.of();
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
-    public void changePassword(String newPassword) {
-        this.password = newPassword;
+    @Override
+    public String getPassword() {
+        return passwordHash;
     }
 
-    public void changeRole(Role newRole) {
-        this.role = newRole;
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return status == UserStatus.ACTIVE;
     }
 }

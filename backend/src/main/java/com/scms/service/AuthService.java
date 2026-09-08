@@ -1,12 +1,12 @@
 package com.scms.service;
 
-import com.scms.dto.LoginRequest;
-import com.scms.dto.LoginResponse;
-import com.scms.dto.RegisterUserRequest;
-import com.scms.dto.RegisterResponse;
+import com.scms.dto.*;
+import com.scms.dto.market.ShortCourseResponse;
+import com.scms.entity.ShortCourse;
 import com.scms.entity.Users;
 import com.scms.exception.LoginAccountLockedException;
 import com.scms.exception.TooManyRequestsException;
+import com.scms.repository.ShortCourseRepository;
 import com.scms.service.admin.AuditLogService;
 import com.scms.entity.enums.Role;  
 import com.scms.entity.enums.UserStatus;
@@ -14,6 +14,9 @@ import com.scms.exception.UserAlreadyExistException;
 import com.scms.jwt.JwtService;
 import com.scms.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -35,6 +39,7 @@ public class AuthService {
     private final AccountLoginRateLimiter accountLoginRateLimiter;
     private final LoginSecurityService loginSecurityService;
     private final AuthenticationManager authenticationManager;
+    private final ShortCourseRepository shortCourseRepository;
 
     private static final String DUMMY_PASSWORD_HASH =
             "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
@@ -161,4 +166,15 @@ public class AuthService {
     private BadCredentialsException invalidCredentials() {
         return new BadCredentialsException("Invalid email or password");
     }
+
+
+
+
+    @Transactional(readOnly = true)
+    public Page<ShortCourseDTO> getAllCourses(Pageable pageable) {
+        return shortCourseRepository.findAllCourses(pageable);
+    }
+
+
+
 }

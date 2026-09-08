@@ -1,9 +1,9 @@
-package com.scms.controller;
-
+ package com.scms.controller;
 import com.scms.dto.LoginRequest;
 import com.scms.dto.LoginResponse;
 import com.scms.dto.RegisterResponse;
 import com.scms.dto.RegisterUserRequest;
+import com.scms.dto.ShortCourseDTO;
 import com.scms.service.AuthService;
 import com.scms.service.ProfilePictureService;
 import com.scms.security.ClientIpResolver;
@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +33,9 @@ public class AuthController {
     private final ClientIpResolver clientIpResolver;
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterUserRequest request) {
+    public ResponseEntity<RegisterResponse> register(
+            @Valid @RequestBody RegisterUserRequest request
+    ) {
         return ResponseEntity.ok(authService.register(request));
     }
 
@@ -44,7 +48,10 @@ public class AuthController {
 
         return ResponseEntity.ok(authService.login(
                 request,
-                LoginRequestMetadata.of(clientIpResolver.resolve(httpRequest), userAgent)
+                LoginRequestMetadata.of(
+                        clientIpResolver.resolve(httpRequest),
+                        userAgent
+                )
         ));
     }
 
@@ -62,7 +69,11 @@ public class AuthController {
             @RequestParam("file") MultipartFile file,
             Authentication authentication
     ) throws Exception {
-        String objectKey = profilePictureService.updateProfilePicture(authentication.getName(), file);
+
+        String objectKey = profilePictureService.updateProfilePicture(
+                authentication.getName(),
+                file
+        );
 
         return ResponseEntity.ok(Map.of(
                 "message", "Profile picture updated successfully",
@@ -72,10 +83,14 @@ public class AuthController {
     }
 
     @GetMapping("/me/profile-picture")
-    public ResponseEntity<InputStreamResource> getProfilePicture(Authentication authentication)
-            throws Exception {
+    public ResponseEntity<InputStreamResource> getProfilePicture(
+            Authentication authentication
+    ) throws Exception {
+
         ProfilePictureService.ProfilePictureContent picture =
-                profilePictureService.getProfilePicture(authentication.getName());
+                profilePictureService.getProfilePicture(
+                        authentication.getName()
+                );
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(picture.contentType()))
@@ -88,4 +103,15 @@ public class AuthController {
     public String greeting() {
         return "Hello world, the spring boot security is ready for use";
     }
+
+    // Get all short courses with pagination
+    @GetMapping("/courses")
+    public ResponseEntity<Page<ShortCourseDTO>> getAllCourses(
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+                authService.getAllCourses(pageable)
+        );
+    }
 }
+

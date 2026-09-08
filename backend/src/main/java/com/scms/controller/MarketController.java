@@ -32,11 +32,7 @@ public class MarketController {
         return ResponseEntity.status(HttpStatus.CREATED).body(marketService.registerCourse(dto));
     }
 
-    @GetMapping("/courses")
-    @PreAuthorize("permitAll")
-    public ResponseEntity<List<ShortCourseResponse>> getAllCourses() {
-        return ResponseEntity.ok(marketService.getAllCourses());
-    }
+
 
     @PatchMapping("/courses/{id}")
     @PreAuthorize("hasRole('MARKETING_OFFICER') AND hasAuthority('COURSE_EDIT')")

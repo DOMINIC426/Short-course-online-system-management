@@ -141,16 +141,6 @@ public class MarketService {
         return "Course " + shortCourse.getTitle() + " has been deleted";
     }
 
-    // FIXED: Updated PreAuthorize to valid SpEL and added INSTRUCTOR role
-    @PreAuthorize("hasAnyRole('MARKETING_OFFICER', 'STUDENT', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public List<ShortCourseResponse> getAllCourses() {
-        List<ShortCourse> courses = shortCourseRepository.findAll();
-        return courses.stream()
-                .map(this::toResponse)
-                .toList();
-    }
-
     @CacheEvict(value = "publicCourses", allEntries = true)
     @PreAuthorize("hasRole('MARKETING_OFFICER')")
     @Transactional

@@ -1,4 +1,3 @@
-// src/pages/HomePage.jsx
 import Hero from "../../components/public/Hero";
 import StatsStrip from "../../components/public/StatsStrip";
 import FeaturedCourses from "../../components/public/FeaturedCourses";
@@ -14,7 +13,9 @@ export default function HomePage() {
     if (location.hash !== "#how-to-apply") return;
 
     requestAnimationFrame(() => {
-      document.getElementById("how-to-apply")?.scrollIntoView({ behavior: "smooth" });
+      document
+        .getElementById("how-to-apply")
+        ?.scrollIntoView({ behavior: "smooth" });
     });
   }, [location.hash]);
 
